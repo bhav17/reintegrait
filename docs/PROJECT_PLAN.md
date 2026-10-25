@@ -93,9 +93,6 @@ The pipeline is built end to end on a simulator calibrated with the open data. R
 | 3. Loop and field tests | Nov 23 to Dec 6 | Test results in hand for all seven bets |
 | 4. Demo | Week of Dec 7 | Build frozen, backup video, two rehearsals |
 
-**Red items now (Bhavya):** confirm demo date and team; email 5 to 8 Chicago reentry organizations to recruit case managers; ask the instructor about ethics review for de-identified referrals. **Next for Claude:** outreach email, interview materials and referral-log template; repo structure and data schema; organization list; voice-to-note module.
-
-The full 37-step tracker with owners, dates, urgency and status lives in the MVP build plan doc.
 
 ## 8. Ground rules
 
@@ -104,10 +101,3 @@ The full 37-step tracker with owners, dates, urgency and status lives in the MVP
 - Synthetic data only until an organization agrees and any required review is done.
 - Delete audio after transcription; vendors with a BAA and zero retention before any real data.
 
-## 9. Open questions
-
-- Demo date, format and audience.
-- Does "accepted within 14 days, no-shows excluded" match how partners define success?
-- Can the team get de-identified past referrals from case managers?
-- Is synthetic data acceptable to the instructors as the main evidence if real rows are thin?
-- Request the restricted SVORI data: yes or no?
