@@ -1,0 +1,147 @@
+{
+  "_about": "Every simulated AI response in the Step 1 prototype lives in this file. Edit the text here and reload the page. {first} is replaced with the client's first name and {duration} with the recording length. Later, replace each block with a call to a real model that returns the same shape.",
+
+  "new_client_intake": {
+    "sample_recording": { "file_name": "intake-andre-2026-11-11.m4a", "size_mb": 68.4, "duration": "47:12" },
+    "processing": {
+      "quality_check": { "status": "flag", "result": "Clear speech for 94% of {duration}. 2 speakers found. 1 inaudible spot at 00:38:14." },
+      "transcription": { "status": "done", "result": "Transcribed 6,840 words. Case manager and client lines are kept apart." },
+      "missing_info_check": { "status": "flag", "result": "2 things to confirm: gender not stated, phone number cut off." },
+      "template_match": { "status": "done", "result": "Matched to Standard intake note. 6 key fields, 5 needs, 5 next steps." }
+    },
+    "transcript": [
+      { "id": "t0", "time": "00:00:04", "speaker": "Denise", "text": "This is intake for Andre Williams, November 11th." },
+      { "id": "t1", "time": "00:00:12", "speaker": "Denise", "text": "I'm recording so I don't have to write while we talk. Is that alright?" },
+      { "id": "t2", "time": "00:00:18", "speaker": "Andre", "text": "Yeah, that's fine." },
+      { "id": "t3", "time": "00:01:05", "speaker": "Denise", "text": "How old are you now?" },
+      { "id": "t4", "time": "00:01:07", "speaker": "Andre", "text": "Thirty-four. I turn thirty-five in March." },
+      { "id": "t5", "time": "00:02:40", "speaker": "Andre", "text": "I got out of Sheridan on the 2nd. I'm staying with my cousin in Englewood, on the couch. He said two weeks, maybe three." },
+      { "id": "t6", "time": "00:06:15", "speaker": "Andre", "text": "I don't have any ID. Just the release papers." },
+      { "id": "t7", "time": "00:09:30", "speaker": "Andre", "text": "My blood pressure pills ran out Saturday. They only gave me two weeks' worth." },
+      { "id": "t8", "time": "00:14:02", "speaker": "Andre", "text": "I want to work. I did forklift in there, I got the certificate." },
+      { "id": "t9", "time": "00:21:47", "speaker": "Andre", "text": "I'm not on food stamps or nothing." },
+      { "id": "t10", "time": "00:38:10", "speaker": "Denise", "text": "What's the best number to reach you?" },
+      { "id": "t11", "time": "00:38:14", "speaker": "Andre", "text": "It's my cousin's phone, 773-555-01 [inaudible, 2 sec]" },
+      { "id": "t12", "time": "00:46:50", "speaker": "Denise", "text": "So this week we start your state ID, get your pills refilled, and I'll call you Friday." }
+    ],
+    "note": {
+      "template": "Standard intake note",
+      "key_info": {
+        "name": { "value": "Andre Williams", "source": "t0" },
+        "age": { "value": "34", "source": "t4" },
+        "gender": { "value": "", "source": null },
+        "locality": { "value": "Englewood", "source": "t5" },
+        "contact": { "value": "773-555-01__", "source": "t11" }
+      },
+      "immediate_needs": [
+        { "priority": "Urgent", "text": "Medication: blood pressure pills ran out Saturday", "source": "t7" },
+        { "priority": "Urgent", "text": "Housing: couch at cousin's place for 2 to 3 weeks", "source": "t5" },
+        { "priority": "Soon", "text": "ID: no state ID, only release papers", "source": "t6" },
+        { "priority": "Soon", "text": "Food: not enrolled in SNAP", "source": "t9" },
+        { "priority": "Later", "text": "Work: wants a job, has a forklift certificate", "source": "t8" }
+      ],
+      "next_steps": [
+        { "text": "Refer to a community health center for a same-week refill", "source": "t12" },
+        { "text": "Start the Illinois state ID application with release papers", "source": "t12" },
+        { "text": "Help apply for SNAP through ABE", "source": "t9" },
+        { "text": "Refer to a Community Re-Entry Support Center for job readiness", "source": "t8" },
+        { "text": "Follow-up call Fri Nov 13", "source": "t12" }
+      ],
+      "flags": [
+        { "id": "f1", "field": "gender", "kind": "Missing", "text": "Gender was not stated in the recording.", "fix": "select", "options": ["Male", "Female", "Non-binary", "Prefers not to say"] },
+        { "id": "f2", "field": "contact", "kind": "Unclear", "text": "Phone number cut off at 00:38:14 (inaudible). Last two digits missing.", "fix": "input", "placeholder": "773-555-01__" }
+      ]
+    },
+    "reminder": { "date": "2026-11-13", "type": "Weekly phone check", "text": "Follow-up call with {first}: ID, pills, SNAP." }
+  },
+
+  "typed_text_processing": {
+    "quality_check": { "status": "skip", "result": "Skipped. You typed this note." },
+    "transcription": { "status": "skip", "result": "Skipped. Using your typed text." }
+  },
+
+  "client_update": {
+    "Referral check": {
+      "sample_recording": { "file_name": "call-{first}-2026-11-11.m4a", "size_mb": 2.9, "duration": "2:04" },
+      "processing": {
+        "quality_check": { "status": "done", "result": "Clear speech for 98% of {duration}. 2 speakers found." },
+        "transcription": { "status": "done", "result": "Transcribed 212 words." },
+        "missing_info_check": { "status": "done", "result": "Nothing missing. 1 new need found." },
+        "template_match": { "status": "done", "result": "Matched to Referral check update. 4 changes to the case file." }
+      },
+      "transcript": [
+        { "id": "u0", "time": "00:00:03", "speaker": "Denise", "text": "Referral check call with {first}, November 11th." },
+        { "id": "u1", "time": "00:00:20", "speaker": "{first}", "text": "Yeah I went Tuesday. They said I'm in, I start the 17th." },
+        { "id": "u2", "time": "00:01:02", "speaker": "{first}", "text": "I need steel-toe boots by then though. I don't have money for those." },
+        { "id": "u3", "time": "00:01:40", "speaker": "Denise", "text": "Okay. I'll check our boot voucher. I'll call you the 18th to see how day one went." }
+      ],
+      "summary": "{first} attended the orientation and was accepted. Starts Nov 17. Needs work boots first.",
+      "changes": [
+        { "kind": "change", "field": "status", "label": "Status", "to": "Enrolled", "source": "u1" },
+        { "kind": "add", "field": "need", "label": "Need", "to": "Steel-toe work boots before Nov 17", "source": "u2" },
+        { "kind": "add", "field": "note", "label": "Next step", "to": "Check boot voucher fund this week", "source": "u3" },
+        { "kind": "add", "field": "reminder", "label": "Reminder", "to": "Wed Nov 18 · Call about first day", "source": "u3",
+          "reminder": { "date": "2026-11-18", "type": "Weekly phone check", "text": "Call {first} about the first day of the program." } }
+      ]
+    },
+    "Second visit": {
+      "sample_recording": { "file_name": "visit2-{first}-2026-11-11.m4a", "size_mb": 21.6, "duration": "16:40" },
+      "processing": {
+        "quality_check": { "status": "done", "result": "Clear speech for 96% of {duration}. 2 speakers found." },
+        "transcription": { "status": "done", "result": "Transcribed 2,310 words." },
+        "missing_info_check": { "status": "done", "result": "Nothing missing." },
+        "template_match": { "status": "done", "result": "Matched to Second visit update. 3 changes to the case file." }
+      },
+      "transcript": [
+        { "id": "u0", "time": "00:00:05", "speaker": "Denise", "text": "Second visit with {first}, November 11th." },
+        { "id": "u1", "time": "00:03:12", "speaker": "{first}", "text": "I picked up the housing form but I didn't understand half of it." },
+        { "id": "u2", "time": "00:09:40", "speaker": "{first}", "text": "My sugar's been okay since the clinic gave me the meter." },
+        { "id": "u3", "time": "00:15:02", "speaker": "Denise", "text": "We filled in the form together. I'll drop it off Thursday." }
+      ],
+      "summary": "Housing form completed together. Health is stable since the clinic visit.",
+      "changes": [
+        { "kind": "change", "field": "need", "label": "Need", "from": "Housing application paperwork", "to": "Housing form done, Denise drops it off Thu", "source": "u3" },
+        { "kind": "change", "field": "need", "label": "Need", "from": "Diabetes care", "to": "Diabetes stable, has a meter", "source": "u2" },
+        { "kind": "add", "field": "reminder", "label": "Reminder", "to": "Mon Nov 23 · Ask about housing decision", "source": "u3",
+          "reminder": { "date": "2026-11-23", "type": "Weekly phone check", "text": "Ask {first} whether the housing office called back." } }
+      ]
+    },
+    "Weekly phone check": {
+      "sample_recording": { "file_name": "call-{first}-2026-11-11.m4a", "size_mb": 1.8, "duration": "1:32" },
+      "processing": {
+        "quality_check": { "status": "done", "result": "Clear speech for 97% of {duration}. 2 speakers found." },
+        "transcription": { "status": "done", "result": "Transcribed 164 words." },
+        "missing_info_check": { "status": "done", "result": "Nothing missing." },
+        "template_match": { "status": "done", "result": "Matched to Weekly phone check update. 3 changes to the case file." }
+      },
+      "transcript": [
+        { "id": "u0", "time": "00:00:02", "speaker": "Denise", "text": "Weekly call with {first}." },
+        { "id": "u1", "time": "00:00:30", "speaker": "{first}", "text": "Classes are good. I missed Monday because I had nobody to watch the kids." },
+        { "id": "u2", "time": "00:01:15", "speaker": "Denise", "text": "I'll look at the childcare assistance program for you." }
+      ],
+      "summary": "{first} is doing well but missed a class for lack of childcare.",
+      "changes": [
+        { "kind": "add", "field": "note", "label": "Note", "to": "Missed Monday class, no childcare", "source": "u1" },
+        { "kind": "add", "field": "note", "label": "Next step", "to": "Look into the Child Care Assistance Program", "source": "u2" },
+        { "kind": "add", "field": "reminder", "label": "Reminder", "to": "Wed Nov 18 · Weekly call", "source": "u2",
+          "reminder": { "date": "2026-11-18", "type": "Weekly phone check", "text": "Weekly call with {first}." } }
+      ]
+    },
+    "Weekly message check": {
+      "sample_recording": null,
+      "sample_text": "Texted {first}: any news on the hearing date? {first}: Got the letter, it's Dec 3 at 9am. Can you come?",
+      "processing": {
+        "missing_info_check": { "status": "done", "result": "Nothing missing." },
+        "template_match": { "status": "done", "result": "Matched to Weekly message check update. 3 changes to the case file." }
+      },
+      "transcript": [],
+      "summary": "Hearing set for Dec 3 at 9am. {first} asked Denise to attend.",
+      "changes": [
+        { "kind": "add", "field": "note", "label": "Note", "to": "Hearing Dec 3, 9am", "source": null },
+        { "kind": "add", "field": "note", "label": "Next step", "to": "Decide whether to attend the hearing", "source": null },
+        { "kind": "add", "field": "reminder", "label": "Reminder", "to": "Mon Nov 30 · Prep for hearing", "source": null,
+          "reminder": { "date": "2026-11-30", "type": "Second visit", "text": "Prep {first} for the Dec 3 hearing." } }
+      ]
+    }
+  }
+}
