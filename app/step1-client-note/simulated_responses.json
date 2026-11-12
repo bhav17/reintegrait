@@ -18,17 +18,17 @@
   },
 
   "new_client_intake": {
-    "sample_recording": { "file_name": "intake-andre-2026-11-11.m4a", "size_mb": 68.4, "duration": "47:12" },
+    "sample_recording": { "file_name": "intake-andre-williams-2026-11-11.m4a", "size_mb": 66.9, "duration": "46:58" },
     "processing": {
       "quality_check": { "status": "flag", "result": "Clear speech for 94% of {duration}. 2 speakers found. 1 inaudible spot at 00:38:14." },
       "transcription": { "status": "done", "result": "Transcribed 6,840 words. Case manager and client lines are kept apart." },
       "missing_info_check": { "status": "flag", "result": "2 things to confirm: gender not stated, phone number cut off." },
-      "template_match": { "status": "done", "result": "Matched to Standard intake note. 6 key fields, 5 needs, 5 next steps." }
+      "template_match": { "status": "done", "result": "Matched to Standard intake note. 5 key fields, 5 needs, 3 agreed next steps, 3 suggestions." }
     },
     "transcript": [
       { "id": "t0", "time": "00:00:04", "speaker": "Denise", "text": "This is intake for Andre Williams, November 11th." },
-      { "id": "t1", "time": "00:00:12", "speaker": "Denise", "text": "I'm recording so I don't have to write while we talk. Is that alright?" },
-      { "id": "t2", "time": "00:00:18", "speaker": "Andre", "text": "Yeah, that's fine." },
+      { "id": "t1", "time": "00:00:12", "speaker": "Denise", "text": "I'm recording so I don't have to write while we talk. Is that alright?", "consent": true },
+      { "id": "t2", "time": "00:00:18", "speaker": "Andre", "text": "Yeah, that's fine.", "consent": true },
       { "id": "t3", "time": "00:01:05", "speaker": "Denise", "text": "How old are you now?" },
       { "id": "t4", "time": "00:01:07", "speaker": "Andre", "text": "Thirty-four. I turn thirty-five in March." },
       { "id": "t5", "time": "00:02:40", "speaker": "Andre", "text": "I got out of Sheridan on the 2nd. I'm staying with my cousin in Englewood, on the couch. He said two weeks, maybe three." },
@@ -42,6 +42,7 @@
     ],
     "note": {
       "template": "Standard intake note",
+      "_next_steps_rules": "See docs/specs/step1-next-steps.md. kind is agreed (source = the line where someone committed) or suggested (source = the need's line). addresses uses the need categories (text before the colon). Suggestions never name a provider. At most 5 suggestions.",
       "key_info": {
         "name": { "value": "Andre Williams", "source": "t0" },
         "age": { "value": "34", "source": "t4" },
@@ -57,11 +58,12 @@
         { "priority": "Later", "text": "Work: wants a job, has a forklift certificate", "source": "t8" }
       ],
       "next_steps": [
-        { "text": "Refer to a community health center for a same-week refill", "source": "t12" },
-        { "text": "Start the Illinois state ID application with release papers", "source": "t12" },
-        { "text": "Help apply for SNAP through ABE", "source": "t9" },
-        { "text": "Refer to a Community Re-Entry Support Center for job readiness", "source": "t8" },
-        { "text": "Follow-up call Fri Nov 13", "source": "t12" }
+        { "kind": "agreed", "action": "Get blood pressure pills refilled", "owner": "Both", "due": "This week", "addresses": ["Medication"], "source": "t12" },
+        { "kind": "agreed", "action": "Start the Illinois state ID application with release papers", "owner": "Both", "due": "This week", "addresses": ["ID"], "source": "t12" },
+        { "kind": "agreed", "action": "Follow-up call", "owner": "Case manager", "due": "Fri Nov 13", "addresses": ["Medication", "ID"], "source": "t12", "creates_reminder": true },
+        { "kind": "suggested", "action": "Find short-term housing before the couch stay ends", "owner": "Case manager", "due": "", "addresses": ["Housing"], "source": "t5" },
+        { "kind": "suggested", "action": "Help apply for SNAP", "owner": "Both", "due": "", "addresses": ["Food"], "source": "t9" },
+        { "kind": "suggested", "action": "Find a job readiness program that uses the forklift certificate", "owner": "Case manager", "due": "", "addresses": ["Work"], "source": "t8" }
       ],
       "flags": [
         { "id": "f1", "field": "gender", "kind": "Missing", "text": "Gender was not stated in the recording.", "fix": "select", "options": ["Male", "Female", "Non-binary", "Prefers not to say"] },

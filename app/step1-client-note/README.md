@@ -48,6 +48,8 @@ Changes are saved in your browser and survive a reload. Click **Reset sample dat
 | 7 | All simulated AI output comes from `simulated_responses.json` |
 | 8 | Works at phone width; no script errors |
 | 9 | Records: every screen reads and writes the seven record types below; a reload keeps them; each approval is logged; reset restores the samples; templates come from the JSON file |
+| 10 | Step 1 spec (`Step 1 spec - Client Note.docx`): reminders due today and this week with Log response on home; "Type notes instead"; files in other formats or over 500 MB refused with a reason; flags at the top of the note with icon and text; consent shown in the transcript; need priority can be changed; review box reads "I reviewed this note against the conversation"; new clients start as "New intake"; an on-screen Activity log records each edit (before and after), need and step added or removed, priority change, flag resolution, review tick, reminder created, update type, accepted or removed changes, time stamps opened, and time from upload to approval |
+| 11 | Next steps rules (`docs/specs/step1-next-steps.md`): agreed steps and AI suggestions shown separately (agreed ticked, suggestions not); each step has owner, due (only if said), the need it addresses and evidence; suggestions name no provider, are capped at 5 in need-priority order and skip needs an agreed step covers; only ticked steps are saved; a reminder is created only from a ticked dated step; with no agreed steps, approval needs a confirmation; the activity log records suggestions accepted and declined |
 
 To run the automated check (needs Node and Playwright):
 

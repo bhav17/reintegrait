@@ -199,6 +199,36 @@ li.skip .dot{border-style:dashed}
 .diff .k{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
 .diff .k.add{color:var(--ok)} .diff .k.chg{color:var(--accent)} .diff .k.rem{color:var(--muted)}
 .diff s{color:var(--muted)}
+.flagbar{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.flagbar .flagitem{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.flagbar .flagitem>div{flex:1;min-width:220px}
+.flagbar .flagitem>.row{flex:0 1 360px}
+.flagitem .ic{font-weight:700}
+.rem .row button{display:inline;grid-template-columns:none;border-top:0;padding:0;width:auto}
+.rem .row .btn{padding:6px 12px;border:1px solid var(--line);white-space:nowrap}
+.rem .row{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:10px 2px}
+.rem .row:first-child{border-top:0}
+.rem .rn{font:inherit;font-weight:600;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;text-align:left}
+.rem .rn:hover{color:var(--accent);text-decoration:underline}
+.items .pri-sel{width:auto;flex:none;padding:1px 2px;font:inherit;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid var(--line);border-radius:3px;padding:1px 2px;background:var(--panel);color:var(--ink)}
+.consent{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ok);background:var(--ok-soft);border-radius:3px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.log{width:100%;font-size:13px}
+.log td{vertical-align:top}
+.log .when{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.log .ev{font-weight:600;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.metrics div{background:var(--bg);border-radius:5px;padding:8px 10px}
+.metrics b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.metrics span{font-size:12px;color:var(--muted)}
+.stepgrp{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stepgrp:first-of-type{margin-top:0}
+.steps li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:4px 8px;align-items:start}
+.steps li input[type=checkbox]{margin-top:4px;accent-color:var(--accent)}
+.steps .meta{grid-column:2/-1;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.steps .meta select,.steps .meta input{font:inherit;font-size:12px;padding:1px 4px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink);width:auto}
+.steps li.off .txt{color:var(--muted)}
+.tag.sug{color:var(--sim);background:var(--sim-soft);border:1px dashed var(--sim)}
+.nosteps{font-size:14px;padding:6px 10px;border-radius:4px;background:var(--warn-soft)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:6px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 </style>
 
@@ -208,6 +238,7 @@ li.skip .dot{border-style:dashed}
     <nav class="main" aria-label="Main">
       <button type="button" data-go="home" id="nav-home">Home</button>
       <button type="button" data-go="clients" id="nav-clients">Clients</button>
+      <button type="button" data-go="activity" id="nav-activity">Activity log</button>
     </nav>
     <div class="who"><b>Denise</b> · Case manager</div>
   </div>
@@ -319,6 +350,14 @@ const updateTypes=()=>SIM.templates.update_types;
 const keyFields=tpl=>SIM.templates.intake_notes[tpl].key_fields.map(f=>[f.key,f.label]);
 
 let SIM=null;
+
+/* ---------- Activity log (spec section 4: feedback and data capture) ----------
+   Shown on screen only, kept in memory for this session. No database. */
+const ACTIVITY=[];
+const clock=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")+":"+String(t.getSeconds()).padStart(2,"0")};
+function logEvent(client,event,detail){ACTIVITY.unshift({at:clock(),ts:Date.now(),client:client||"",event,detail:detail||""})}
+const secs=ms=>{const s=Math.round(ms/1000);return s<60?s+" sec":Math.floor(s/60)+" min "+(s%60)+" sec"};
+
 const state={view:"home",sel:"c1",note:null,update:null,editing:false,newIds:new Set(),filter:""};
 const app=document.getElementById("app"), mroot=document.getElementById("modal-root");
 
@@ -328,31 +367,32 @@ document.getElementById("brand").onclick=()=>go("home");
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
 
 function render(){
- ["home","clients"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate})[state.view]();
+ ["home","clients","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity})[state.view]();
  app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
 const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. AI output comes from simulated_responses.json.<button class="btn ghost small" type="button" data-reset>Reset sample data</button></div>`;
 
 /* ---------- Home ---------- */
 function renderHome(){
- const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=2).sort((a,b)=>a.reminder.date-b.reminder.date);
+ const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=6).sort((a,b)=>a.reminder.date-b.reminder.date);
  app.innerHTML=mock+`
  <div class="hello"><h1>Welcome back, Denise</h1><p class="muted">Wednesday, November 11. Who are you working with?</p></div>
  <div class="choices">
   <button class="choice" id="btn-new" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 4-6 8-6s8 2 8 6"/><path d="M19 8v6M16 11h6"/></svg></span><b>New client</b><span>Upload the voice note from your first meeting. AI drafts the client note.</span></button>
   <button class="choice" id="btn-existing" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg></span><b>Existing client</b><span>Open a case file to add a referral response, visit or check-in.</span></button>
  </div>
- <div class="pane"><h2>Reminders due <span class="tag warn">${due.length}</span></h2><div class="rem">
-   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<button type="button" data-open="${c.id}"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue":dd===0?"Today":fmt(c.reminder.date)}</span><span><span class="rn">${esc(c.name)}</span><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><span class="muted" aria-hidden="true">›</span></button>`}).join("")||`<p class="muted small">Nothing due in the next two days.</p>`}
+ <div class="pane"><h2>Reminders due today and this week <span class="tag warn">${due.length}</span></h2><div class="rem" id="reminders">
+   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<div class="row"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue · ":dd===0?"Today · ":""}${fmt(c.reminder.date)}</span><span><button class="rn" type="button" data-open="${c.id}">${esc(c.name)}</button><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><button class="btn" type="button" data-logresp="${c.id}">Log response</button></div>`}).join("")||`<p class="muted small">Nothing due this week.</p>`}
  </div></div>`;
  document.getElementById("btn-new").onclick=()=>openUpload({mode:"new"});
  document.getElementById("btn-existing").onclick=()=>go("clients");
  app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.open;go("clients")});
+ app.querySelectorAll("[data-logresp]").forEach(b=>b.onclick=()=>{const c=clients().find(x=>x.id===b.dataset.logresp);openUpload({mode:"update",client:c,type:c.reminder.type})});
 }
 
 /* ---------- Existing client database ---------- */
-function statusTag(s){const m={"Active":"ok","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
+function statusTag(s){const m={"Active":"ok","New intake":"info","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
 function renderClients(){
  const q=state.filter.toLowerCase();
  const CL=clients();
@@ -407,7 +447,7 @@ function openUpload(opts){
   <div class="limits"><div><b>Up to 3 hours</b>per recording</div><div><b>Up to 500 MB</b>per file</div><div><b>MP3, M4A, WAV, AAC</b>audio formats</div></div>
   <div id="filebox"></div>
   <button class="btn ghost" id="sample" type="button" style="align-self:flex-start">Use the sample recording</button>
-  <div class="or">or type it</div>
+  <div class="or">or type notes instead</div>
   <textarea id="typed" placeholder="Type or paste your notes" aria-label="Typed notes"></textarea>
   <div class="btns" style="justify-content:flex-end"><button class="btn" id="mcancel" type="button">Cancel</button><button class="btn primary" id="mgo" type="button" disabled>Process with AI</button></div>
  </div></div>`;
@@ -431,7 +471,9 @@ function openUpload(opts){
  function pick(f,sample){
   const box=document.getElementById("filebox");
   const name=f?f.name:sample.file_name, mb=f?f.size/1e6:sample.size_mb;
-  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem">This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
+  const okExt=/\.(mp3|m4a|wav|aac)$/i.test(name);
+  if(!okExt){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> Can't use this file</b>${esc(name)} isn't an MP3, M4A, WAV or AAC audio file. Export the recording in one of those formats, or type notes instead.</div>`;return}
+  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> File too large</b>This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
   audio={name,mb,dur:f?null:sample.duration};
   box.innerHTML=`<div class="file"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div class="meta"><div class="nm">${esc(name)}</div><div class="small muted">${mb.toFixed(1)} MB · <span id="fdur">${f?"reading length…":sample.duration}</span> · <span id="fstat">Uploading…</span></div><div class="bar"><i id="fbar"></i></div></div></div>`;
   if(f){try{const a=new Audio();a.preload="metadata";a.onloadedmetadata=()=>{const el=document.getElementById("fdur");if(!el||!audio)return;if(isFinite(a.duration)){const s=Math.round(a.duration);audio.dur=(s>=3600?Math.floor(s/3600)+":"+String(Math.floor(s%3600/60)).padStart(2,"0"):Math.floor(s/60))+":"+String(s%60).padStart(2,"0");el.textContent=audio.dur;if(s>3*3600){document.getElementById("fstat").textContent="Over 3 hours. Split the recording.";audio=null;refresh()}}else el.textContent="length unknown"};a.onerror=()=>{const el=document.getElementById("fdur");if(el)el.textContent="length unknown"};a.src=URL.createObjectURL(f)}catch(e){}}
@@ -442,11 +484,14 @@ function openUpload(opts){
   const source=audio?{kind:"audio",...audio}:{kind:"text",text:typed.value.trim()};
   if(isNew){
    const sim=clone(SIM.new_client_intake);
-   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false};state.editing=false;
+   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false,startedAt:Date.now(),edits:0,tsOpened:0};state.editing=false;
+   applyStepRules(state.note);
+   logEvent(sim.note.key_info.name.value,"Upload",source.kind==="audio"?`Voice note ${source.name} (${source.mb.toFixed(1)} MB${source.dur?", "+source.dur:""})`:"Typed notes");
    close();startProcess("note");
   }else{
    const type=curType(), sim=simFor(type);
-   state.update={client:opts.client,type,source,...sim};
+   state.update={client:opts.client,type,source,...sim,startedAt:Date.now()};
+   logEvent(opts.client.name,"Upload",`${type} · `+(source.kind==="audio"?`voice note ${source.name}`:"typed notes"));
    close();startProcess("update");
   }
  };
@@ -482,68 +527,120 @@ function renderProcess(){
 function txPane(lines,src){
  if(src.kind!=="audio"||!lines.length)return`<div class="pane"><h2>Your typed notes</h2><p class="small" style="white-space:pre-wrap">${esc(src.text||"No transcript in this sample.")}</p></div>`;
  return`<div class="pane"><h2>Transcript <span class="tag info">${esc(src.dur||"")}</span></h2>
- <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">${m}</span>`)}</span></div>`).join("")}</div>
+ <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">⚠ ${m}</span>`)}${l.consent?`<span class="consent">✓ Consent</span>`:""}</span></div>`).join("")}</div>
  <p class="small muted" style="margin-top:8px">Tap a time stamp in the note to see where it came from.</p></div>`;
 }
-function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
+function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;
+  const job=state.view==="note"?state.note:state.update;if(job){job.tsOpened=(job.tsOpened||0)+1;logEvent(job.client?job.client.name:job.key_info.name.value,"Time stamp opened",b.textContent)}app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
 const srcBtn=(id,lines,src)=>{if(!id||src.kind!=="audio")return"";const l=lines.find(x=>x.id===id);return l?`<button class="src" type="button" data-src="${id}" title="Show in transcript">${l.time}</button>`:""};
+
+/* ---------- Next steps rules (docs/specs/step1-next-steps.md) ----------
+   Agreed steps need the line where someone committed; suggestions need a need they address,
+   never cover a need an agreed step already covers, are ordered by need priority, at most 5. */
+const MAX_SUGGESTIONS=5;
+const needCat=t=>String(t).split(":")[0].trim();
+function applyStepRules(note){
+ const pr={Urgent:0,Soon:1,Later:2};
+ const needPri=c=>{const x=note.immediate_needs.find(x=>needCat(x.text)===c);return x?pr[x.priority]??3:3};
+ const steps=note.next_steps.map(x=>({kind:x.kind||"suggested",text:x.action||x.text,owner:x.owner||"Case manager",due:x.due||"",addresses:x.addresses||[],source:x.source||null,creates_reminder:!!x.creates_reminder}));
+ steps.forEach(x=>{if(x.kind==="agreed"&&!x.source)x.kind="suggested"});
+ const agreed=steps.filter(x=>x.kind==="agreed");
+ const covered=new Set(agreed.flatMap(x=>x.addresses));
+ const sug=steps.filter(x=>x.kind==="suggested"&&x.addresses.length&&!x.addresses.every(a=>covered.has(a)))
+  .sort((a,b)=>Math.min(...a.addresses.map(needPri))-Math.min(...b.addresses.map(needPri))).slice(0,MAX_SUGGESTIONS);
+ note.next_steps=[...agreed.map(x=>({...x,ticked:true})),...sug.map(x=>({...x,ticked:false}))];
+ note.noneConfirmed=false;
+}
 
 /* ---------- New client note ---------- */
 function renderNote(){
  const n=state.note, k=n.key_info, L=n.transcript, S=n.source;
  const open=n.flags.filter(f=>!f.resolved).length;
- const fld=(key,label)=>{const flagged=n.flags.some(f=>f.field===key&&!f.resolved);
+ const fld=(key,label)=>{const flagged=n.flags.some(f=>f.field===key&&!f.resolved);const mark=flagged?`<span aria-hidden="true">⚠ </span>`:"";
   if(key==="gender"){const opts=n.flags.find(f=>f.field==="gender")?.options||["Male","Female","Non-binary","Prefers not to say"];
-   return`<label class="${flagged?"flagged":""}"><span>${label}</span><select id="k-gender" ${state.editing?"":"disabled"}><option value="">Not stated</option>${opts.map(o=>`<option ${k.gender.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
-  return`<label class="${flagged?"flagged":""}"><span>${label} ${srcBtn(k[key].source,L,S)}</span><input id="k-${key}" value="${esc(k[key].value)}" ${state.editing?"":"readonly"}></label>`};
+   return`<label class="${flagged?"flagged":""}"><span>${mark}${label}${flagged?" (to confirm)":""}</span><select id="k-gender" ${state.editing?"":"disabled"}><option value="">Not stated</option>${opts.map(o=>`<option ${k.gender.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
+  return`<label class="${flagged?"flagged":""}"><span>${mark}${label}${flagged?" (to confirm)":""} ${srcBtn(k[key].source,L,S)}</span><input id="k-${key}" value="${esc(k[key].value)}" ${state.editing?"":"readonly"}></label>`};
  const pc={Urgent:"u",Soon:"s",Later:"l"};
  const ce=state.editing?'contenteditable="true"':"";
+ const agreedIdx=[],sugIdx=[];n.next_steps.forEach((x,i)=>(x.kind==="suggested"?sugIdx:agreedIdx).push(i));
+ const needSrc=a=>{const x=n.immediate_needs.find(x=>needCat(x.text)===a);return x?x.source:null};
+ const stepLi=i=>{const x=n.next_steps[i];
+  const ev=x.kind==="suggested"?(x.addresses[0]?srcBtn(needSrc(x.addresses[0])||x.source,L,S):""):srcBtn(x.source,L,S);
+  return`<li class="${x.ticked?"":"off"}"><input type="checkbox" data-tick="${i}" ${x.ticked?"checked":""} aria-label="Save this step"><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span><button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button>
+   <span class="meta"><span>Owner: ${state.editing?`<select data-owner="${i}" aria-label="Owner">${["Case manager","Client","Both"].map(o=>`<option ${o===x.owner?"selected":""}>${o}</option>`).join("")}</select>`:esc(x.owner)}</span>
+   <span>Due: ${state.editing?`<input data-due="${i}" value="${esc(x.due)}" placeholder="not said" aria-label="Due" size="10">`:(x.due?esc(x.due):"not said")}</span>
+   ${x.addresses.length?`<span>Addresses: ${esc(x.addresses.join(", "))}</span>`:""}
+   ${x.kind==="added"?`<span class="tag info">Added by case manager</span>`:x.kind==="suggested"?`<span>Evidence: need ${ev}</span>`:ev?`<span>Agreed at ${ev}</span>`:""}
+   ${x.creates_reminder&&x.ticked?`<span class="tag info">Creates reminder</span>`:""}</span></li>`};
+ const noneNeeded=!agreedIdx.length;
+ const canSave=()=>!open&&n.rv1&&(!noneNeeded||n.noneConfirmed);
  app.innerHTML=mock+`
  <div class="notehead"><div><p class="small muted">New client · ${esc(n.template)}</p><h1>Client note: ${esc(k.name.value||"New client")}</h1></div>
   <div class="btns"><button class="btn" id="btn-edit" type="button" aria-pressed="${state.editing}">${state.editing?"Done editing":"Edit note"}</button></div></div>
+ <div class="flagbar" id="flags" aria-label="Flags">${n.flags.map(f=>f.resolved?`<div class="flagitem res"><div><b><span class="ic" aria-hidden="true">✓</span> Resolved · ${esc(f.kind)}: ${esc(f.field)}</b> Set to ${esc(f.value)}</div></div>`:`<div class="flagitem"><div><b><span class="ic" aria-hidden="true">⚠</span> ${esc(f.kind)}: ${esc(f.field)}</b> ${esc(f.text)}</div><div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}">`}<button class="btn" type="button" data-fix="${f.id}">Save</button></div></div>`).join("")}</div>
  <div class="notegrid">
   ${txPane(L,S)}
   <div class="pane note ${state.editing?"editing":""}" id="note">
    <section><h4>Key information ${open?`<span class="tag warn">${open} to confirm</span>`:`<span class="tag ok">Complete</span>`}</h4>
     <div class="keyinfo">${keyFields(n.template).map(([f,l])=>fld(f,l)).join("")}</div></section>
-   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li><span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span><span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
-   <section><h4>Next steps</h4><ul class="items" id="steps">${n.next_steps.map((x,i)=>`<li><span aria-hidden="true">→</span><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button></section>
+   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li>${state.editing?`<select class="pri-sel" data-pri="${i}" aria-label="Priority">${["Urgent","Soon","Later"].map(o=>`<option ${o===x.priority?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span>`}<span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
+   <section id="steps"><h4>Next steps <span class="small muted" style="font-weight:400">Only ticked steps are saved</span></h4>
+    <div class="stepgrp">Agreed in meeting</div>
+    ${agreedIdx.length?`<ul class="items steps" id="steps-agreed">${agreedIdx.map(stepLi).join("")}</ul>`:`<p class="nosteps" id="nosteps"><span aria-hidden="true">⚠ </span>No next steps agreed</p>`}
+    <button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button>
+    ${sugIdx.length?`<div class="stepgrp">AI suggested <span class="tag sug">You decide</span></div><ul class="items steps" id="steps-suggested">${sugIdx.map(stepLi).join("")}</ul>`:""}
+   </section>
   </div>
   <div class="pane review" id="review">
    <h2>Review check</h2>
-   <div class="flags">${n.flags.map(f=>f.resolved?`<div class="flagitem res"><b>✓ ${esc(f.kind)}: ${esc(f.field)}</b>Set to ${esc(f.value)}</div>`:`<div class="flagitem"><b>${esc(f.kind)}: ${esc(f.field)}</b>${esc(f.text)}<div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}">`}<button class="btn" type="button" data-fix="${f.id}">Save</button></div></div>`).join("")}</div>
    <div class="checks">
-    <div class="auto ${open?"n":"y"}"><i>${open?"!":"✓"}</i><span>${open?open+" item"+(open>1?"s":"")+" to confirm":"All flags resolved"}</span></div>
-    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> I read the note and it matches what the client said</label>
+    <div class="auto ${open?"n":"y"}"><i aria-hidden="true">${open?"⚠":"✓"}</i><span>${open?open+" flag"+(open>1?"s":"")+" to resolve (see top)":"All flags resolved"}</span></div>
+    ${noneNeeded?`<label class="chk"><input type="checkbox" id="rv-none" ${n.noneConfirmed?"checked":""}> I confirm no next steps were agreed in this meeting</label>`:""}
+    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> I reviewed this note against the conversation</label>
    </div>
-   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${open||!n.rv1?"disabled":""}>Approve and save to case file</button>
+   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${canSave()?"":"disabled"}>Approve and save to case file</button>
   </div>
  </div>`;
  wireSrc();
  document.getElementById("btn-edit").onclick=()=>{syncNote();state.editing=!state.editing;renderNote()};
- app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();n[b.dataset.del].splice(+b.dataset.i,1);renderNote()});
- app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",source:null}:{text:"New step",source:null});renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
- app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const f=n.flags.find(x=>x.id===b.dataset.fix);const v=document.getElementById("fx-"+f.id).value.trim();if(!v)return;syncNote();f.resolved=true;f.value=v;k[f.field].value=v;renderNote()});
- document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;document.getElementById("btn-save").disabled=open>0||!n.rv1};
+ app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.del,[gone]=n[l].splice(+b.dataset.i,1);n.edits++;logEvent(k.name.value,l==="immediate_needs"?"Need removed":"Next step removed",gone.text);renderNote()});
+ app.querySelectorAll("[data-pri]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.pri];const before=x.priority;x.priority=sel.value;n.edits++;logEvent(k.name.value,"Priority changed",`${x.text}: ${before} → ${sel.value}`);renderNote()});
+ app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",source:null,added:true}:{kind:"added",text:"New step",owner:"Case manager",due:"",addresses:[],source:null,ticked:true,added:true});
+ if(l==="next_steps")n.noneConfirmed=false;n.edits++;renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=l==="next_steps"?app.querySelector(`[data-list="next_steps"][data-i="${n.next_steps.length-1}"]`):items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
+ app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const f=n.flags.find(x=>x.id===b.dataset.fix);const v=document.getElementById("fx-"+f.id).value.trim();if(!v)return;syncNote();const before=k[f.field].value;f.resolved=true;f.value=v;k[f.field].value=v;logEvent(k.name.value,"Flag resolved",`${f.kind} ${f.field}: "${before||"blank"}" → "${v}"`);renderNote()});
+ document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;logEvent(k.name.value,e.target.checked?"Review box ticked":"Review box unticked","I reviewed this note against the conversation");document.getElementById("btn-save").disabled=!canSave()};
+ const rn=document.getElementById("rv-none");if(rn)rn.onchange=e=>{n.noneConfirmed=e.target.checked;logEvent(k.name.value,e.target.checked?"No steps confirmed":"No steps unconfirmed","I confirm no next steps were agreed in this meeting");document.getElementById("btn-save").disabled=!canSave()};
+ app.querySelectorAll("[data-tick]").forEach(cb=>cb.onchange=()=>{syncNote();n.next_steps[+cb.dataset.tick].ticked=cb.checked;renderNote()});
  document.getElementById("btn-save").onclick=()=>{
   syncNote();
   const nm=k.name.value||"New client", first=nm.split(" ")[0];
   const r=fill(n.reminder,{first});
-  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"Active"},true);
+  const kept=n.next_steps.filter(x=>x.ticked);
+  const makesReminder=kept.some(x=>x.creates_reminder);
+  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"New intake"},true);
   const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,
-   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${n.next_steps.map(x=>x.text).join("; ")}.`});
+   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${kept.map(x=>x.text).join("; ")||"none agreed"}.`});
   n.immediate_needs.forEach(x=>Store.insert("Need",{ClientId:c.Id,Text:x.text,Priority:x.priority,Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id}));
-  n.next_steps.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id}));
-  Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
-  approve(it.Id,"I read the note and it matches what the client said");
+  kept.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id,Owner:x.owner,DueText:x.due||null,Addresses:x.addresses,Origin:x.kind==="agreed"?"Agreed in meeting":x.kind==="added"?"Added by case manager":"AI suggestion accepted"}));
+  if(makesReminder)Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,"I reviewed this note against the conversation");
+  n.immediate_needs.filter(x=>x.added).forEach(x=>logEvent(nm,"Need added",`${x.priority}: ${x.text}`));
+  n.next_steps.filter(x=>x.added).forEach(x=>logEvent(nm,"Next step added",x.text));
+  n.next_steps.filter(x=>x.kind==="suggested").forEach(x=>logEvent(nm,x.ticked?"Suggestion accepted":"Suggestion declined",x.text));
+  n.next_steps.filter(x=>x.kind==="agreed"&&!x.ticked).forEach(x=>logEvent(nm,"Agreed step not saved",x.text));
+  if(makesReminder)logEvent(nm,"Reminder created",`${r.type}, ${fmt(parseDate(r.date))}: ${r.text}`);
+  logEvent(nm,"Note approved",`${secs(Date.now()-n.startedAt)} from upload to approval · ${n.edits} edit${n.edits===1?"":"s"} · ${n.tsOpened} time stamp${n.tsOpened===1?"":"s"} opened`);
   Store.save();
   state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
  };
 }
 function syncNote(){
  const n=state.note;if(!n)return;
- keyFields(n.template).forEach(([f])=>{const el=document.getElementById("k-"+f);if(el)n.key_info[f].value=el.value});
- app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];if(it)it.text=el.textContent.trim()});
+ const who=n.key_info.name.value;
+ keyFields(n.template).forEach(([f,label])=>{const el=document.getElementById("k-"+f);if(el&&el.value!==n.key_info[f].value){logEvent(who,"Field edited",`${label}: "${n.key_info[f].value||"blank"}" → "${el.value||"blank"}"`);n.edits++;n.key_info[f].value=el.value}});
+ app.querySelectorAll("[data-owner]").forEach(el=>{const x=n.next_steps[+el.dataset.owner];if(x&&el.value!==x.owner){logEvent(who,"Step owner changed",`${x.text}: ${x.owner} → ${el.value}`);n.edits++;x.owner=el.value}});
+ app.querySelectorAll("[data-due]").forEach(el=>{const x=n.next_steps[+el.dataset.due];const v=el.value.trim();if(x&&v!==x.due){logEvent(who,"Step due changed",`${x.text}: "${x.due||"not said"}" → "${v||"not said"}"`);n.edits++;x.due=v}});
+ app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];const t=el.textContent.trim();if(it&&t!==it.text){if(!it.added){logEvent(who,el.dataset.list==="immediate_needs"?"Need edited":"Next step edited",`"${it.text}" → "${t}"`);n.edits++}it.text=t}});
 }
 
 /* ---------- Existing client update ---------- */
@@ -570,7 +667,7 @@ function renderUpdate(){
  </div>`;
  wireSrc();
  const sv=document.getElementById("usave");
- document.getElementById("urv").onchange=e=>sv.disabled=!e.target.checked;
+ document.getElementById("urv").onchange=e=>{sv.disabled=!e.target.checked;logEvent(c.name,e.target.checked?"Review box ticked":"Review box unticked",u.type)};
  document.getElementById("btn-back").onclick=()=>go("clients");
  sv.onclick=()=>{
   const keep=[...app.querySelectorAll("[data-keep]")].map(x=>x.checked);
@@ -587,9 +684,31 @@ function renderUpdate(){
   Store.where("Goal",g=>g.ClientId===c.id&&g.Status==="Open"&&g.DueDate).forEach(g=>Store.update("Goal",g.Id,{Status:"Done",CompletedDate:TODAY_ISO}));
   if(newRem)Store.insert("Goal",{ClientId:c.id,Text:newRem.text,Type:newRem.type,DueDate:newRem.date,Status:"Open",InteractionId:it.Id});
   approve(it.Id,`I checked these changes against the ${S.kind==="audio"?"recording":"notes"}`);
+  u.changes.forEach((ch,i)=>logEvent(c.name,keep[i]?"Change accepted":"Change removed",`${ch.label}: ${ch.to}`));
+  if(newRem)logEvent(c.name,"Reminder created",`${newRem.type}, ${fmt(parseDate(newRem.date))}: ${newRem.text}`);
+  logEvent(c.name,"Update approved",`${u.type} · ${secs(Date.now()-u.startedAt)} from upload to approval`);
   Store.save();
   state.sel=c.id;state.newIds.add(c.id);go("clients");toast(`Added to ${c.name}'s case file.`);
  };
+}
+
+/* ---------- Activity log view ---------- */
+function renderActivity(){
+ const count=e=>ACTIVITY.filter(a=>a.event===e).length;
+ const approvals=ACTIVITY.filter(a=>a.event==="Note approved"||a.event==="Update approved");
+ app.innerHTML=mock+`
+ <div class="notehead"><div><h1>Activity log</h1><p class="small muted">What happened in this session, newest first. Kept on screen only and cleared on reload.</p></div></div>
+ <div class="pane">
+  <div class="metrics">
+   <div><b>${approvals.length}</b><span>Notes and updates approved</span></div>
+   <div><b>${count("Field edited")+count("Need edited")+count("Next step edited")+count("Priority changed")+count("Need added")+count("Need removed")+count("Next step added")+count("Next step removed")+count("Step owner changed")+count("Step due changed")}</b><span>Edits to AI drafts</span></div>
+   <div><b>${count("Flag resolved")}</b><span>Flags resolved</span></div>
+   <div><b>${count("Suggestion accepted")} of ${count("Suggestion accepted")+count("Suggestion declined")}</b><span>AI suggestions accepted</span></div>
+   <div><b>${count("Time stamp opened")}</b><span>Time stamps opened</span></div>
+   <div><b>${count("Reminder created")}</b><span>Reminders created</span></div>
+  </div>
+  ${ACTIVITY.length?`<div class="tablewrap"><table class="log" id="activity"><thead><tr><th>Time</th><th>Client</th><th>Event</th><th>Detail</th></tr></thead><tbody>${ACTIVITY.map(a=>`<tr><td class="when">${a.at}</td><td>${esc(a.client)}</td><td class="ev">${esc(a.event)}</td><td>${esc(a.detail)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted small">Nothing yet. Start a new client or log a response, and each upload, edit, flag, review tick and approval shows up here.</p>`}
+ </div>`;
 }
 
 /* ---------- Start: load the simulated AI responses ---------- */
