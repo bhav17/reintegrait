@@ -1,0 +1,529 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ReintegrAIt Client Note</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: same case-file workspace as the ReturnPath prototype. Sticky header, one view at a time (home, clients, processing, note), modals for uploads. */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#18222d; --muted:#5b6876; --line:#d9dfe5;
+  --accent:#1f5f8b; --accent-soft:#e3eef6; --sim:#7a6a52; --sim-soft:#f4efe6;
+  --ok:#2e7d4f; --ok-soft:#e3f2e8; --warn:#9a6400; --warn-soft:#fbf0d9; --bad:#a63d3d; --bad-soft:#f8e4e4;
+  --hl:#fff2b8; --scrim:rgba(16,24,32,.45);
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11171d; --panel:#19212a; --ink:#e4e9ee; --muted:#9aa7b4; --line:#2c3743;
+  --accent:#7db4dc; --accent-soft:#1d3346; --sim:#cbb48e; --sim-soft:#2f2a21;
+  --ok:#7ccb9a; --ok-soft:#1a3326; --warn:#e2b55a; --warn-soft:#352a14; --bad:#e58f8f; --bad-soft:#3a1f1f; --hl:#4a4116; --scrim:rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11171d; --panel:#19212a; --ink:#e4e9ee; --muted:#9aa7b4; --line:#2c3743;
+  --accent:#7db4dc; --accent-soft:#1d3346; --sim:#cbb48e; --sim-soft:#2f2a21;
+  --ok:#7ccb9a; --ok-soft:#1a3326; --warn:#e2b55a; --warn-soft:#352a14; --bad:#e58f8f; --bad-soft:#3a1f1f; --hl:#4a4116; --scrim:rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:12px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;background:none;border:0;color:var(--ink);font-family:inherit;cursor:pointer;padding:0}
+.brand small{font-weight:500;color:var(--muted);font-size:13px;margin-left:6px}
+nav.main{display:flex;gap:4px}
+nav.main button{font:inherit;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px;cursor:pointer}
+nav.main button[aria-current="page"]{color:var(--ink);border-color:var(--accent);font-weight:600}
+.who{margin-left:auto;font-size:13px;color:var(--muted)}
+.who b{color:var(--ink)}
+main{padding-block:20px 56px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.tag.sim{color:var(--sim);background:var(--sim-soft);border:1px dashed var(--sim)}
+.tag.ok{color:var(--ok);background:var(--ok-soft)}
+.tag.warn{color:var(--warn);background:var(--warn-soft)}
+.tag.bad{color:var(--bad);background:var(--bad-soft)}
+.tag.info{color:var(--accent);background:var(--accent-soft)}
+h1{font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h3{font-size:16px;margin:0;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-mono);font-size:12px}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.btn.ghost{border-color:transparent;background:none;color:var(--accent);padding-inline:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible,tr[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mockbar{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
+
+/* Home */
+.hello{display:flex;flex-direction:column;gap:4px;margin-bottom:20px}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}
+@media (max-width:640px){.choices{grid-template-columns:1fr}}
+.choice{font:inherit;text-align:left;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:22px 22px 20px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.choice:hover{border-color:var(--accent)}
+.choice .ic{width:40px;height:40px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:6px}
+.choice b{font-size:20px}
+.choice span{color:var(--muted);font-size:14px}
+.homegrid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px}
+@media (max-width:860px){.homegrid{grid-template-columns:1fr}}
+.rem{display:flex;flex-direction:column}
+.rem button{font:inherit;color:var(--ink);text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;cursor:pointer}
+.rem button:first-child{border-top:0}
+.rem button:hover .rn{color:var(--accent)}
+.rem .rd{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.rem .rn{font-weight:600}
+.rem .rt{font-size:13px;color:var(--muted);display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
+
+/* Clients */
+.clients{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:20px;align-items:start}
+@media (max-width:900px){.clients{grid-template-columns:1fr}}
+.search{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.search input{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--bg)}
+tbody tr[aria-selected="true"] td{background:var(--accent-soft)}
+td .sub{display:block;font-size:12px;color:var(--muted)}
+.due{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+.due.over{color:var(--bad)} .due.today{color:var(--warn)}
+.detail{position:sticky;top:120px}
+@media (max-width:900px){.detail{position:static}}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-block:12px}
+.kv div span{display:block;font-size:12px;color:var(--muted)}
+.kv div b{font-weight:600;font-size:14px}
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.timeline li{display:grid;grid-template-columns:58px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.timeline li.new{background:var(--ok-soft);margin-inline:-8px;padding-inline:8px;border-radius:4px}
+.timeline .d{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:2px}
+.timeline .t{font-size:12px;font-weight:600;color:var(--accent)}
+.timeline p{font-size:14px}
+.remcard{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 12px;border-radius:5px;background:var(--warn-soft);font-size:14px;margin-block:12px;flex-wrap:wrap}
+.remcard.calm{background:var(--accent-soft)}
+
+/* Modal */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
+.modal{background:var(--panel);border-radius:8px;width:100%;max-width:560px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal header{position:static;border:0;padding:0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;background:none}
+.x{font:inherit;font-size:20px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;padding:2px 6px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop.over,.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{font-size:15px}
+.limits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px}
+@media (max-width:480px){.limits{grid-template-columns:1fr}}
+.limits div{background:var(--bg);border-radius:5px;padding:8px 10px}
+.limits b{display:block;font-size:14px}
+.file{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+.file .meta{flex:1;min-width:0}
+.file .nm{font-weight:600;overflow-wrap:anywhere}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s linear}
+.or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+textarea,select,.field input{font:inherit;font-size:14px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+label.chk input{margin-top:3px;accent-color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.field>span{color:var(--muted)}
+
+/* Processing */
+.proc{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.stages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.stages li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.stages li:first-child{border-top:0}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+li.run .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+li.done .dot{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+li.flag .dot{background:var(--warn);border-color:var(--warn);color:var(--panel)}
+li.skip .dot{border-style:dashed}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){li.run .dot{animation:none;border-top-color:var(--accent)}}
+.stages b{display:block}
+.stages .res{font-size:13px;color:var(--muted);margin-top:2px}
+.stages li.wait b{color:var(--muted);font-weight:500}
+
+/* Note */
+.notehead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:16px}
+.notegrid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr) minmax(0,3fr);gap:16px;align-items:start}
+@media (max-width:1100px){.notegrid{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.review{grid-column:1/-1}}
+@media (max-width:760px){.notegrid{grid-template-columns:1fr}}
+.tx{display:flex;flex-direction:column;gap:2px;font-size:14px;max-height:620px;overflow-y:auto}
+.tx div{display:grid;grid-template-columns:64px 1fr;gap:8px;padding:5px 6px;border-radius:4px;scroll-margin:40px}
+.tx div.on{background:var(--hl)}
+.tx .ts{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:1px}
+.tx .sp{font-weight:600;font-size:13px;margin-right:4px}
+.tx .gap{color:var(--bad);font-style:italic}
+.note section{border-top:1px solid var(--line);padding-block:12px}
+.note section:first-of-type{border-top:0;padding-top:0}
+.note h4{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.03em;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.keyinfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+@media (max-width:480px){.keyinfo{grid-template-columns:1fr}}
+.keyinfo label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.keyinfo input,.keyinfo select{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:4px;padding:5px 6px;margin-left:-7px;width:100%}
+.editing .keyinfo input,.editing .keyinfo select{border-color:var(--line);background:var(--panel);margin-left:0}
+.keyinfo .flagged input,.keyinfo .flagged select{background:var(--warn-soft);border-color:var(--warn)}
+.keyinfo select:disabled,.keyinfo input:read-only{opacity:1;cursor:default;appearance:none}
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.items li{display:flex;gap:8px;align-items:baseline}
+.items .txt{flex:1;min-width:0;border-radius:3px;padding:1px 3px;margin-left:-3px}
+.editing .items .txt{outline:1px dashed var(--line)}
+.items .txt:focus{background:var(--accent-soft);outline:none}
+.pri{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.pri.u{color:var(--bad);background:var(--bad-soft)} .pri.s{color:var(--warn);background:var(--warn-soft)} .pri.l{color:var(--muted);background:var(--bg)}
+.src{font-family:var(--f-mono);font-size:11px;color:var(--accent);cursor:pointer;border:0;background:none;padding:0;white-space:nowrap}
+.del{display:none;border:0;background:none;color:var(--bad);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.editing .del{display:inline}
+.add{display:none;margin-top:6px}
+.editing .add{display:inline-block}
+.flags{display:flex;flex-direction:column;gap:8px}
+.flagitem{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:4px;padding:8px 10px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.flagitem.res{border-color:var(--ok);background:var(--ok-soft)}
+.flagitem .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.flagitem input,.flagitem select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);flex:1;min-width:120px}
+.checks{display:flex;flex-direction:column;gap:10px;margin-block:10px 14px}
+.auto{display:flex;gap:8px;font-size:14px;align-items:flex-start}
+.auto i{font-style:normal;font-weight:700;width:16px;text-align:center}
+.auto.y i{color:var(--ok)} .auto.n i{color:var(--warn)}
+.diff{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.diff li{display:grid;grid-template-columns:70px 1fr;gap:8px}
+.diff .k{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.diff .k.add{color:var(--ok)} .diff .k.chg{color:var(--accent)} .diff .k.rem{color:var(--muted)}
+.diff s{color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:6px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+</style>
+
+<header>
+  <div class="wrap top">
+    <button class="brand" id="brand" type="button">ReintegrAIt <small>Step 1 · Client note</small></button>
+    <nav class="main" aria-label="Main">
+      <button type="button" data-go="home" id="nav-home">Home</button>
+      <button type="button" data-go="clients" id="nav-clients">Clients</button>
+    </nav>
+    <div class="who"><b>Denise</b> · Case manager</div>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+<div id="modal-root"></div>
+
+<script>
+/* ReintegrAIt Step 1 prototype.
+   - Mock client records live in CLIENTS below (no database).
+   - Every simulated AI response is loaded from simulated_responses.json. */
+const TODAY = new Date(2026,10,11);
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const d=(m,day)=>new Date(2026,m-1,day);
+const parseDate=s=>{const [y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd)};
+const fmt=dt=>MONTHS[dt.getMonth()]+" "+dt.getDate();
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayDiff=dt=>Math.round((dt-TODAY)/864e5);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const fill=(o,vars)=>JSON.parse(JSON.stringify(o).replace(/\{(first|duration)\}/g,(m,k)=>vars[k]??m));
+
+const CLIENTS=[
+ {id:"c1",name:"Marcus Reed",age:41,gender:"Male",locality:"Austin",phone:"773-555-0142",since:d(10,2),status:"Referral pending",
+  needs:["Job readiness program","Steady housing (staying with sister)"],
+  reminder:{date:d(11,11),type:"Referral check",text:"Did Marcus attend the Cara Collective orientation on Tue Nov 10?"},
+  entries:[{date:d(11,3),type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am."},
+           {date:d(10,20),type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December."},
+           {date:d(10,2),type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP."}]},
+ {id:"c2",name:"Tanya Brooks",age:29,gender:"Female",locality:"Roseland",phone:"312-555-0178",since:d(9,14),status:"Active",
+  needs:["Childcare during GED classes","SNAP recertification"],
+  reminder:{date:d(11,11),type:"Weekly phone check",text:"Weekly call. Ask how GED classes are going."},
+  entries:[{date:d(11,4),type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier."},
+           {date:d(10,8),type:"Second visit",text:"SNAP approved. Interested in GED."},
+           {date:d(9,14),type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother."}]},
+ {id:"c3",name:"Luis Herrera",age:52,gender:"Male",locality:"Little Village",phone:"773-555-0119",since:d(10,21),status:"Needs follow-up",
+  needs:["Housing application paperwork","Diabetes care"],
+  reminder:{date:d(11,9),type:"Second visit",text:"Bring the housing application and help fill it in."},
+  entries:[{date:d(10,21),type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication."}]},
+ {id:"c4",name:"Keisha Moore",age:36,gender:"Female",locality:"North Lawndale",phone:"872-555-0163",since:d(8,30),status:"Active",
+  needs:["Driver's license reinstatement"],
+  reminder:{date:d(11,16),type:"Weekly message check",text:"Text check-in about the license hearing date."},
+  entries:[{date:d(11,9),type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet."},
+           {date:d(8,30),type:"Intake note",text:"Released Aug 24. Has housing with partner."}]},
+ {id:"c5",name:"James Carter",age:24,gender:"Male",locality:"Humboldt Park",phone:"773-555-0127",since:d(10,28),status:"Referral pending",
+  needs:["Job training","Phone (lost his)"],
+  reminder:{date:d(11,20),type:"Referral check",text:"Did James start the Safer Foundation program?"},
+  entries:[{date:d(11,5),type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18."},
+           {date:d(10,28),type:"Intake note",text:"Released Oct 24. Staying with grandmother."}]},
+];
+const UPDATE_TYPES=["Referral check","Second visit","Weekly phone check","Weekly message check"];
+const KEY_FIELDS=[["name","Name"],["age","Age"],["gender","Gender"],["locality","Neighborhood"],["contact","Contact phone"]];
+
+let SIM=null;
+const state={view:"home",sel:"c1",note:null,update:null,editing:false,newIds:new Set(),filter:""};
+const app=document.getElementById("app"), mroot=document.getElementById("modal-root");
+
+function go(v){state.view=v;render();window.scrollTo(0,0)}
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.getElementById("brand").onclick=()=>go("home");
+function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
+
+function render(){
+ ["home","clients"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate})[state.view]();
+}
+const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients. AI output comes from simulated_responses.json.</div>`;
+
+/* ---------- Home ---------- */
+function renderHome(){
+ const due=CLIENTS.filter(c=>c.reminder&&dayDiff(c.reminder.date)<=2).sort((a,b)=>a.reminder.date-b.reminder.date);
+ app.innerHTML=mock+`
+ <div class="hello"><h1>Welcome back, Denise</h1><p class="muted">Wednesday, November 11. Who are you working with?</p></div>
+ <div class="choices">
+  <button class="choice" id="btn-new" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 4-6 8-6s8 2 8 6"/><path d="M19 8v6M16 11h6"/></svg></span><b>New client</b><span>Upload the voice note from your first meeting. AI drafts the client note.</span></button>
+  <button class="choice" id="btn-existing" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg></span><b>Existing client</b><span>Open a case file to add a referral response, visit or check-in.</span></button>
+ </div>
+ <div class="pane"><h2>Reminders due <span class="tag warn">${due.length}</span></h2><div class="rem">
+   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<button type="button" data-open="${c.id}"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue":dd===0?"Today":fmt(c.reminder.date)}</span><span><span class="rn">${esc(c.name)}</span><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><span class="muted" aria-hidden="true">›</span></button>`}).join("")||`<p class="muted small">Nothing due in the next two days.</p>`}
+ </div></div>`;
+ document.getElementById("btn-new").onclick=()=>openUpload({mode:"new"});
+ document.getElementById("btn-existing").onclick=()=>go("clients");
+ app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.open;go("clients")});
+}
+
+/* ---------- Existing client database ---------- */
+function statusTag(s){const m={"Active":"ok","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
+function renderClients(){
+ const q=state.filter.toLowerCase();
+ const list=CLIENTS.filter(c=>!q||[c.name,c.locality,c.status].join(" ").toLowerCase().includes(q));
+ const c=CLIENTS.find(x=>x.id===state.sel)||CLIENTS[0];
+ const rd=c.reminder?dayDiff(c.reminder.date):0;
+ app.innerHTML=mock+`
+ <div class="clients">
+  <div class="pane">
+   <h2>Clients <span class="tag info">${CLIENTS.length}</span></h2>
+   <div class="search"><input id="q" type="search" placeholder="Search by name, neighborhood or status" value="${esc(state.filter)}" aria-label="Search clients"></div>
+   <div class="tablewrap"><table>
+    <thead><tr><th>Client</th><th>Neighborhood</th><th>Status</th><th>Next reminder</th></tr></thead>
+    <tbody>${list.map(x=>{const dd=x.reminder?dayDiff(x.reminder.date):null;return`<tr tabindex="0" data-id="${x.id}" aria-selected="${x.id===c.id}"><td><b>${esc(x.name)}</b><span class="sub">${esc(x.age)} · ${esc(x.gender)} · ${esc(x.phone)}</span></td><td>${esc(x.locality)}</td><td>${statusTag(x.status)}</td><td>${x.reminder?`<span class="due ${dd<0?"over":dd===0?"today":""}">${dd<0?"Overdue · ":dd===0?"Today · ":""}${fmt(x.reminder.date)}</span><span class="sub">${esc(x.reminder.type)}</span>`:`<span class="muted small">None</span>`}</td></tr>`}).join("")}</tbody>
+   </table></div>
+  </div>
+  <div class="pane detail" id="detail">
+   <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+    <div><h3 style="font-size:20px" id="detail-name">${esc(c.name)}</h3><p class="small muted">Client since ${fmt(c.since)} · ${statusTag(c.status)}</p></div>
+    <button class="btn primary" id="btn-addinfo" type="button">+ Upload new information</button>
+   </div>
+   <div class="kv">
+    <div><span>Age</span><b>${esc(c.age)}</b></div><div><span>Gender</span><b>${esc(c.gender)}</b></div>
+    <div><span>Neighborhood</span><b>${esc(c.locality)}</b></div><div><span>Contact</span><b>${esc(c.phone)}</b></div>
+   </div>
+   ${c.reminder?`<div class="remcard ${rd>0?"calm":""}" id="remcard"><div><b>${rd<0?"Overdue":rd===0?"Due today":"Next"} · ${fmt(c.reminder.date)} · ${esc(c.reminder.type)}</b><br>${esc(c.reminder.text)}</div><button class="btn" id="btn-log" type="button">Log response</button></div>`:""}
+   ${c.needs.length?`<h2 style="margin-top:6px">Open needs</h2><ul class="small" id="needs-list" style="margin:0 0 12px;padding-left:18px">${c.needs.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}
+   <h2>Case file</h2>
+   <ol class="timeline" id="timeline">${c.entries.map((e,i)=>`<li class="${i===0&&state.newIds.has(c.id)?"new":""}"><span class="d">${fmt(e.date)}</span><div><span class="t">${esc(e.type)}</span><p>${esc(e.text)}</p></div></li>`).join("")}</ol>
+  </div>
+ </div>`;
+ const qi=document.getElementById("q");
+ qi.oninput=()=>{state.filter=qi.value;const pos=qi.selectionStart;renderClients();const n=document.getElementById("q");n.focus();n.setSelectionRange(pos,pos)};
+ app.querySelectorAll("tbody tr").forEach(tr=>{const pick=()=>{state.sel=tr.dataset.id;renderClients();if(innerWidth<900)document.getElementById("detail").scrollIntoView({behavior:"smooth"})};tr.onclick=pick;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}}});
+ document.getElementById("btn-addinfo").onclick=()=>openUpload({mode:"update",client:c});
+ const log=document.getElementById("btn-log"); if(log)log.onclick=()=>openUpload({mode:"update",client:c,type:c.reminder.type});
+}
+
+/* ---------- Upload pop-up ---------- */
+function openUpload(opts){
+ const isNew=opts.mode==="new";
+ const first=isNew?"":opts.client.name.split(" ")[0];
+ const simFor=t=>isNew?SIM.new_client_intake:fill(SIM.client_update[t],{first});
+ mroot.innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <header><div><h3 id="mtitle">${isNew?"New client: upload voice note":"Upload new information for "+esc(opts.client.name)}</h3><p class="small muted">${isNew?"Upload the recording of your first meeting. Long files are fine.":"Add a voice note or type what the client told you."}</p></div><button class="x" id="mclose" type="button" aria-label="Close">×</button></header>
+  ${isNew?"":`<label class="field"><span>What is this update?</span><select id="utype">${UPDATE_TYPES.map(t=>`<option ${t===(opts.type||"Referral check")?"selected":""}>${t}</option>`).join("")}</select></label>`}
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an audio file">
+   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent)"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+   <b>Drop a voice note here or click to choose</b><span class="small muted">From your phone's voice memo app or a recorder</span>
+   <input type="file" id="file" accept="audio/*,.m4a,.mp3,.wav,.aac" hidden>
+  </div>
+  <div class="limits"><div><b>Up to 3 hours</b>per recording</div><div><b>Up to 500 MB</b>per file</div><div><b>MP3, M4A, WAV, AAC</b>audio formats</div></div>
+  <div id="filebox"></div>
+  <button class="btn ghost" id="sample" type="button" style="align-self:flex-start">Use the sample recording</button>
+  <div class="or">or type it</div>
+  <textarea id="typed" placeholder="Type or paste your notes" aria-label="Typed notes"></textarea>
+  <div class="btns" style="justify-content:flex-end"><button class="btn" id="mcancel" type="button">Cancel</button><button class="btn primary" id="mgo" type="button" disabled>Process with AI</button></div>
+ </div></div>`;
+ let audio=null, uploading=false;
+ const close=()=>{mroot.innerHTML="";document.removeEventListener("keydown",onEsc)};
+ const onEsc=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",onEsc);
+ const goBtn=document.getElementById("mgo"),typed=document.getElementById("typed"),utype=document.getElementById("utype"),sampleBtn=document.getElementById("sample");
+ const refresh=()=>{goBtn.disabled=uploading||!(audio||typed.value.trim())};
+ const curType=()=>utype?utype.value:null;
+ const setSampleLabel=()=>{const s=simFor(curType());sampleBtn.textContent=s.sample_recording?`Use the sample recording (${s.sample_recording.duration})`:"Use the sample text message"};
+ setSampleLabel(); if(utype)utype.onchange=setSampleLabel;
+ typed.oninput=refresh;
+ document.getElementById("mclose").onclick=close;document.getElementById("mcancel").onclick=close;
+ document.getElementById("scrim").onclick=e=>{if(e.target.id==="scrim")close()};
+ const fi=document.getElementById("file"),drop=document.getElementById("drop");
+ drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fi.click()}};
+ drop.ondragover=e=>{e.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
+ drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])pick(e.dataTransfer.files[0])};
+ fi.onchange=()=>{if(fi.files[0])pick(fi.files[0])};
+ sampleBtn.onclick=()=>{const s=simFor(curType());if(s.sample_recording)pick(null,s.sample_recording);else{typed.value=s.sample_text;refresh()}};
+ function pick(f,sample){
+  const box=document.getElementById("filebox");
+  const name=f?f.name:sample.file_name, mb=f?f.size/1e6:sample.size_mb;
+  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem">This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
+  audio={name,mb,dur:f?null:sample.duration};
+  box.innerHTML=`<div class="file"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div class="meta"><div class="nm">${esc(name)}</div><div class="small muted">${mb.toFixed(1)} MB · <span id="fdur">${f?"reading length…":sample.duration}</span> · <span id="fstat">Uploading…</span></div><div class="bar"><i id="fbar"></i></div></div></div>`;
+  if(f){try{const a=new Audio();a.preload="metadata";a.onloadedmetadata=()=>{const el=document.getElementById("fdur");if(!el||!audio)return;if(isFinite(a.duration)){const s=Math.round(a.duration);audio.dur=(s>=3600?Math.floor(s/3600)+":"+String(Math.floor(s%3600/60)).padStart(2,"0"):Math.floor(s/60))+":"+String(s%60).padStart(2,"0");el.textContent=audio.dur;if(s>3*3600){document.getElementById("fstat").textContent="Over 3 hours. Split the recording.";audio=null;refresh()}}else el.textContent="length unknown"};a.onerror=()=>{const el=document.getElementById("fdur");if(el)el.textContent="length unknown"};a.src=URL.createObjectURL(f)}catch(e){}}
+  uploading=true;refresh();let p=0;const bar=document.getElementById("fbar");
+  const iv=setInterval(()=>{p+=12;bar.style.width=Math.min(p,100)+"%";if(p>=100){clearInterval(iv);uploading=false;const st=document.getElementById("fstat");if(st&&audio)st.textContent="Uploaded";refresh()}},120);
+ }
+ goBtn.onclick=()=>{
+  const source=audio?{kind:"audio",...audio}:{kind:"text",text:typed.value.trim()};
+  if(isNew){
+   const sim=clone(SIM.new_client_intake);
+   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false};state.editing=false;
+   close();startProcess("note");
+  }else{
+   const type=curType(), sim=simFor(type);
+   state.update={client:opts.client,type,source,...sim};
+   close();startProcess("update");
+  }
+ };
+}
+
+/* ---------- AI processing (simulated) ---------- */
+let procTimer=null;
+function startProcess(next){state.procNext=next;state.view="process";render();window.scrollTo(0,0)}
+function renderProcess(){
+ const isNew=state.procNext==="note";
+ const job=isNew?state.note:state.update, src=job.source;
+ const P=src.kind==="audio"?job.processing:{...job.processing,...SIM.typed_text_processing};
+ const stages=[["quality_check","Check recording quality"],["transcription","Turn voice into text"],["missing_info_check","Look for errors and missing information"],["template_match","Match to the template"]]
+  .map(([k,t])=>{const r=P[k]||SIM.typed_text_processing[k];return{t,status:r.status,r:r.result.replace("{duration}",src.dur||"the recording")}});
+ app.innerHTML=mock+`<div class="proc">
+  <div><h1 style="font-size:22px">${isNew?"Drafting the client note":"Reading the update for "+esc(state.update.client.name)}</h1><p class="muted small">${src.kind==="audio"?esc(src.name)+" · "+esc(src.dur||"")+" · "+src.mb.toFixed(1)+" MB":"Typed notes"}</p></div>
+  <div class="pane"><ol class="stages" id="stages">${stages.map((s,i)=>`<li class="wait" data-i="${i}"><span class="dot">${i+1}</span><div><b>${s.t}</b><div class="res" hidden>${esc(s.r)}</div></div></li>`).join("")}</ol></div>
+  <div class="btns"><button class="btn primary" id="seenote" type="button" hidden>Review the ${isNew?"note":"update"}</button><button class="btn" id="cancelp" type="button">Cancel</button></div>
+ </div>`;
+ const lis=[...app.querySelectorAll("#stages li")];let i=0;
+ clearTimeout(procTimer);
+ const step=()=>{
+  if(i>0){const s=stages[i-1],li=lis[i-1];li.className=s.status==="skip"?"skip":s.status==="flag"?"flag":"done";li.querySelector(".dot").textContent=s.status==="skip"?"–":s.status==="flag"?"!":"✓";li.querySelector(".res").hidden=false}
+  if(i<lis.length){lis[i].className="run";lis[i].querySelector(".dot").textContent="";i++;procTimer=setTimeout(step,stages[i-1].status==="skip"?400:1000)}
+  else{const b=document.getElementById("seenote");b.hidden=false;b.focus()}
+ };
+ step();
+ document.getElementById("seenote").onclick=()=>go(state.procNext);
+ document.getElementById("cancelp").onclick=()=>{clearTimeout(procTimer);go(isNew?"home":"clients")};
+}
+
+/* ---------- Transcript pane ---------- */
+function txPane(lines,src){
+ if(src.kind!=="audio"||!lines.length)return`<div class="pane"><h2>Your typed notes</h2><p class="small" style="white-space:pre-wrap">${esc(src.text||"No transcript in this sample.")}</p></div>`;
+ return`<div class="pane"><h2>Transcript <span class="tag info">${esc(src.dur||"")}</span></h2>
+ <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">${m}</span>`)}</span></div>`).join("")}</div>
+ <p class="small muted" style="margin-top:8px">Tap a time stamp in the note to see where it came from.</p></div>`;
+}
+function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
+const srcBtn=(id,lines,src)=>{if(!id||src.kind!=="audio")return"";const l=lines.find(x=>x.id===id);return l?`<button class="src" type="button" data-src="${id}" title="Show in transcript">${l.time}</button>`:""};
+
+/* ---------- New client note ---------- */
+function renderNote(){
+ const n=state.note, k=n.key_info, L=n.transcript, S=n.source;
+ const open=n.flags.filter(f=>!f.resolved).length;
+ const fld=(key,label)=>{const flagged=n.flags.some(f=>f.field===key&&!f.resolved);
+  if(key==="gender"){const opts=n.flags.find(f=>f.field==="gender")?.options||["Male","Female","Non-binary","Prefers not to say"];
+   return`<label class="${flagged?"flagged":""}"><span>${label}</span><select id="k-gender" ${state.editing?"":"disabled"}><option value="">Not stated</option>${opts.map(o=>`<option ${k.gender.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
+  return`<label class="${flagged?"flagged":""}"><span>${label} ${srcBtn(k[key].source,L,S)}</span><input id="k-${key}" value="${esc(k[key].value)}" ${state.editing?"":"readonly"}></label>`};
+ const pc={Urgent:"u",Soon:"s",Later:"l"};
+ const ce=state.editing?'contenteditable="true"':"";
+ app.innerHTML=mock+`
+ <div class="notehead"><div><p class="small muted">New client · ${esc(n.template)}</p><h1>Client note: ${esc(k.name.value||"New client")}</h1></div>
+  <div class="btns"><button class="btn" id="btn-edit" type="button" aria-pressed="${state.editing}">${state.editing?"Done editing":"Edit note"}</button></div></div>
+ <div class="notegrid">
+  ${txPane(L,S)}
+  <div class="pane note ${state.editing?"editing":""}" id="note">
+   <section><h4>Key information ${open?`<span class="tag warn">${open} to confirm</span>`:`<span class="tag ok">Complete</span>`}</h4>
+    <div class="keyinfo">${KEY_FIELDS.map(([f,l])=>fld(f,l)).join("")}</div></section>
+   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li><span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span><span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
+   <section><h4>Next steps</h4><ul class="items" id="steps">${n.next_steps.map((x,i)=>`<li><span aria-hidden="true">→</span><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button></section>
+  </div>
+  <div class="pane review" id="review">
+   <h2>Review check</h2>
+   <div class="flags">${n.flags.map(f=>f.resolved?`<div class="flagitem res"><b>✓ ${esc(f.kind)}: ${esc(f.field)}</b>Set to ${esc(f.value)}</div>`:`<div class="flagitem"><b>${esc(f.kind)}: ${esc(f.field)}</b>${esc(f.text)}<div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}">`}<button class="btn" type="button" data-fix="${f.id}">Save</button></div></div>`).join("")}</div>
+   <div class="checks">
+    <div class="auto ${open?"n":"y"}"><i>${open?"!":"✓"}</i><span>${open?open+" item"+(open>1?"s":"")+" to confirm":"All flags resolved"}</span></div>
+    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> I read the note and it matches what the client said</label>
+   </div>
+   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${open||!n.rv1?"disabled":""}>Approve and save to case file</button>
+  </div>
+ </div>`;
+ wireSrc();
+ document.getElementById("btn-edit").onclick=()=>{syncNote();state.editing=!state.editing;renderNote()};
+ app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();n[b.dataset.del].splice(+b.dataset.i,1);renderNote()});
+ app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",source:null}:{text:"New step",source:null});renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
+ app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const f=n.flags.find(x=>x.id===b.dataset.fix);const v=document.getElementById("fx-"+f.id).value.trim();if(!v)return;syncNote();f.resolved=true;f.value=v;k[f.field].value=v;renderNote()});
+ document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;document.getElementById("btn-save").disabled=open>0||!n.rv1};
+ document.getElementById("btn-save").onclick=()=>{
+  syncNote();
+  const nm=k.name.value||"New client", first=nm.split(" ")[0];
+  const r=fill(n.reminder,{first});
+  const c={id:"c"+Date.now(),name:nm,age:k.age.value,gender:k.gender.value||"Not stated",locality:k.locality.value,phone:k.contact.value,since:TODAY,status:"Active",
+   needs:n.immediate_needs.map(x=>x.text),reminder:{date:parseDate(r.date),type:r.type,text:r.text},
+   entries:[{date:TODAY,type:"Intake note",text:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${n.next_steps.map(x=>x.text).join("; ")}.`}]};
+  CLIENTS.unshift(c);state.sel=c.id;state.newIds.add(c.id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
+ };
+}
+function syncNote(){
+ const n=state.note;if(!n)return;
+ KEY_FIELDS.forEach(([f])=>{const el=document.getElementById("k-"+f);if(el)n.key_info[f].value=el.value});
+ app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];if(it)it.text=el.textContent.trim()});
+}
+
+/* ---------- Existing client update ---------- */
+function renderUpdate(){
+ const u=state.update,c=u.client,S=u.source;
+ app.innerHTML=mock+`
+ <div class="notehead"><div><p class="small muted">${esc(c.name)} · ${esc(u.type)}</p><h1>Update to case file</h1></div>
+  <div class="btns"><button class="btn" id="btn-back" type="button">Back to clients</button></div></div>
+ <div class="notegrid">
+  ${txPane(u.transcript,S)}
+  <div class="pane note">
+   <section><h4>Summary</h4><p contenteditable="true" id="usum" style="border-radius:3px;outline:1px dashed var(--line);padding:4px 6px">${esc(u.summary)}</p><p class="small muted" style="margin-top:4px">Click the text to edit it.</p></section>
+   <section><h4>Changes to the case file <span class="tag info">${u.changes.length}</span></h4>
+    <ul class="diff">${u.changes.map((ch,i)=>`<li><span class="k ${ch.kind==="add"?"add":"chg"}">${ch.kind==="add"?"Add":"Change"}</span><label class="chk"><input type="checkbox" checked data-keep="${i}"> <span><b>${esc(ch.label)}:</b> ${ch.from?`<s>${esc(ch.from)}</s> → `:ch.field==="status"?`<s>${esc(c.status)}</s> → `:""}${esc(ch.to)} ${srcBtn(ch.source,u.transcript,S)}</span></label></li>`).join("")}</ul>
+    <p class="small muted" style="margin-top:8px">Untick anything you don't want added.</p></section>
+  </div>
+  <div class="pane review">
+   <h2>Review check</h2>
+   <div class="checks">
+    <label class="chk"><input type="checkbox" id="urv"> I checked these changes against the ${S.kind==="audio"?"recording":"notes"}</label>
+   </div>
+   <button class="btn primary" id="usave" type="button" style="width:100%" disabled>Add to case file</button>
+  </div>
+ </div>`;
+ wireSrc();
+ const sv=document.getElementById("usave");
+ document.getElementById("urv").onchange=e=>sv.disabled=!e.target.checked;
+ document.getElementById("btn-back").onclick=()=>go("clients");
+ sv.onclick=()=>{
+  const keep=[...app.querySelectorAll("[data-keep]")].map(x=>x.checked);
+  c.entries.unshift({date:TODAY,type:u.type,text:document.getElementById("usum").textContent.trim()});
+  let newRem=null;
+  u.changes.forEach((ch,i)=>{if(!keep[i])return;
+   if(ch.field==="status")c.status=ch.to;
+   if(ch.field==="need"){const j=ch.from?c.needs.indexOf(ch.from):-1;if(j>=0)c.needs[j]=ch.to;else c.needs.unshift(ch.to)}
+   if(ch.field==="reminder")newRem={date:parseDate(ch.reminder.date),type:ch.reminder.type,text:ch.reminder.text};
+  });
+  c.reminder=newRem;
+  state.sel=c.id;state.newIds.add(c.id);go("clients");toast(`Added to ${c.name}'s case file.`);
+ };
+}
+
+/* ---------- Start: load the simulated AI responses ---------- */
+fetch("simulated_responses.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
+ .then(j=>{SIM=j;render()})
+ .catch(()=>{app.innerHTML=`<div class="pane"><h3>Couldn't load simulated_responses.json</h3><p class="small" style="margin-top:6px">Browsers block this file when the page is opened by double-click. From this folder run <code>python3 -m http.server 8000</code> and open <code>http://localhost:8000</code>. If the JSON was edited, check it for a missing comma or quote.</p></div>`});
+</script>
