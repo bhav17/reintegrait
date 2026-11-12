@@ -71,6 +71,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     (await p.inputValue('#k-locality')).includes('63rd') && (await p.textContent('#steps')).includes('winter coat'));
   await p.selectOption('#fx-f1', 'Male'); await p.click('[data-fix="f1"]');
   await p.fill('#fx-f2', '773-555-0186'); await p.click('[data-fix="f2"]');
+  await p.fill('#lg-min', '50');
   await p.check('#rv1');
   check('5. Saving is allowed once flags are resolved and the review box is ticked', !(await p.isDisabled('#btn-save')));
   await p.click('#btn-save'); await p.waitForSelector('#detail-name');
@@ -98,7 +99,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   check('6. A typed update (text instead of voice) also works', (await p.textContent('#detail')).includes('Dec 3'));
 
   // Records behind the screens (step 1)
-  const recs = () => p.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
+  const recs = () => p.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
   let R = await recs();
   const types = ['Client', 'Interaction', 'Need', 'Service', 'Goal', 'Referral', 'Approval'];
   check('9. The store holds all seven record types', types.every(t => Array.isArray(R[t])));
@@ -113,6 +114,10 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-11' && g.Status === 'Done') &&
     R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-18' && g.Status === 'Open'));
   check('9. Sample referrals are Referral records', R.Referral.length === 2);
+  const andreSvc = R.Service.filter(sv => sv.ClientId === andre.Id);
+  check('12. An intake writes one Service per service type, splitting the minutes',
+    andreSvc.length === 5 && andreSvc.reduce((t, sv) => t + sv.Minutes, 0) === 50 &&
+    R.Interaction.some(i => i.ClientId === andre.Id && i.Minutes === 50 && i.MeetingType === 'In-person visit'));
   await p.reload(); await p.waitForSelector('#btn-new'); await p.click('#nav-clients');
   const afterReload = await p.textContent('tbody');
   check('9. A reload keeps new clients and updates', afterReload.includes('Andre Williams') && afterReload.includes('Enrolled'));
@@ -206,7 +211,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
   await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]');
   await ns.check('#rv1'); await ns.click('#btn-save'); await ns.waitForSelector('#detail-name');
-  const R11 = await ns.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
+  const R11 = await ns.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
   const cid = R11.Client.find(c => c.Name === 'Andre Williams').Id;
   const goals = R11.Goal.filter(g => g.ClientId === cid);
   check('11. Only ticked steps are saved, and no reminder without the ticked call',
@@ -227,6 +232,41 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   check('11. With no agreed steps, approval needs the "no next steps agreed" confirmation', blocked && !(await ns.isDisabled('#btn-save')));
   await shot(ns, '11-no-steps');
   await ns.click('[data-reset]');
+
+  // 12. Service type and dosage (step 2)
+  const p4 = await browser.newPage();
+  await p4.goto(URL); await p4.click('#btn-new'); await p4.click('#sample');
+  await p4.waitForSelector('#mgo:not([disabled])'); await p4.click('#mgo'); await waitForAI(p4);
+  const needTypes = await p4.$$eval('[data-stype]', s => s.map(x => x.value));
+  check('12. Each need in the drafted note has a service type', needTypes.length === 5 && needTypes.every(Boolean));
+  check('12. Minutes are filled from the recording length (46:58 is 47 min)', (await p4.inputValue('#lg-min')) === '47');
+  await p4.selectOption('#fx-f1', 'Male'); await p4.click('[data-fix="f1"]');
+  await p4.fill('#fx-f2', '773-555-0186'); await p4.click('[data-fix="f2"]');
+  await p4.click('#btn-edit'); await p4.click('[data-add="immediate_needs"]'); await p4.keyboard.type('Winter coat'); await p4.click('#btn-edit');
+  await p4.check('#rv1');
+  const blockedType = await p4.isDisabled('#btn-save') && (await p4.textContent('#chk-types')).includes('1 need without');
+  await p4.selectOption('[data-stype="5"]', 'Benefits'); await p4.check('#rv1');
+  await p4.fill('#lg-min', '');
+  const blockedMin = await p4.isDisabled('#btn-save');
+  await p4.fill('#lg-min', '50');
+  check('12. A note can\'t be saved until every need has a service type and minutes are logged',
+    blockedType && blockedMin && !(await p4.isDisabled('#btn-save')));
+  await p4.click('#nav-clients');
+  await p4.click('tr[data-id="c3"]'); await p4.click('#btn-addinfo'); await p4.selectOption('#utype', 'Second visit');
+  await p4.click('#sample'); await p4.waitForSelector('#mgo:not([disabled])'); await p4.click('#mgo'); await waitForAI(p4);
+  const svcs = await p4.$$eval('#lg-svcs input:checked', s => s.map(x => x.value));
+  check('12. An update suggests the services covered and the meeting type', svcs.join() === 'Housing,Health' && (await p4.inputValue('#lg-type')) === 'In-person visit');
+  for (const v of svcs) await p4.uncheck(`#lg-svcs input[value="${v}"]`);
+  await p4.check('#urv');
+  const blockedSvc = await p4.isDisabled('#usave');
+  await p4.check('#lg-svcs input[value="Housing"]');
+  check('12. An update can\'t be saved without at least one service', blockedSvc && !(await p4.isDisabled('#usave')));
+  await p4.click('#usave'); await p4.waitForSelector('#dosage');
+  const R4 = await p4.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
+  const luisSvc = R4.Service.filter(x => x.ClientId === 'c3' && x.Date === '2026-11-11');
+  check('12. Saving an update writes Service records with type and minutes', luisSvc.length === 1 && luisSvc[0].ServiceType === 'Housing' && luisSvc[0].Minutes === 17);
+  check('12. The client shows a dosage summary (contacts, minutes, service types, referrals)',
+    (await p4.innerText('#dosage')).replace(/\s+/g, ' ').includes('2 contacts 62 min 2 service types 0 referrals'));
 
   // Simulated AI lives in the JSON file
   const p2 = await browser.newPage();

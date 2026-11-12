@@ -14,7 +14,9 @@
         ]
       }
     },
-    "update_types": ["Referral check", "Second visit", "Weekly phone check", "Weekly message check"]
+    "update_types": ["Referral check", "Second visit", "Weekly phone check", "Weekly message check"],
+    "service_types": ["Housing", "ID and documents", "Jobs", "Benefits", "Health", "Family", "Legal", "Transport"],
+    "meeting_types": ["In-person visit", "Phone call", "Text message"]
   },
 
   "new_client_intake": {
@@ -42,6 +44,7 @@
     ],
     "note": {
       "template": "Standard intake note",
+      "meeting": { "type": "In-person visit" },
       "_next_steps_rules": "See docs/specs/step1-next-steps.md. kind is agreed (source = the line where someone committed) or suggested (source = the need's line). addresses uses the need categories (text before the colon). Suggestions never name a provider. At most 5 suggestions.",
       "key_info": {
         "name": { "value": "Andre Williams", "source": "t0" },
@@ -51,11 +54,11 @@
         "contact": { "value": "773-555-01__", "source": "t11" }
       },
       "immediate_needs": [
-        { "priority": "Urgent", "text": "Medication: blood pressure pills ran out Saturday", "source": "t7" },
-        { "priority": "Urgent", "text": "Housing: couch at cousin's place for 2 to 3 weeks", "source": "t5" },
-        { "priority": "Soon", "text": "ID: no state ID, only release papers", "source": "t6" },
-        { "priority": "Soon", "text": "Food: not enrolled in SNAP", "source": "t9" },
-        { "priority": "Later", "text": "Work: wants a job, has a forklift certificate", "source": "t8" }
+        { "priority": "Urgent", "text": "Medication: blood pressure pills ran out Saturday", "service_type": "Health", "source": "t7" },
+        { "priority": "Urgent", "text": "Housing: couch at cousin's place for 2 to 3 weeks", "service_type": "Housing", "source": "t5" },
+        { "priority": "Soon", "text": "ID: no state ID, only release papers", "service_type": "ID and documents", "source": "t6" },
+        { "priority": "Soon", "text": "Food: not enrolled in SNAP", "service_type": "Benefits", "source": "t9" },
+        { "priority": "Later", "text": "Work: wants a job, has a forklift certificate", "service_type": "Jobs", "source": "t8" }
       ],
       "next_steps": [
         { "kind": "agreed", "action": "Get blood pressure pills refilled", "owner": "Both", "due": "This week", "addresses": ["Medication"], "source": "t12" },
@@ -80,6 +83,8 @@
 
   "client_update": {
     "Referral check": {
+      "meeting": { "type": "Phone call", "minutes": 3 },
+      "service_types": ["Jobs"],
       "sample_recording": { "file_name": "call-{first}-2026-11-11.m4a", "size_mb": 2.9, "duration": "2:04" },
       "processing": {
         "quality_check": { "status": "done", "result": "Clear speech for 98% of {duration}. 2 speakers found." },
@@ -96,13 +101,15 @@
       "summary": "{first} attended the orientation and was accepted. Starts Nov 17. Needs work boots first.",
       "changes": [
         { "kind": "change", "field": "status", "label": "Status", "to": "Enrolled", "source": "u1" },
-        { "kind": "add", "field": "need", "label": "Need", "to": "Steel-toe work boots before Nov 17", "source": "u2" },
+        { "kind": "add", "field": "need", "label": "Need", "to": "Steel-toe work boots before Nov 17", "service_type": "Jobs", "source": "u2" },
         { "kind": "add", "field": "note", "label": "Next step", "to": "Check boot voucher fund this week", "source": "u3" },
         { "kind": "add", "field": "reminder", "label": "Reminder", "to": "Wed Nov 18 · Call about first day", "source": "u3",
           "reminder": { "date": "2026-11-18", "type": "Weekly phone check", "text": "Call {first} about the first day of the program." } }
       ]
     },
     "Second visit": {
+      "meeting": { "type": "In-person visit", "minutes": 17 },
+      "service_types": ["Housing", "Health"],
       "sample_recording": { "file_name": "visit2-{first}-2026-11-11.m4a", "size_mb": 21.6, "duration": "16:40" },
       "processing": {
         "quality_check": { "status": "done", "result": "Clear speech for 96% of {duration}. 2 speakers found." },
@@ -125,6 +132,8 @@
       ]
     },
     "Weekly phone check": {
+      "meeting": { "type": "Phone call", "minutes": 2 },
+      "service_types": ["Family"],
       "sample_recording": { "file_name": "call-{first}-2026-11-11.m4a", "size_mb": 1.8, "duration": "1:32" },
       "processing": {
         "quality_check": { "status": "done", "result": "Clear speech for 97% of {duration}. 2 speakers found." },
@@ -146,6 +155,8 @@
       ]
     },
     "Weekly message check": {
+      "meeting": { "type": "Text message", "minutes": 5 },
+      "service_types": ["Legal"],
       "sample_recording": null,
       "sample_text": "Texted {first}: any news on the hearing date? {first}: Got the letter, it's Dec 3 at 9am. Can you come?",
       "processing": {
