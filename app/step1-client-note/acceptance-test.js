@@ -132,6 +132,59 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   const hasField = (await p3.$$eval('.keyinfo label', ls => ls.map(l => l.textContent))).some(t => t.includes('Preferred name'));
   check('9. Templates (update types, key fields) come from simulated_responses.json', hasType && hasField);
 
+  // 10. Step 1 spec (Step 1 spec - Client Note.docx)
+  const s = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  s.on('pageerror', e => errors.push(e.message));
+  await s.goto(URL); await s.waitForSelector('#btn-new');
+  await s.click('[data-reset]'); await s.waitForSelector('#reminders');
+  const remText = await s.textContent('#reminders');
+  check('10. Home lists reminders due today and this week (Keisha Moore, Nov 16), each with Log response',
+    remText.includes('Keisha Moore') && remText.includes('Nov 16') &&
+    (await s.$$('#reminders [data-logresp]')).length === (await s.$$('#reminders .row')).length);
+  await s.click('#reminders [data-logresp="c1"]');
+  check('10. Log response on a home reminder opens the update flow with its type',
+    (await s.textContent('#mtitle')).includes('Marcus Reed') && (await s.inputValue('#utype')) === 'Referral check');
+  await s.click('#mclose');
+  await s.click('#btn-new');
+  check('10. Pop-up offers "Type notes instead"', (await s.textContent('.modal')).toLowerCase().includes('type notes instead'));
+  await s.setInputFiles('#file', { name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+  const refusal = await s.textContent('#filebox');
+  check('10. A file in another format is refused, saying why and what to do',
+    refusal.includes("Can't use this file") && refusal.includes('MP3, M4A, WAV or AAC') && await s.isDisabled('#mgo'));
+  await s.click('#sample'); await s.waitForSelector('#mgo:not([disabled])');
+  check('10. Sample recording matches the spec', (await s.textContent('#filebox')).includes('intake-andre-williams-2026-11-11.m4a'));
+  await s.click('#mgo'); await waitForAI(s);
+  const flagsTop = await s.evaluate(() => { const f = document.getElementById('flags'), n = document.getElementById('note'); return !!f && !!(f.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING); });
+  check('10. Flags appear at the top of the note, with an icon and text', flagsTop &&
+    (await s.textContent('#flags')).includes('⚠') && (await s.textContent('#flags')).includes('Gender') && (await s.textContent('#flags')).includes('00:38:14'));
+  check('10. Consent to recording is shown in the transcript', (await s.textContent('#t2')).includes('Consent'));
+  await s.click('[data-src="t5"]');
+  await s.click('#btn-edit');
+  await s.selectOption('[data-pri="4"]', 'Soon');
+  check('10. A need\'s priority can be changed', (await s.$$eval('#needs li', ls => ls[4].querySelector('select').value)) === 'Soon');
+  await s.fill('#k-age', '35'); await s.click('#btn-edit');
+  check('10. Review box says "I reviewed this note against the conversation"',
+    (await s.textContent('#review')).includes('I reviewed this note against the conversation'));
+  await s.selectOption('#fx-f1', 'Male'); await s.click('[data-fix="f1"]');
+  await s.fill('#fx-f2', '773-555-0186'); await s.click('[data-fix="f2"]');
+  await s.check('#rv1'); await s.click('#btn-save'); await s.waitForSelector('#detail-name');
+  check('10. A new client gets status "New intake" and a follow-up reminder',
+    (await s.textContent('#detail')).includes('New intake') && (await s.textContent('#remcard')).includes('Nov 13'));
+  await s.click('#nav-activity');
+  const log = await s.textContent('#activity');
+  check('10. Activity log shows edits (before → after), priority change, flags, review tick, reminder and approval time',
+    log.includes('"34" → "35"') && log.includes('Later → Soon') && log.includes('Flag resolved') && log.includes('Review box ticked') &&
+    log.includes('Reminder created') && log.includes('from upload to approval') && log.includes('Time stamp opened'));
+  await shot(s, '10-activity-log');
+  await s.click('#nav-clients'); await s.click('tr[data-id="c1"]'); await s.click('#btn-addinfo'); await s.click('#sample');
+  await s.waitForSelector('#mgo:not([disabled])'); await s.click('#mgo'); await waitForAI(s);
+  await s.uncheck('[data-keep="2"]'); await s.check('#urv'); await s.click('#usave'); await s.waitForSelector('#timeline');
+  await s.click('#nav-activity');
+  const log2 = await s.textContent('#activity');
+  check('10. Activity log shows the update type and which changes were accepted or removed',
+    log2.includes('Referral check · voice note') && log2.includes('Change accepted') && log2.includes('Change removed') && log2.includes('Update approved'));
+  await s.click('[data-reset]');
+
   // Simulated AI lives in the JSON file
   const p2 = await browser.newPage();
   await p2.route('**/simulated_responses.json', async r => {
