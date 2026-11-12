@@ -73,7 +73,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   await p.fill('#fx-f2', '773-555-0186'); await p.click('[data-fix="f2"]');
   await p.check('#rv1');
   check('5. Saving is allowed once flags are resolved and the review box is ticked', !(await p.isDisabled('#btn-save')));
-  await p.click('#btn-save'); await p.waitForSelector('#detail-name');
+  await p.click('#btn-save'); await p.click('#tab-casefile'); await p.waitForSelector('#detail-name');
   check('5. The approved note is saved to the new client\'s case file',
     (await p.textContent('#detail-name')) === 'Andre Williams' &&
     (await p.textContent('#timeline')).includes('winter coat') &&
@@ -167,7 +167,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     (await s.textContent('#review')).includes('I reviewed this note against the conversation'));
   await s.selectOption('#fx-f1', 'Male'); await s.click('[data-fix="f1"]');
   await s.fill('#fx-f2', '773-555-0186'); await s.click('[data-fix="f2"]');
-  await s.check('#rv1'); await s.click('#btn-save'); await s.waitForSelector('#detail-name');
+  await s.check('#rv1'); await s.click('#btn-save'); await s.click('#tab-casefile'); await s.waitForSelector('#detail-name');
   check('10. A new client gets status "New intake" and a follow-up reminder',
     (await s.textContent('#detail')).includes('New intake') && (await s.textContent('#remcard')).includes('Nov 13'));
   await s.click('#nav-activity');
@@ -205,7 +205,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   check('11. Unticking the follow-up call removes its reminder badge', !(await ns.textContent('#steps-agreed')).includes('Creates reminder'));
   await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
   await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]');
-  await ns.check('#rv1'); await ns.click('#btn-save'); await ns.waitForSelector('#detail-name');
+  await ns.check('#rv1'); await ns.click('#btn-save'); await ns.click('#tab-casefile'); await ns.waitForSelector('#detail-name');
   const R11 = await ns.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
   const cid = R11.Client.find(c => c.Name === 'Andre Williams').Id;
   const goals = R11.Goal.filter(g => g.ClientId === cid);

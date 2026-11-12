@@ -2,6 +2,8 @@
 
 A clickable prototype of Step 1 from the user journey storyboard. A case manager records a client meeting, AI turns it into a standard client note, and the case manager edits and approves it. Existing clients get new voice notes or typed updates added to their case file.
 
+**Step 2 (Matched services)** is a tab in the same prototype. See [STEP2.md](STEP2.md).
+
 The AI is simulated. Nothing is sent anywhere, and there is no server or login. Client records are saved in your browser only (see Records below).
 
 ## Files
