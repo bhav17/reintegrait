@@ -231,6 +231,7 @@ li.skip .dot{border-style:dashed}
 .nosteps{font-size:14px;padding:6px 10px;border-radius:4px;background:var(--warn-soft)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:6px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 </style>
+<link rel="stylesheet" href="matched-services.css">
 
 <header>
   <div class="wrap top">
@@ -368,7 +369,7 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 
 function render(){
  ["home","clients","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity})[state.view]();
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices})[state.view]();
  app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
 const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. AI output comes from simulated_responses.json.<button class="btn ghost small" type="button" data-reset>Reset sample data</button></div>`;
@@ -414,6 +415,7 @@ function renderClients(){
     <div><h3 style="font-size:20px" id="detail-name">${esc(c.name)}</h3><p class="small muted">Client since ${fmt(c.since)} · ${statusTag(c.status)}</p></div>
     <button class="btn primary" id="btn-addinfo" type="button">+ Upload new information</button>
    </div>
+   <div class="ms-tabs" role="tablist" aria-label="Case file sections"><button type="button" role="tab" aria-selected="true" id="tab-casefile">Case file</button><button type="button" role="tab" aria-selected="false" id="tab-services" onclick="go('services')">Matched services</button></div>
    <div class="kv">
     <div><span>Age</span><b>${esc(c.age)}</b></div><div><span>Gender</span><b>${esc(c.gender)}</b></div>
     <div><span>Neighborhood</span><b>${esc(c.locality)}</b></div><div><span>Contact</span><b>${esc(c.phone)}</b></div>
@@ -631,7 +633,7 @@ function renderNote(){
   if(makesReminder)logEvent(nm,"Reminder created",`${r.type}, ${fmt(parseDate(r.date))}: ${r.text}`);
   logEvent(nm,"Note approved",`${secs(Date.now()-n.startedAt)} from upload to approval · ${n.edits} edit${n.edits===1?"":"s"} · ${n.tsOpened} time stamp${n.tsOpened===1?"":"s"} opened`);
   Store.save();
-  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
+  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("services");toast(`Saved. ${nm} is now in your clients. Next: match services.`);
  };
 }
 function syncNote(){
@@ -716,3 +718,4 @@ fetch("simulated_responses.json").then(r=>{if(!r.ok)throw new Error(r.status);re
  .then(j=>{SIM=j;Store.load();render()})
  .catch(()=>{app.innerHTML=`<div class="pane"><h3>Couldn't load simulated_responses.json</h3><p class="small" style="margin-top:6px">Browsers block this file when the page is opened by double-click. From this folder run <code>python3 -m http.server 8000</code> and open <code>http://localhost:8000</code>. If the JSON was edited, check it for a missing comma or quote.</p></div>`});
 </script>
+<script src="matched-services.js"></script>
