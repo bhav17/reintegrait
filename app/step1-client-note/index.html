@@ -218,48 +218,105 @@ li.skip .dot{border-style:dashed}
 
 <script>
 /* ReintegrAIt Step 1 prototype.
-   - Mock client records live in CLIENTS below (no database).
-   - Every simulated AI response is loaded from simulated_responses.json. */
+   - Client records live in a small record store (below), saved in this browser only. No server, no login.
+   - Every simulated AI response, and the note templates, are loaded from simulated_responses.json. */
 const TODAY = new Date(2026,10,11);
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const d=(m,day)=>new Date(2026,m-1,day);
 const parseDate=s=>{const [y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd)};
+const iso=dt=>dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+const TODAY_ISO=iso(TODAY);
 const fmt=dt=>MONTHS[dt.getMonth()]+" "+dt.getDate();
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dayDiff=dt=>Math.round((dt-TODAY)/864e5);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const fill=(o,vars)=>JSON.parse(JSON.stringify(o).replace(/\{(first|duration)\}/g,(m,k)=>vars[k]??m));
 
-const CLIENTS=[
- {id:"c1",name:"Marcus Reed",age:41,gender:"Male",locality:"Austin",phone:"773-555-0142",since:d(10,2),status:"Referral pending",
+/* ---------- Records ----------
+   Seven record types. Names follow Salesforce Nonprofit Cloud so an export maps cleanly later:
+   Client       one person served (Salesforce: Account / Contact)
+   Interaction  a visit, call, text or intake note (Interaction + InteractionSummary)
+   Need         an open need found in a note (care plan need)
+   Service      a service delivered, for dosage reporting (BenefitDisbursement). Filled from step 2.
+   Goal         a next step or a dated reminder (GoalAssignment). Reminders are open Goals with a due date.
+   Referral     a referral sent to a partner (Referral). Statuses grow in step 4.
+   Approval     who approved which note, and when (audit log)
+   Everything is saved to localStorage under STORE_KEY. "Reset sample data" puts the five sample clients back. */
+const STORE_KEY="reintegrait.records.v1";
+const RECORD_TYPES=["Client","Interaction","Need","Service","Goal","Referral","Approval"];
+const uid=t=>t.slice(0,3).toLowerCase()+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+const SAMPLE_CLIENTS=[
+ {id:"c1",name:"Marcus Reed",age:41,gender:"Male",locality:"Austin",phone:"773-555-0142",since:"2026-10-02",status:"Referral pending",
   needs:["Job readiness program","Steady housing (staying with sister)"],
-  reminder:{date:d(11,11),type:"Referral check",text:"Did Marcus attend the Cara Collective orientation on Tue Nov 10?"},
-  entries:[{date:d(11,3),type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am."},
-           {date:d(10,20),type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December."},
-           {date:d(10,2),type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP."}]},
- {id:"c2",name:"Tanya Brooks",age:29,gender:"Female",locality:"Roseland",phone:"312-555-0178",since:d(9,14),status:"Active",
+  reminder:{date:"2026-11-11",type:"Referral check",text:"Did Marcus attend the Cara Collective orientation on Tue Nov 10?"},
+  entries:[{date:"2026-11-03",type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",referral:{partner:"Cara Collective",service:"Job readiness"}},
+           {date:"2026-10-20",type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December."},
+           {date:"2026-10-02",type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP."}]},
+ {id:"c2",name:"Tanya Brooks",age:29,gender:"Female",locality:"Roseland",phone:"312-555-0178",since:"2026-09-14",status:"Active",
   needs:["Childcare during GED classes","SNAP recertification"],
-  reminder:{date:d(11,11),type:"Weekly phone check",text:"Weekly call. Ask how GED classes are going."},
-  entries:[{date:d(11,4),type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier."},
-           {date:d(10,8),type:"Second visit",text:"SNAP approved. Interested in GED."},
-           {date:d(9,14),type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother."}]},
- {id:"c3",name:"Luis Herrera",age:52,gender:"Male",locality:"Little Village",phone:"773-555-0119",since:d(10,21),status:"Needs follow-up",
+  reminder:{date:"2026-11-11",type:"Weekly phone check",text:"Weekly call. Ask how GED classes are going."},
+  entries:[{date:"2026-11-04",type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier."},
+           {date:"2026-10-08",type:"Second visit",text:"SNAP approved. Interested in GED."},
+           {date:"2026-09-14",type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother."}]},
+ {id:"c3",name:"Luis Herrera",age:52,gender:"Male",locality:"Little Village",phone:"773-555-0119",since:"2026-10-21",status:"Needs follow-up",
   needs:["Housing application paperwork","Diabetes care"],
-  reminder:{date:d(11,9),type:"Second visit",text:"Bring the housing application and help fill it in."},
-  entries:[{date:d(10,21),type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication."}]},
- {id:"c4",name:"Keisha Moore",age:36,gender:"Female",locality:"North Lawndale",phone:"872-555-0163",since:d(8,30),status:"Active",
+  reminder:{date:"2026-11-09",type:"Second visit",text:"Bring the housing application and help fill it in."},
+  entries:[{date:"2026-10-21",type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication."}]},
+ {id:"c4",name:"Keisha Moore",age:36,gender:"Female",locality:"North Lawndale",phone:"872-555-0163",since:"2026-08-30",status:"Active",
   needs:["Driver's license reinstatement"],
-  reminder:{date:d(11,16),type:"Weekly message check",text:"Text check-in about the license hearing date."},
-  entries:[{date:d(11,9),type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet."},
-           {date:d(8,30),type:"Intake note",text:"Released Aug 24. Has housing with partner."}]},
- {id:"c5",name:"James Carter",age:24,gender:"Male",locality:"Humboldt Park",phone:"773-555-0127",since:d(10,28),status:"Referral pending",
+  reminder:{date:"2026-11-16",type:"Weekly message check",text:"Text check-in about the license hearing date."},
+  entries:[{date:"2026-11-09",type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet."},
+           {date:"2026-08-30",type:"Intake note",text:"Released Aug 24. Has housing with partner."}]},
+ {id:"c5",name:"James Carter",age:24,gender:"Male",locality:"Humboldt Park",phone:"773-555-0127",since:"2026-10-28",status:"Referral pending",
   needs:["Job training","Phone (lost his)"],
-  reminder:{date:d(11,20),type:"Referral check",text:"Did James start the Safer Foundation program?"},
-  entries:[{date:d(11,5),type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18."},
-           {date:d(10,28),type:"Intake note",text:"Released Oct 24. Staying with grandmother."}]},
+  reminder:{date:"2026-11-20",type:"Referral check",text:"Did James start the Safer Foundation program?"},
+  entries:[{date:"2026-11-05",type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18.",referral:{partner:"Safer Foundation",service:"Job training"}},
+           {date:"2026-10-28",type:"Intake note",text:"Released Oct 24. Staying with grandmother."}]},
 ];
-const UPDATE_TYPES=["Referral check","Second visit","Weekly phone check","Weekly message check"];
-const KEY_FIELDS=[["name","Name"],["age","Age"],["gender","Gender"],["locality","Neighborhood"],["contact","Contact phone"]];
+
+/* Turn the sample clients into records. Entries are added oldest first so the store reads like a real history. */
+function sampleRecords(){
+ const R={};RECORD_TYPES.forEach(t=>R[t]=[]);
+ let n=0;const id=p=>p+"-s"+(++n);
+ SAMPLE_CLIENTS.forEach(s=>{
+  R.Client.push({Id:s.id,Name:s.name,Age:s.age,Gender:s.gender,Locality:s.locality,Phone:s.phone,ClientSince:s.since,Status:s.status});
+  s.needs.forEach(t=>R.Need.push({Id:id("nee"),ClientId:s.id,Text:t,Priority:"Soon",Status:"Open",CreatedDate:s.since,InteractionId:null}));
+  s.entries.slice().reverse().forEach(e=>{const iid=id("int");
+   R.Interaction.push({Id:iid,ClientId:s.id,Date:e.date,Type:e.type,Summary:e.text,Channel:"Sample",Template:null,SourceName:null});
+   if(e.referral)R.Referral.push({Id:id("ref"),ClientId:s.id,InteractionId:iid,Partner:e.referral.partner,Service:e.referral.service,Status:"Sent",SentDate:e.date});
+  });
+  R.Goal.push({Id:id("goa"),ClientId:s.id,Text:s.reminder.text,Type:s.reminder.type,DueDate:s.reminder.date,Status:"Open",InteractionId:null});
+ });
+ return R;
+}
+
+const Store={
+ data:null,
+ load(){let d=null;try{d=JSON.parse(localStorage.getItem(STORE_KEY))}catch(e){}
+  this.data=d&&RECORD_TYPES.every(t=>Array.isArray(d[t]))?d:sampleRecords();this.save()},
+ save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(this.data))}catch(e){}},
+ reset(){this.data=sampleRecords();this.save()},
+ all(t){return this.data[t]},
+ where(t,f){return this.data[t].filter(f)},
+ get(t,id){return this.data[t].find(r=>r.Id===id)},
+ insert(t,rec,atFront){const r={Id:uid(t),...rec};this.data[t][atFront?"unshift":"push"](r);return r},
+ update(t,id,patch){Object.assign(this.get(t,id),patch)},
+};
+
+/* The screens read a client "view": the client plus its open needs, next reminder and case file, built from the records. */
+function clientView(c){
+ const due=Store.where("Goal",g=>g.ClientId===c.Id&&g.Status==="Open"&&g.DueDate).sort((a,b)=>a.DueDate.localeCompare(b.DueDate))[0];
+ return{id:c.Id,name:c.Name,age:c.Age,gender:c.Gender,locality:c.Locality,phone:c.Phone,since:parseDate(c.ClientSince),status:c.Status,
+  needs:Store.where("Need",x=>x.ClientId===c.Id&&x.Status==="Open").map(x=>x.Text),
+  reminder:due?{goalId:due.Id,date:parseDate(due.DueDate),type:due.Type,text:due.Text}:null,
+  entries:Store.where("Interaction",x=>x.ClientId===c.Id).reverse().sort((a,b)=>b.Date.localeCompare(a.Date)).map(x=>({date:parseDate(x.Date),type:x.Type,text:x.Summary}))};
+}
+const clients=()=>Store.all("Client").map(clientView);
+const approve=(recordId,statement)=>Store.insert("Approval",{RecordType:"Interaction",RecordId:recordId,ApprovedBy:"Denise",ApprovedAt:new Date().toISOString(),Statement:statement});
+
+/* Templates come from simulated_responses.json ("templates"). */
+const updateTypes=()=>SIM.templates.update_types;
+const keyFields=tpl=>SIM.templates.intake_notes[tpl].key_fields.map(f=>[f.key,f.label]);
 
 let SIM=null;
 const state={view:"home",sel:"c1",note:null,update:null,editing:false,newIds:new Set(),filter:""};
@@ -273,12 +330,13 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 function render(){
  ["home","clients"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
  ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate})[state.view]();
+ app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
-const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients. AI output comes from simulated_responses.json.</div>`;
+const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. AI output comes from simulated_responses.json.<button class="btn ghost small" type="button" data-reset>Reset sample data</button></div>`;
 
 /* ---------- Home ---------- */
 function renderHome(){
- const due=CLIENTS.filter(c=>c.reminder&&dayDiff(c.reminder.date)<=2).sort((a,b)=>a.reminder.date-b.reminder.date);
+ const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=2).sort((a,b)=>a.reminder.date-b.reminder.date);
  app.innerHTML=mock+`
  <div class="hello"><h1>Welcome back, Denise</h1><p class="muted">Wednesday, November 11. Who are you working with?</p></div>
  <div class="choices">
@@ -297,13 +355,14 @@ function renderHome(){
 function statusTag(s){const m={"Active":"ok","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
 function renderClients(){
  const q=state.filter.toLowerCase();
- const list=CLIENTS.filter(c=>!q||[c.name,c.locality,c.status].join(" ").toLowerCase().includes(q));
- const c=CLIENTS.find(x=>x.id===state.sel)||CLIENTS[0];
+ const CL=clients();
+ const list=CL.filter(c=>!q||[c.name,c.locality,c.status].join(" ").toLowerCase().includes(q));
+ const c=CL.find(x=>x.id===state.sel)||CL[0];
  const rd=c.reminder?dayDiff(c.reminder.date):0;
  app.innerHTML=mock+`
  <div class="clients">
   <div class="pane">
-   <h2>Clients <span class="tag info">${CLIENTS.length}</span></h2>
+   <h2>Clients <span class="tag info">${CL.length}</span></h2>
    <div class="search"><input id="q" type="search" placeholder="Search by name, neighborhood or status" value="${esc(state.filter)}" aria-label="Search clients"></div>
    <div class="tablewrap"><table>
     <thead><tr><th>Client</th><th>Neighborhood</th><th>Status</th><th>Next reminder</th></tr></thead>
@@ -339,7 +398,7 @@ function openUpload(opts){
  const simFor=t=>isNew?SIM.new_client_intake:fill(SIM.client_update[t],{first});
  mroot.innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
   <header><div><h3 id="mtitle">${isNew?"New client: upload voice note":"Upload new information for "+esc(opts.client.name)}</h3><p class="small muted">${isNew?"Upload the recording of your first meeting. Long files are fine.":"Add a voice note or type what the client told you."}</p></div><button class="x" id="mclose" type="button" aria-label="Close">×</button></header>
-  ${isNew?"":`<label class="field"><span>What is this update?</span><select id="utype">${UPDATE_TYPES.map(t=>`<option ${t===(opts.type||"Referral check")?"selected":""}>${t}</option>`).join("")}</select></label>`}
+  ${isNew?"":`<label class="field"><span>What is this update?</span><select id="utype">${updateTypes().map(t=>`<option ${t===(opts.type||"Referral check")?"selected":""}>${t}</option>`).join("")}</select></label>`}
   <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an audio file">
    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent)"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
    <b>Drop a voice note here or click to choose</b><span class="small muted">From your phone's voice memo app or a recorder</span>
@@ -446,7 +505,7 @@ function renderNote(){
   ${txPane(L,S)}
   <div class="pane note ${state.editing?"editing":""}" id="note">
    <section><h4>Key information ${open?`<span class="tag warn">${open} to confirm</span>`:`<span class="tag ok">Complete</span>`}</h4>
-    <div class="keyinfo">${KEY_FIELDS.map(([f,l])=>fld(f,l)).join("")}</div></section>
+    <div class="keyinfo">${keyFields(n.template).map(([f,l])=>fld(f,l)).join("")}</div></section>
    <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li><span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span><span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
    <section><h4>Next steps</h4><ul class="items" id="steps">${n.next_steps.map((x,i)=>`<li><span aria-hidden="true">→</span><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button></section>
   </div>
@@ -470,15 +529,20 @@ function renderNote(){
   syncNote();
   const nm=k.name.value||"New client", first=nm.split(" ")[0];
   const r=fill(n.reminder,{first});
-  const c={id:"c"+Date.now(),name:nm,age:k.age.value,gender:k.gender.value||"Not stated",locality:k.locality.value,phone:k.contact.value,since:TODAY,status:"Active",
-   needs:n.immediate_needs.map(x=>x.text),reminder:{date:parseDate(r.date),type:r.type,text:r.text},
-   entries:[{date:TODAY,type:"Intake note",text:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${n.next_steps.map(x=>x.text).join("; ")}.`}]};
-  CLIENTS.unshift(c);state.sel=c.id;state.newIds.add(c.id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
+  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"Active"},true);
+  const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,
+   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${n.next_steps.map(x=>x.text).join("; ")}.`});
+  n.immediate_needs.forEach(x=>Store.insert("Need",{ClientId:c.Id,Text:x.text,Priority:x.priority,Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id}));
+  n.next_steps.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id}));
+  Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,"I read the note and it matches what the client said");
+  Store.save();
+  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
  };
 }
 function syncNote(){
  const n=state.note;if(!n)return;
- KEY_FIELDS.forEach(([f])=>{const el=document.getElementById("k-"+f);if(el)n.key_info[f].value=el.value});
+ keyFields(n.template).forEach(([f])=>{const el=document.getElementById("k-"+f);if(el)n.key_info[f].value=el.value});
  app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];if(it)it.text=el.textContent.trim()});
 }
 
@@ -510,20 +574,26 @@ function renderUpdate(){
  document.getElementById("btn-back").onclick=()=>go("clients");
  sv.onclick=()=>{
   const keep=[...app.querySelectorAll("[data-keep]")].map(x=>x.checked);
-  c.entries.unshift({date:TODAY,type:u.type,text:document.getElementById("usum").textContent.trim()});
+  const it=Store.insert("Interaction",{ClientId:c.id,Date:TODAY_ISO,Type:u.type,Summary:document.getElementById("usum").textContent.trim(),Channel:S.kind==="audio"?"Voice note":"Typed",Template:u.type+" update",SourceName:S.name||null});
   let newRem=null;
   u.changes.forEach((ch,i)=>{if(!keep[i])return;
-   if(ch.field==="status")c.status=ch.to;
-   if(ch.field==="need"){const j=ch.from?c.needs.indexOf(ch.from):-1;if(j>=0)c.needs[j]=ch.to;else c.needs.unshift(ch.to)}
-   if(ch.field==="reminder")newRem={date:parseDate(ch.reminder.date),type:ch.reminder.type,text:ch.reminder.text};
+   if(ch.field==="status")Store.update("Client",c.id,{Status:ch.to});
+   if(ch.field==="need"){const ex=ch.from&&Store.all("Need").find(x=>x.ClientId===c.id&&x.Status==="Open"&&x.Text===ch.from);
+    if(ex)Store.update("Need",ex.Id,{Text:ch.to});else Store.insert("Need",{ClientId:c.id,Text:ch.to,Priority:"Soon",Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id})}
+   if(ch.field==="note"&&ch.label==="Next step")Store.insert("Goal",{ClientId:c.id,Text:ch.to,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id});
+   if(ch.field==="reminder")newRem=ch.reminder;
   });
-  c.reminder=newRem;
+  /* Logging an update answers the client's open reminders; the update's own reminder (if kept) becomes the next one. */
+  Store.where("Goal",g=>g.ClientId===c.id&&g.Status==="Open"&&g.DueDate).forEach(g=>Store.update("Goal",g.Id,{Status:"Done",CompletedDate:TODAY_ISO}));
+  if(newRem)Store.insert("Goal",{ClientId:c.id,Text:newRem.text,Type:newRem.type,DueDate:newRem.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,`I checked these changes against the ${S.kind==="audio"?"recording":"notes"}`);
+  Store.save();
   state.sel=c.id;state.newIds.add(c.id);go("clients");toast(`Added to ${c.name}'s case file.`);
  };
 }
 
 /* ---------- Start: load the simulated AI responses ---------- */
 fetch("simulated_responses.json").then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
- .then(j=>{SIM=j;render()})
+ .then(j=>{SIM=j;Store.load();render()})
  .catch(()=>{app.innerHTML=`<div class="pane"><h3>Couldn't load simulated_responses.json</h3><p class="small" style="margin-top:6px">Browsers block this file when the page is opened by double-click. From this folder run <code>python3 -m http.server 8000</code> and open <code>http://localhost:8000</code>. If the JSON was edited, check it for a missing comma or quote.</p></div>`});
 </script>

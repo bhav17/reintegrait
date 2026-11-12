@@ -97,6 +97,41 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   await p.click('#mgo'); await waitForAI(p); await p.check('#urv'); await p.click('#usave');
   check('6. A typed update (text instead of voice) also works', (await p.textContent('#detail')).includes('Dec 3'));
 
+  // Records behind the screens (step 1)
+  const recs = () => p.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
+  let R = await recs();
+  const types = ['Client', 'Interaction', 'Need', 'Service', 'Goal', 'Referral', 'Approval'];
+  check('9. The store holds all seven record types', types.every(t => Array.isArray(R[t])));
+  const andre = R.Client.find(c => c.Name === 'Andre Williams');
+  check('9. The new client is a Client record with its intake Interaction, Needs and Goals',
+    !!andre && R.Interaction.some(i => i.ClientId === andre.Id && i.Type === 'Intake note') &&
+    R.Need.filter(n => n.ClientId === andre.Id).length === 5 &&
+    R.Goal.some(g => g.ClientId === andre.Id && g.Text.includes('winter coat')) &&
+    R.Goal.some(g => g.ClientId === andre.Id && g.DueDate === '2026-11-13'));
+  check('9. Each approved note and update writes an Approval record', R.Approval.length === 3 && R.Approval.every(a => a.ApprovedBy && a.ApprovedAt));
+  check('9. Logging a response closes the old reminder and opens the new one',
+    R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-11' && g.Status === 'Done') &&
+    R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-18' && g.Status === 'Open'));
+  check('9. Sample referrals are Referral records', R.Referral.length === 2);
+  await p.reload(); await p.waitForSelector('#btn-new'); await p.click('#nav-clients');
+  const afterReload = await p.textContent('tbody');
+  check('9. A reload keeps new clients and updates', afterReload.includes('Andre Williams') && afterReload.includes('Enrolled'));
+  await p.click('[data-reset]'); await p.click('#nav-clients');
+  R = await recs();
+  check('9. Reset sample data brings back the five sample clients',
+    (await p.$$('tbody tr')).length === 5 && !(await p.textContent('tbody')).includes('Andre') && R.Approval.length === 0);
+  const p3 = await browser.newPage();
+  await p3.route('**/simulated_responses.json', async r => {
+    const j = await (await r.fetch()).json(); j.templates.update_types.push('Court date check');
+    j.templates.intake_notes['Standard intake note'].key_fields.push({ key: 'name', label: 'Preferred name' }); await r.fulfill({ json: j });
+  });
+  await p3.goto(URL); await p3.click('#btn-existing'); await p3.click('#btn-addinfo');
+  const hasType = (await p3.$$eval('#utype option', o => o.map(x => x.textContent))).includes('Court date check');
+  await p3.click('#mclose'); await p3.click('#nav-home'); await p3.click('#btn-new'); await p3.click('#sample');
+  await p3.waitForSelector('#mgo:not([disabled])'); await p3.click('#mgo'); await waitForAI(p3);
+  const hasField = (await p3.$$eval('.keyinfo label', ls => ls.map(l => l.textContent))).some(t => t.includes('Preferred name'));
+  check('9. Templates (update types, key fields) come from simulated_responses.json', hasType && hasField);
+
   // Simulated AI lives in the JSON file
   const p2 = await browser.newPage();
   await p2.route('**/simulated_responses.json', async r => {
