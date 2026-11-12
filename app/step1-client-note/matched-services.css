@@ -1,0 +1,94 @@
+/* Step 2: Matched services. Reuses the Step 1 tokens and components (pane, btn, tag, pri, field, chk). */
+.ms-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:4px 0 14px}
+.ms-tabs button{font:inherit;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px;cursor:pointer;margin-bottom:-1px}
+.ms-tabs button[aria-selected="true"]{color:var(--ink);border-color:var(--accent);font-weight:600}
+.ms-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ms-grid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:16px;align-items:start}
+@media (max-width:900px){.ms-grid{grid-template-columns:1fr}}
+
+/* Needs board */
+.ms-buckets{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ms-bucket{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;background:var(--panel)}
+.ms-bucket.sel{box-shadow:0 0 0 2px var(--accent)}
+.ms-bucket.st-pending{border-left-color:var(--warn)}
+.ms-bucket.st-done{border-left-color:var(--ok);background:var(--ok-soft)}
+.ms-bucket.st-handled{border-left-color:var(--line);opacity:.7}
+.ms-bopen{font:inherit;color:var(--ink);text-align:left;background:none;border:0;width:100%;padding:10px 12px 6px;cursor:pointer;display:flex;flex-direction:column;gap:3px}
+.ms-bopen .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ms-bopen b{font-size:15px}
+.ms-bopen .line{font-size:14px}
+.ms-bstat{font-size:13px;font-weight:600;color:var(--accent)}
+.st-pending .ms-bstat{color:var(--warn)} .st-done .ms-bstat{color:var(--ok)} .st-handled .ms-bstat{color:var(--muted)}
+.st-handled .pri{background:var(--bg);color:var(--muted)}
+.ms-bctl{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;padding:0 12px 8px;font-size:13px}
+.ms-bctl .btn{font-size:12px;padding:3px 8px;font-weight:500}
+.ms-quote{margin:0 12px 10px;padding:6px 8px;background:var(--hl);border-radius:4px;font-size:13px}
+.ms-addneed{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);align-items:end}
+.ms-addneed .btn{grid-column:1/-1;justify-self:start}
+@media (max-width:480px){.ms-addneed{grid-template-columns:1fr}}
+.ms-addneed input,.ms-addneed select{font:inherit;font-size:14px;width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+
+/* Service cards */
+.ms-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-block:10px}
+.ms-card{border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--panel);min-width:0}
+.ms-card.top1{border-color:var(--accent)}
+.ms-card header{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:static;border:0;padding:0;background:none}
+.ms-card h3{font-size:15px;flex:1 1 100%}
+.ms-rank{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.ms-card .meta{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.ms-card .blk{font-size:13px}
+.ms-card .blk>b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ms-checks{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.ms-checks li{display:grid;grid-template-columns:18px 1fr;gap:4px}
+.ms-checks i{font-style:normal;font-weight:700;text-align:center}
+.ms-checks .y i{color:var(--ok)} .ms-checks .n i{color:var(--bad)} .ms-checks .q i{color:var(--warn)}
+.ms-checks .src{display:block;white-space:normal;overflow-wrap:anywhere;color:var(--muted);font-size:12px;font-family:inherit;cursor:default}
+.ms-stale{color:var(--warn);font-weight:600}
+.ms-why{font-size:13px;background:var(--accent-soft);border-radius:4px;padding:6px 8px}
+.ms-prov{font-size:12px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
+.ms-card .btns{margin-top:auto}
+.ms-reasons{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:var(--bg);border-radius:5px}
+.ms-reasons p{flex:1 1 100%;font-size:13px}
+.ms-reasons .btn{font-size:13px;padding:4px 10px;font-weight:500}
+.ms-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ms-list li{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:6px 0;border-top:1px solid var(--line)}
+.ms-list li:first-child{border-top:0}
+.ms-list .grow{flex:1;min-width:180px}
+details.ms-more{margin-top:10px;border:1px solid var(--line);border-radius:6px;padding:8px 12px}
+details.ms-more>summary{cursor:pointer;font-weight:600;font-size:14px}
+.ms-inline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%}
+.ms-inline input,.ms-inline select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink);flex:1;min-width:140px}
+
+/* Referral, answer, client text */
+.ms-panel{border:1px solid var(--accent);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--panel)}
+.ms-panel.done{border-color:var(--ok)}
+.ms-panel h3{font-size:17px}
+.ms-panel textarea{min-height:120px}
+.ms-panel fieldset{border:0;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.ms-panel legend{font-size:13px;color:var(--muted);margin-bottom:4px;padding:0}
+.ms-callbox{background:var(--bg);border-radius:6px;padding:10px 12px;font-size:14px}
+.ms-callbox .num{font-family:var(--f-mono);font-size:16px;font-weight:600}
+.ms-quote2{border-left:3px solid var(--line);padding:4px 10px;font-size:14px;color:var(--muted);white-space:pre-wrap;margin:0}
+.ms-sim{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border:1px dashed var(--sim);border-radius:6px;background:var(--sim-soft)}
+.ms-bubble{max-width:90%;padding:8px 12px;border-radius:14px;font-size:14px;line-height:1.4;white-space:pre-wrap}
+.ms-bubble.in{background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:4px;align-self:flex-start}
+.ms-bubble.out{background:var(--accent);color:var(--panel);border-bottom-right-radius:4px;align-self:flex-end}
+.ms-answer{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end}
+.ms-answer input,.ms-answer select{font:inherit;font-size:14px;width:100%;padding:7px 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+.ms-textgrid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:14px;align-items:start}
+@media (max-width:640px){.ms-textgrid{grid-template-columns:1fr}}
+.ms-phone{border:2px solid var(--line);border-radius:22px;padding:14px 10px 18px;background:var(--bg);display:flex;flex-direction:column;gap:8px;min-height:220px;max-width:280px;width:100%;justify-self:center}
+.ms-phone .to{text-align:center;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px}
+.ms-phone .st{align-self:flex-end;font-size:11px;color:var(--muted)}
+.ms-rems{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ms-rems li{display:grid;grid-template-columns:70px 1fr;gap:8px;padding:8px 10px;background:var(--accent-soft);border-radius:5px}
+.ms-rems .d{font-family:var(--f-mono);font-size:12px}
+.ms-stars{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.ms-stars .btn{min-width:40px;padding:4px 8px}
+.ms-stars .btn[aria-pressed="true"]{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+
+/* Activity log panel at the bottom */
+details.ms-log{margin-top:18px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+details.ms-log>summary{cursor:pointer;font-weight:600}
+details.ms-log .tablewrap{max-height:320px;overflow:auto;margin-top:8px}
+.ms-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
