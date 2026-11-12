@@ -1,6 +1,22 @@
 {
   "_about": "Every simulated AI response in the Step 1 prototype lives in this file. Edit the text here and reload the page. {first} is replaced with the client's first name and {duration} with the recording length. Later, replace each block with a call to a real model that returns the same shape.",
 
+  "templates": {
+    "_about": "Note templates. The intake note's key fields and the list of update types come from here, so a new field or update type needs no code change.",
+    "intake_notes": {
+      "Standard intake note": {
+        "key_fields": [
+          { "key": "name", "label": "Name" },
+          { "key": "age", "label": "Age" },
+          { "key": "gender", "label": "Gender" },
+          { "key": "locality", "label": "Neighborhood" },
+          { "key": "contact", "label": "Contact phone" }
+        ]
+      }
+    },
+    "update_types": ["Referral check", "Second visit", "Weekly phone check", "Weekly message check"]
+  },
+
   "new_client_intake": {
     "sample_recording": { "file_name": "intake-andre-2026-11-11.m4a", "size_mb": 68.4, "duration": "47:12" },
     "processing": {

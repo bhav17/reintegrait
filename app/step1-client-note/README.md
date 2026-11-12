@@ -2,14 +2,14 @@
 
 A clickable prototype of Step 1 from the user journey storyboard. A case manager records a client meeting, AI turns it into a standard client note, and the case manager edits and approves it. Existing clients get new voice notes or typed updates added to their case file.
 
-The AI is simulated. Nothing is sent anywhere, and there is no database, login or server code.
+The AI is simulated. Nothing is sent anywhere, and there is no server or login. Client records are saved in your browser only (see Records below).
 
 ## Files
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole prototype: screens, mock client records, and the logic that plays back the simulated AI |
-| `simulated_responses.json` | Every simulated AI response: processing results, transcripts, the drafted client note, flags, and the updates for existing clients. Edit it and reload |
+| `index.html` | The whole prototype: screens, the record store with the sample clients, and the logic that plays back the simulated AI |
+| `simulated_responses.json` | Note templates (intake key fields, update types) and every simulated AI response: processing results, transcripts, the drafted client note, flags, and the updates for existing clients. Edit it and reload |
 | `acceptance-test.js` | Optional automated check of the acceptance criteria below |
 
 ## Launch
@@ -33,7 +33,7 @@ Then open http://localhost:8000.
 6. **Clients.** Andre Williams is now in the database with the note in his case file and a Friday reminder.
 7. **Existing client.** Select Marcus Reed, click **Upload new information** (or **Log response** on his reminder), pick the update type (referral check, second visit, weekly phone check or weekly message check), use the sample, process it, review the changes, tick the box, and **Add to case file**. His status, needs, case file and next reminder update.
 
-Changes last until you reload the page.
+Changes are saved in your browser and survive a reload. Click **Reset sample data** at the top of any screen to start over with the five sample clients.
 
 ## Acceptance criteria and test
 
@@ -47,6 +47,7 @@ Changes last until you reload the page.
 | 6 | Existing client opens the client database. Selecting a client shows a button to upload new information (referral check response, second visit, weekly phone or message check), which is added to the case file. Reminders are tracked per client |
 | 7 | All simulated AI output comes from `simulated_responses.json` |
 | 8 | Works at phone width; no script errors |
+| 9 | Records: every screen reads and writes the seven record types below; a reload keeps them; each approval is logged; reset restores the samples; templates come from the JSON file |
 
 To run the automated check (needs Node and Playwright):
 
@@ -57,6 +58,22 @@ node acceptance-test.js            # in another terminal
 ```
 
 It prints PASS or FAIL for each criterion and saves a screenshot of each screen to `screenshots/`.
+
+## Records
+
+The screens read and write seven record types, kept in `localStorage` under `reintegrait.records.v1`. Their names follow Salesforce Nonprofit Cloud so an export maps cleanly later.
+
+| Record | What it holds | Salesforce equivalent |
+|---|---|---|
+| Client | Name, age, gender, neighborhood, phone, status, client since | Account / Contact |
+| Interaction | Each intake note, visit, call or text: date, type, summary, voice or typed | Interaction, InteractionSummary |
+| Need | Each open need from a note, with priority | Care plan need |
+| Service | Services delivered, for dosage reporting (filled from step 2) | BenefitDisbursement |
+| Goal | Next steps, and reminders (a reminder is an open goal with a due date) | GoalAssignment |
+| Referral | Referrals sent to partners (statuses grow in step 4) | Referral |
+| Approval | Who approved which note or update, and when | Audit log |
+
+Logging a response on a client closes their open reminders, and the update's own reminder, if kept, becomes the next one.
 
 ## Replacing the simulated AI later
 
