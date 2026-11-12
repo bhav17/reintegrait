@@ -185,6 +185,49 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     log2.includes('Referral check · voice note') && log2.includes('Change accepted') && log2.includes('Change removed') && log2.includes('Update approved'));
   await s.click('[data-reset]');
 
+  // 11. Next steps rules (docs/specs/step1-next-steps.md)
+  const ns = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  ns.on('pageerror', e => errors.push(e.message));
+  await ns.goto(URL); await ns.waitForSelector('#btn-new'); await ns.click('[data-reset]');
+  await ns.click('#btn-new'); await ns.click('#sample'); await ns.waitForSelector('#mgo:not([disabled])');
+  await ns.click('#mgo'); await waitForAI(ns);
+  const agreed = await ns.$$eval('#steps-agreed li', ls => ls.map(l => ({ t: l.textContent, on: l.querySelector('[data-tick]').checked })));
+  const sugg = await ns.$$eval('#steps-suggested li', ls => ls.map(l => ({ t: l.textContent, on: l.querySelector('[data-tick]').checked })));
+  check('11. Agreed steps and AI suggestions show separately; agreed ticked, suggestions not',
+    agreed.length === 3 && sugg.length >= 1 && agreed.every(x => x.on) && sugg.every(x => !x.on));
+  check('11. Each step shows owner, due and evidence',
+    agreed.every(x => x.t.includes('Owner:') && x.t.includes('Due:') && x.t.includes('Agreed at')) && sugg.every(x => x.t.includes('Evidence: need')));
+  check('11. Suggestions are capped at 5, in need-priority order, and skip needs an agreed step covers',
+    sugg.length <= 5 && sugg[0].t.includes('Housing') && !sugg.some(x => /Medication|ID\b/.test(x.t.split('Addresses:')[1] || '')));
+  check('11. Suggestions name no provider', !sugg.some(x => /ABE|Cara|Safer|Center\b/.test(x.t)));
+  await ns.check('#steps-suggested li:first-child [data-tick]');
+  await ns.uncheck('#steps-agreed li:nth-child(3) [data-tick]');
+  check('11. Unticking the follow-up call removes its reminder badge', !(await ns.textContent('#steps-agreed')).includes('Creates reminder'));
+  await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
+  await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]');
+  await ns.check('#rv1'); await ns.click('#btn-save'); await ns.waitForSelector('#detail-name');
+  const R11 = await ns.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
+  const cid = R11.Client.find(c => c.Name === 'Andre Williams').Id;
+  const goals = R11.Goal.filter(g => g.ClientId === cid);
+  check('11. Only ticked steps are saved, and no reminder without the ticked call',
+    goals.some(g => g.Origin === 'AI suggestion accepted' && g.Text.includes('housing')) && !goals.some(g => g.Text.includes('SNAP')) &&
+    !goals.some(g => g.Text === 'Follow-up call') && !goals.some(g => g.DueDate));
+  await ns.click('#nav-activity');
+  const log11 = await ns.textContent('#activity');
+  check('11. Activity log records suggestions accepted and declined', log11.includes('Suggestion accepted') && log11.includes('Suggestion declined'));
+  await ns.click('#nav-home'); await ns.click('#btn-new'); await ns.click('#sample'); await ns.waitForSelector('#mgo:not([disabled])');
+  await ns.click('#mgo'); await waitForAI(ns);
+  await ns.click('#btn-edit');
+  for (let i = 0; i < 3; i++) await ns.click('#steps-agreed li:first-child [data-del]');
+  await ns.click('#btn-edit');
+  await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
+  await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]'); await ns.check('#rv1');
+  const blocked = (await ns.textContent('#nosteps')).includes('No next steps agreed') && await ns.isDisabled('#btn-save');
+  await ns.check('#rv-none');
+  check('11. With no agreed steps, approval needs the "no next steps agreed" confirmation', blocked && !(await ns.isDisabled('#btn-save')));
+  await shot(ns, '11-no-steps');
+  await ns.click('[data-reset]');
+
   // Simulated AI lives in the JSON file
   const p2 = await browser.newPage();
   await p2.route('**/simulated_responses.json', async r => {
