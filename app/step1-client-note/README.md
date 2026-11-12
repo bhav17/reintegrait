@@ -2,6 +2,8 @@
 
 A clickable prototype of Step 1 from the user journey storyboard. A case manager records a client meeting, AI turns it into a standard client note, and the case manager edits and approves it. Existing clients get new voice notes or typed updates added to their case file.
 
+**Step 2 (Matched services)** is a tab in the same prototype. See [STEP2.md](STEP2.md).
+
 The AI is simulated. Nothing is sent anywhere, and there is no server or login. Client records are saved in your browser only (see Records below).
 
 ## Files
@@ -9,7 +11,7 @@ The AI is simulated. Nothing is sent anywhere, and there is no server or login. 
 | File | What it is |
 |---|---|
 | `index.html` | The whole prototype: screens, the record store with the sample clients, and the logic that plays back the simulated AI |
-| `simulated_responses.json` | Note templates (intake key fields, update types) and every simulated AI response: processing results, transcripts, the drafted client note, flags, and the updates for existing clients. Edit it and reload |
+| `simulated_responses.json` | Note templates (intake key fields, update types, service types, meeting types) and every simulated AI response: processing results, transcripts, the drafted client note, flags, and the updates for existing clients. Edit it and reload |
 | `acceptance-test.js` | Optional automated check of the acceptance criteria below |
 
 ## Launch
@@ -48,6 +50,9 @@ Changes are saved in your browser and survive a reload. Click **Reset sample dat
 | 7 | All simulated AI output comes from `simulated_responses.json` |
 | 8 | Works at phone width; no script errors |
 | 9 | Records: every screen reads and writes the seven record types below; a reload keeps them; each approval is logged; reset restores the samples; templates come from the JSON file |
+| 10 | Step 1 spec (`Step 1 spec - Client Note.docx`): reminders due today and this week with Log response on home; "Type notes instead"; files in other formats or over 500 MB refused with a reason; flags at the top of the note with icon and text; consent shown in the transcript; need priority can be changed; review box reads "I reviewed this note against the conversation"; new clients start as "New intake"; an on-screen Activity log records each edit (before and after), need and step added or removed, priority change, flag resolution, review tick, reminder created, update type, accepted or removed changes, time stamps opened, and time from upload to approval |
+| 11 | Next steps rules (`docs/specs/step1-next-steps.md`): agreed steps and AI suggestions shown separately (agreed ticked, suggestions not); each step has owner, due (only if said), the need it addresses and evidence; suggestions name no provider, are capped at 5 in need-priority order and skip needs an agreed step covers; only ticked steps are saved; a reminder is created only from a ticked dated step; with no agreed steps, approval needs a confirmation; the activity log records suggestions accepted and declined |
+| 12 | Dosage: each need has a service type; each note and update logs meeting type, minutes and services covered, and can't be saved without them; saving writes Service records; each client shows contacts, minutes, service types and referrals |
 
 To run the automated check (needs Node and Playwright):
 
@@ -61,19 +66,21 @@ It prints PASS or FAIL for each criterion and saves a screenshot of each screen 
 
 ## Records
 
-The screens read and write seven record types, kept in `localStorage` under `reintegrait.records.v1`. Their names follow Salesforce Nonprofit Cloud so an export maps cleanly later.
+The screens read and write seven record types, kept in `localStorage` under `reintegrait.records.v2`. Their names follow Salesforce Nonprofit Cloud so an export maps cleanly later.
 
 | Record | What it holds | Salesforce equivalent |
 |---|---|---|
 | Client | Name, age, gender, neighborhood, phone, status, client since | Account / Contact |
-| Interaction | Each intake note, visit, call or text: date, type, summary, voice or typed | Interaction, InteractionSummary |
-| Need | Each open need from a note, with priority | Care plan need |
-| Service | Services delivered, for dosage reporting (filled from step 2) | BenefitDisbursement |
+| Interaction | Each intake note, visit, call or text: date, type, summary, voice or typed, meeting type, minutes | Interaction, InteractionSummary |
+| Need | Each open need from a note, with priority and service type | Care plan need |
+| Service | One per service type covered in an interaction, with minutes (the interaction's minutes split evenly) | BenefitDisbursement |
 | Goal | Next steps, and reminders (a reminder is an open goal with a due date) | GoalAssignment |
 | Referral | Referrals sent to partners (statuses grow in step 4) | Referral |
 | Approval | Who approved which note or update, and when | Audit log |
 
 Logging a response on a client closes their open reminders, and the update's own reminder, if kept, becomes the next one.
+
+**Dosage.** Service types are Housing, ID and documents, Jobs, Benefits, Health, Family, Legal and Transport (edit them in the JSON file). Each need gets one. Before a note or update is saved, the review panel's service log asks for the meeting type, the minutes (filled from the recording length when there is one) and the services covered. Saving writes one Service record per type covered. Each client's page shows contacts, minutes, service types and referrals, which are the dosage measures ESTTA says reentry funders ask for.
 
 ## Replacing the simulated AI later
 

@@ -199,8 +199,50 @@ li.skip .dot{border-style:dashed}
 .diff .k{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
 .diff .k.add{color:var(--ok)} .diff .k.chg{color:var(--accent)} .diff .k.rem{color:var(--muted)}
 .diff s{color:var(--muted)}
+.flagbar{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.flagbar .flagitem{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.flagbar .flagitem>div{flex:1;min-width:220px}
+.flagbar .flagitem>.row{flex:0 1 360px}
+.flagitem .ic{font-weight:700}
+.rem .row button{display:inline;grid-template-columns:none;border-top:0;padding:0;width:auto}
+.rem .row .btn{padding:6px 12px;border:1px solid var(--line);white-space:nowrap}
+.rem .row{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:10px 2px}
+.rem .row:first-child{border-top:0}
+.rem .rn{font:inherit;font-weight:600;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;text-align:left}
+.rem .rn:hover{color:var(--accent);text-decoration:underline}
+.items .pri-sel{width:auto;flex:none;padding:1px 2px;font:inherit;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid var(--line);border-radius:3px;padding:1px 2px;background:var(--panel);color:var(--ink)}
+.consent{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ok);background:var(--ok-soft);border-radius:3px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.log{width:100%;font-size:13px}
+.log td{vertical-align:top}
+.log .when{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.log .ev{font-weight:600;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.metrics div{background:var(--bg);border-radius:5px;padding:8px 10px}
+.metrics b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.metrics span{font-size:12px;color:var(--muted)}
+.stepgrp{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stepgrp:first-of-type{margin-top:0}
+.steps li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:4px 8px;align-items:start}
+.steps li input[type=checkbox]{margin-top:4px;accent-color:var(--accent)}
+.steps .meta{grid-column:2/-1;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.steps .meta select,.steps .meta input{font:inherit;font-size:12px;padding:1px 4px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink);width:auto}
+.steps li.off .txt{color:var(--muted)}
+.tag.sug{color:var(--sim);background:var(--sim-soft);border:1px dashed var(--sim)}
+.nosteps{font-size:14px;padding:6px 10px;border-radius:4px;background:var(--warn-soft)}
+.stype{font:inherit;font-size:12px;padding:1px 4px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);max-width:150px}
+.stype.missing{border-color:var(--warn);background:var(--warn-soft)}
+.svclog{border-top:1px solid var(--line);padding-top:12px;margin-top:4px;display:flex;flex-direction:column;gap:10px}
+.logrow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px}
+.svcs{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.svcs legend{font-size:13px;color:var(--muted);margin-bottom:4px;padding:0}
+.svcs label{display:inline-flex;gap:4px;align-items:center;font-size:13px;border:1px solid var(--line);border-radius:14px;padding:2px 9px;cursor:pointer}
+.svcs label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.svcs input{accent-color:var(--accent);margin:0}
+.dosage{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.dosage b{color:var(--ink);font-variant-numeric:tabular-nums}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:6px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 </style>
+<link rel="stylesheet" href="matched-services.css">
 
 <header>
   <div class="wrap top">
@@ -208,6 +250,7 @@ li.skip .dot{border-style:dashed}
     <nav class="main" aria-label="Main">
       <button type="button" data-go="home" id="nav-home">Home</button>
       <button type="button" data-go="clients" id="nav-clients">Clients</button>
+      <button type="button" data-go="activity" id="nav-activity">Activity log</button>
     </nav>
     <div class="who"><b>Denise</b> · Case manager</div>
   </div>
@@ -234,44 +277,44 @@ const fill=(o,vars)=>JSON.parse(JSON.stringify(o).replace(/\{(first|duration)\}/
 /* ---------- Records ----------
    Seven record types. Names follow Salesforce Nonprofit Cloud so an export maps cleanly later:
    Client       one person served (Salesforce: Account / Contact)
-   Interaction  a visit, call, text or intake note (Interaction + InteractionSummary)
-   Need         an open need found in a note (care plan need)
-   Service      a service delivered, for dosage reporting (BenefitDisbursement). Filled from step 2.
+   Interaction  a visit, call, text or intake note, with meeting type and minutes (Interaction + InteractionSummary)
+   Need         an open need found in a note, tagged with a service type (care plan need)
+   Service      a service delivered in an interaction: type and minutes, for dosage reporting (BenefitDisbursement)
    Goal         a next step or a dated reminder (GoalAssignment). Reminders are open Goals with a due date.
    Referral     a referral sent to a partner (Referral). Statuses grow in step 4.
    Approval     who approved which note, and when (audit log)
    Everything is saved to localStorage under STORE_KEY. "Reset sample data" puts the five sample clients back. */
-const STORE_KEY="reintegrait.records.v1";
+const STORE_KEY="reintegrait.records.v2";
 const RECORD_TYPES=["Client","Interaction","Need","Service","Goal","Referral","Approval"];
 const uid=t=>t.slice(0,3).toLowerCase()+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 const SAMPLE_CLIENTS=[
  {id:"c1",name:"Marcus Reed",age:41,gender:"Male",locality:"Austin",phone:"773-555-0142",since:"2026-10-02",status:"Referral pending",
-  needs:["Job readiness program","Steady housing (staying with sister)"],
+  needs:[["Job readiness program","Jobs"],["Steady housing (staying with sister)","Housing"]],
   reminder:{date:"2026-11-11",type:"Referral check",text:"Did Marcus attend the Cara Collective orientation on Tue Nov 10?"},
-  entries:[{date:"2026-11-03",type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",referral:{partner:"Cara Collective",service:"Job readiness"}},
-           {date:"2026-10-20",type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December."},
-           {date:"2026-10-02",type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP."}]},
+  entries:[{date:"2026-11-03",type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",referral:{partner:"Cara Collective",service:"Job readiness"},mt:"Phone call",min:10,svc:["Jobs"]},
+           {date:"2026-10-20",type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December.",mt:"In-person visit",min:30,svc:["Jobs","Housing"]},
+           {date:"2026-10-02",type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP.",mt:"In-person visit",min:55,svc:["ID and documents","Jobs","Benefits"]}]},
  {id:"c2",name:"Tanya Brooks",age:29,gender:"Female",locality:"Roseland",phone:"312-555-0178",since:"2026-09-14",status:"Active",
-  needs:["Childcare during GED classes","SNAP recertification"],
+  needs:[["Childcare during GED classes","Family"],["SNAP recertification","Benefits"]],
   reminder:{date:"2026-11-11",type:"Weekly phone check",text:"Weekly call. Ask how GED classes are going."},
-  entries:[{date:"2026-11-04",type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier."},
-           {date:"2026-10-08",type:"Second visit",text:"SNAP approved. Interested in GED."},
-           {date:"2026-09-14",type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother."}]},
+  entries:[{date:"2026-11-04",type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier.",mt:"Phone call",min:8,svc:["Family"]},
+           {date:"2026-10-08",type:"Second visit",text:"SNAP approved. Interested in GED.",mt:"In-person visit",min:25,svc:["Benefits"]},
+           {date:"2026-09-14",type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother.",mt:"In-person visit",min:50,svc:["Benefits","Family"]}]},
  {id:"c3",name:"Luis Herrera",age:52,gender:"Male",locality:"Little Village",phone:"773-555-0119",since:"2026-10-21",status:"Needs follow-up",
-  needs:["Housing application paperwork","Diabetes care"],
+  needs:[["Housing application paperwork","Housing"],["Diabetes care","Health"]],
   reminder:{date:"2026-11-09",type:"Second visit",text:"Bring the housing application and help fill it in."},
-  entries:[{date:"2026-10-21",type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication."}]},
+  entries:[{date:"2026-10-21",type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication.",mt:"In-person visit",min:45,svc:["Housing","Health"]}]},
  {id:"c4",name:"Keisha Moore",age:36,gender:"Female",locality:"North Lawndale",phone:"872-555-0163",since:"2026-08-30",status:"Active",
-  needs:["Driver's license reinstatement"],
+  needs:[["Driver's license reinstatement","Legal"]],
   reminder:{date:"2026-11-16",type:"Weekly message check",text:"Text check-in about the license hearing date."},
-  entries:[{date:"2026-11-09",type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet."},
-           {date:"2026-08-30",type:"Intake note",text:"Released Aug 24. Has housing with partner."}]},
+  entries:[{date:"2026-11-09",type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet.",mt:"Text message",min:5,svc:["Legal"]},
+           {date:"2026-08-30",type:"Intake note",text:"Released Aug 24. Has housing with partner.",mt:"In-person visit",min:40,svc:["Legal","Jobs"]}]},
  {id:"c5",name:"James Carter",age:24,gender:"Male",locality:"Humboldt Park",phone:"773-555-0127",since:"2026-10-28",status:"Referral pending",
-  needs:["Job training","Phone (lost his)"],
+  needs:[["Job training","Jobs"],["Phone (lost his)","Benefits"]],
   reminder:{date:"2026-11-20",type:"Referral check",text:"Did James start the Safer Foundation program?"},
-  entries:[{date:"2026-11-05",type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18.",referral:{partner:"Safer Foundation",service:"Job training"}},
-           {date:"2026-10-28",type:"Intake note",text:"Released Oct 24. Staying with grandmother."}]},
+  entries:[{date:"2026-11-05",type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18.",referral:{partner:"Safer Foundation",service:"Job training"},mt:"Phone call",min:12,svc:["Jobs"]},
+           {date:"2026-10-28",type:"Intake note",text:"Released Oct 24. Staying with grandmother.",mt:"In-person visit",min:40,svc:["Jobs","Benefits"]}]},
 ];
 
 /* Turn the sample clients into records. Entries are added oldest first so the store reads like a real history. */
@@ -280,9 +323,10 @@ function sampleRecords(){
  let n=0;const id=p=>p+"-s"+(++n);
  SAMPLE_CLIENTS.forEach(s=>{
   R.Client.push({Id:s.id,Name:s.name,Age:s.age,Gender:s.gender,Locality:s.locality,Phone:s.phone,ClientSince:s.since,Status:s.status});
-  s.needs.forEach(t=>R.Need.push({Id:id("nee"),ClientId:s.id,Text:t,Priority:"Soon",Status:"Open",CreatedDate:s.since,InteractionId:null}));
+  s.needs.forEach(([t,st])=>R.Need.push({Id:id("nee"),ClientId:s.id,Text:t,ServiceType:st,Priority:"Soon",Status:"Open",CreatedDate:s.since,InteractionId:null}));
   s.entries.slice().reverse().forEach(e=>{const iid=id("int");
-   R.Interaction.push({Id:iid,ClientId:s.id,Date:e.date,Type:e.type,Summary:e.text,Channel:"Sample",Template:null,SourceName:null});
+   R.Interaction.push({Id:iid,ClientId:s.id,Date:e.date,Type:e.type,Summary:e.text,Channel:"Sample",Template:null,SourceName:null,MeetingType:e.mt,Minutes:e.min});
+   splitMinutes(e.min,e.svc).forEach(([st,m])=>R.Service.push({Id:id("ser"),ClientId:s.id,InteractionId:iid,Date:e.date,ServiceType:st,Minutes:m,MeetingType:e.mt}));
    if(e.referral)R.Referral.push({Id:id("ref"),ClientId:s.id,InteractionId:iid,Partner:e.referral.partner,Service:e.referral.service,Status:"Sent",SentDate:e.date});
   });
   R.Goal.push({Id:id("goa"),ClientId:s.id,Text:s.reminder.text,Type:s.reminder.type,DueDate:s.reminder.date,Status:"Open",InteractionId:null});
@@ -308,10 +352,38 @@ function clientView(c){
  const due=Store.where("Goal",g=>g.ClientId===c.Id&&g.Status==="Open"&&g.DueDate).sort((a,b)=>a.DueDate.localeCompare(b.DueDate))[0];
  return{id:c.Id,name:c.Name,age:c.Age,gender:c.Gender,locality:c.Locality,phone:c.Phone,since:parseDate(c.ClientSince),status:c.Status,
   needs:Store.where("Need",x=>x.ClientId===c.Id&&x.Status==="Open").map(x=>x.Text),
+  needTypes:Store.where("Need",x=>x.ClientId===c.Id&&x.Status==="Open").map(x=>x.ServiceType||""),
   reminder:due?{goalId:due.Id,date:parseDate(due.DueDate),type:due.Type,text:due.Text}:null,
   entries:Store.where("Interaction",x=>x.ClientId===c.Id).reverse().sort((a,b)=>b.Date.localeCompare(a.Date)).map(x=>({date:parseDate(x.Date),type:x.Type,text:x.Summary}))};
 }
 const clients=()=>Store.all("Client").map(clientView);
+
+/* ---------- Dosage (step 2) ----------
+   Every interaction logs a meeting type and minutes. Its minutes are split evenly across the service types it covered,
+   one Service record per type. That gives the dosage funders ask for: contacts, minutes, and breadth of service types. */
+function splitMinutes(total,types){const n=types.length;if(!n)return[];const each=Math.floor(total/n);return types.map((t,i)=>[t,each+(i<total-each*n?1:0)])}
+function logServices(clientId,it,types){splitMinutes(it.Minutes,types).forEach(([st,m])=>Store.insert("Service",{ClientId:clientId,InteractionId:it.Id,Date:it.Date,ServiceType:st,Minutes:m,MeetingType:it.MeetingType}))}
+const durToMin=d=>{if(!d)return"";const p=String(d).split(":").map(Number);if(p.some(isNaN))return"";const sec=p.reduce((a,x)=>a*60+x,0);return Math.max(1,Math.ceil(sec/60))};
+function dosage(clientId){
+ const its=Store.where("Interaction",x=>x.ClientId===clientId&&x.Minutes>0), sv=Store.where("Service",x=>x.ClientId===clientId);
+ return{contacts:its.length,minutes:its.reduce((a,x)=>a+x.Minutes,0),types:[...new Set(sv.map(x=>x.ServiceType))],referrals:Store.where("Referral",x=>x.ClientId===clientId).length};
+}
+const serviceTypes=()=>SIM.templates.service_types;
+const meetingTypes=()=>SIM.templates.meeting_types;
+/* The service log box, shown in the review panel of a new note and of an update. */
+function logBox(log,pickServices){
+ return`<div class="svclog" id="svclog"><h2 style="margin:0">Service log</h2>
+  <div class="logrow"><label class="field"><span>Meeting</span><select id="lg-type">${meetingTypes().map(t=>`<option ${t===log.meeting_type?"selected":""}>${esc(t)}</option>`).join("")}</select></label>
+  <label class="field"><span>Minutes</span><input id="lg-min" type="number" min="1" step="1" inputmode="numeric" value="${esc(log.minutes)}"></label></div>
+  ${pickServices?`<fieldset class="svcs" id="lg-svcs"><legend>Services covered</legend>${serviceTypes().map(t=>`<label><input type="checkbox" value="${esc(t)}" ${log.services.includes(t)?"checked":""}>${esc(t)}</label>`).join("")}</fieldset>`
+   :`<p class="small muted" id="lg-svcs">Services covered: <b>${esc(log.services.join(", ")||"none yet")}</b>. These come from the needs' service types.</p>`}
+ </div>`;
+}
+function wireLog(log,onChange){
+ document.getElementById("lg-type").onchange=e=>{log.meeting_type=e.target.value;onChange()};
+ document.getElementById("lg-min").oninput=e=>{const v=parseInt(e.target.value,10);log.minutes=v>0?v:"";onChange()};
+ app.querySelectorAll("#lg-svcs input").forEach(b=>b.onchange=()=>{log.services=[...app.querySelectorAll("#lg-svcs input:checked")].map(x=>x.value);onChange()});
+}
 const approve=(recordId,statement)=>Store.insert("Approval",{RecordType:"Interaction",RecordId:recordId,ApprovedBy:"Denise",ApprovedAt:new Date().toISOString(),Statement:statement});
 
 /* Templates come from simulated_responses.json ("templates"). */
@@ -319,6 +391,14 @@ const updateTypes=()=>SIM.templates.update_types;
 const keyFields=tpl=>SIM.templates.intake_notes[tpl].key_fields.map(f=>[f.key,f.label]);
 
 let SIM=null;
+
+/* ---------- Activity log (spec section 4: feedback and data capture) ----------
+   Shown on screen only, kept in memory for this session. No database. */
+const ACTIVITY=[];
+const clock=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")+":"+String(t.getSeconds()).padStart(2,"0")};
+function logEvent(client,event,detail){ACTIVITY.unshift({at:clock(),ts:Date.now(),client:client||"",event,detail:detail||""})}
+const secs=ms=>{const s=Math.round(ms/1000);return s<60?s+" sec":Math.floor(s/60)+" min "+(s%60)+" sec"};
+
 const state={view:"home",sel:"c1",note:null,update:null,editing:false,newIds:new Set(),filter:""};
 const app=document.getElementById("app"), mroot=document.getElementById("modal-root");
 
@@ -328,31 +408,32 @@ document.getElementById("brand").onclick=()=>go("home");
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
 
 function render(){
- ["home","clients"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate})[state.view]();
+ ["home","clients","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices})[state.view]();
  app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
 const mock=`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. AI output comes from simulated_responses.json.<button class="btn ghost small" type="button" data-reset>Reset sample data</button></div>`;
 
 /* ---------- Home ---------- */
 function renderHome(){
- const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=2).sort((a,b)=>a.reminder.date-b.reminder.date);
+ const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=6).sort((a,b)=>a.reminder.date-b.reminder.date);
  app.innerHTML=mock+`
  <div class="hello"><h1>Welcome back, Denise</h1><p class="muted">Wednesday, November 11. Who are you working with?</p></div>
  <div class="choices">
   <button class="choice" id="btn-new" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 4-6 8-6s8 2 8 6"/><path d="M19 8v6M16 11h6"/></svg></span><b>New client</b><span>Upload the voice note from your first meeting. AI drafts the client note.</span></button>
   <button class="choice" id="btn-existing" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg></span><b>Existing client</b><span>Open a case file to add a referral response, visit or check-in.</span></button>
  </div>
- <div class="pane"><h2>Reminders due <span class="tag warn">${due.length}</span></h2><div class="rem">
-   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<button type="button" data-open="${c.id}"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue":dd===0?"Today":fmt(c.reminder.date)}</span><span><span class="rn">${esc(c.name)}</span><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><span class="muted" aria-hidden="true">›</span></button>`}).join("")||`<p class="muted small">Nothing due in the next two days.</p>`}
+ <div class="pane"><h2>Reminders due today and this week <span class="tag warn">${due.length}</span></h2><div class="rem" id="reminders">
+   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<div class="row"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue · ":dd===0?"Today · ":""}${fmt(c.reminder.date)}</span><span><button class="rn" type="button" data-open="${c.id}">${esc(c.name)}</button><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><button class="btn" type="button" data-logresp="${c.id}">Log response</button></div>`}).join("")||`<p class="muted small">Nothing due this week.</p>`}
  </div></div>`;
  document.getElementById("btn-new").onclick=()=>openUpload({mode:"new"});
  document.getElementById("btn-existing").onclick=()=>go("clients");
  app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.open;go("clients")});
+ app.querySelectorAll("[data-logresp]").forEach(b=>b.onclick=()=>{const c=clients().find(x=>x.id===b.dataset.logresp);openUpload({mode:"update",client:c,type:c.reminder.type})});
 }
 
 /* ---------- Existing client database ---------- */
-function statusTag(s){const m={"Active":"ok","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
+function statusTag(s){const m={"Active":"ok","New intake":"info","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
 function renderClients(){
  const q=state.filter.toLowerCase();
  const CL=clients();
@@ -374,12 +455,14 @@ function renderClients(){
     <div><h3 style="font-size:20px" id="detail-name">${esc(c.name)}</h3><p class="small muted">Client since ${fmt(c.since)} · ${statusTag(c.status)}</p></div>
     <button class="btn primary" id="btn-addinfo" type="button">+ Upload new information</button>
    </div>
+   <div class="ms-tabs" role="tablist" aria-label="Case file sections"><button type="button" role="tab" aria-selected="true" id="tab-casefile">Case file</button><button type="button" role="tab" aria-selected="false" id="tab-services" onclick="go('services')">Matched services</button></div>
    <div class="kv">
     <div><span>Age</span><b>${esc(c.age)}</b></div><div><span>Gender</span><b>${esc(c.gender)}</b></div>
     <div><span>Neighborhood</span><b>${esc(c.locality)}</b></div><div><span>Contact</span><b>${esc(c.phone)}</b></div>
    </div>
    ${c.reminder?`<div class="remcard ${rd>0?"calm":""}" id="remcard"><div><b>${rd<0?"Overdue":rd===0?"Due today":"Next"} · ${fmt(c.reminder.date)} · ${esc(c.reminder.type)}</b><br>${esc(c.reminder.text)}</div><button class="btn" id="btn-log" type="button">Log response</button></div>`:""}
-   ${c.needs.length?`<h2 style="margin-top:6px">Open needs</h2><ul class="small" id="needs-list" style="margin:0 0 12px;padding-left:18px">${c.needs.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:""}
+   ${(d=>`<div class="dosage" id="dosage"><span><b>${d.contacts}</b> contacts</span><span><b>${d.minutes}</b> min</span><span><b>${d.types.length}</b> service types</span><span><b>${d.referrals}</b> referrals</span></div>`)(dosage(c.id))}
+   ${c.needs.length?`<h2 style="margin-top:6px">Open needs</h2><ul class="small" id="needs-list" style="margin:0 0 12px;padding-left:18px">${c.needs.map((n,i)=>`<li>${esc(n)}${c.needTypes[i]?` <span class="tag info">${esc(c.needTypes[i])}</span>`:""}</li>`).join("")}</ul>`:""}
    <h2>Case file</h2>
    <ol class="timeline" id="timeline">${c.entries.map((e,i)=>`<li class="${i===0&&state.newIds.has(c.id)?"new":""}"><span class="d">${fmt(e.date)}</span><div><span class="t">${esc(e.type)}</span><p>${esc(e.text)}</p></div></li>`).join("")}</ol>
   </div>
@@ -407,7 +490,7 @@ function openUpload(opts){
   <div class="limits"><div><b>Up to 3 hours</b>per recording</div><div><b>Up to 500 MB</b>per file</div><div><b>MP3, M4A, WAV, AAC</b>audio formats</div></div>
   <div id="filebox"></div>
   <button class="btn ghost" id="sample" type="button" style="align-self:flex-start">Use the sample recording</button>
-  <div class="or">or type it</div>
+  <div class="or">or type notes instead</div>
   <textarea id="typed" placeholder="Type or paste your notes" aria-label="Typed notes"></textarea>
   <div class="btns" style="justify-content:flex-end"><button class="btn" id="mcancel" type="button">Cancel</button><button class="btn primary" id="mgo" type="button" disabled>Process with AI</button></div>
  </div></div>`;
@@ -431,7 +514,9 @@ function openUpload(opts){
  function pick(f,sample){
   const box=document.getElementById("filebox");
   const name=f?f.name:sample.file_name, mb=f?f.size/1e6:sample.size_mb;
-  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem">This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
+  const okExt=/\.(mp3|m4a|wav|aac)$/i.test(name);
+  if(!okExt){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> Can't use this file</b>${esc(name)} isn't an MP3, M4A, WAV or AAC audio file. Export the recording in one of those formats, or type notes instead.</div>`;return}
+  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> File too large</b>This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
   audio={name,mb,dur:f?null:sample.duration};
   box.innerHTML=`<div class="file"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div class="meta"><div class="nm">${esc(name)}</div><div class="small muted">${mb.toFixed(1)} MB · <span id="fdur">${f?"reading length…":sample.duration}</span> · <span id="fstat">Uploading…</span></div><div class="bar"><i id="fbar"></i></div></div></div>`;
   if(f){try{const a=new Audio();a.preload="metadata";a.onloadedmetadata=()=>{const el=document.getElementById("fdur");if(!el||!audio)return;if(isFinite(a.duration)){const s=Math.round(a.duration);audio.dur=(s>=3600?Math.floor(s/3600)+":"+String(Math.floor(s%3600/60)).padStart(2,"0"):Math.floor(s/60))+":"+String(s%60).padStart(2,"0");el.textContent=audio.dur;if(s>3*3600){document.getElementById("fstat").textContent="Over 3 hours. Split the recording.";audio=null;refresh()}}else el.textContent="length unknown"};a.onerror=()=>{const el=document.getElementById("fdur");if(el)el.textContent="length unknown"};a.src=URL.createObjectURL(f)}catch(e){}}
@@ -442,11 +527,16 @@ function openUpload(opts){
   const source=audio?{kind:"audio",...audio}:{kind:"text",text:typed.value.trim()};
   if(isNew){
    const sim=clone(SIM.new_client_intake);
-   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false};state.editing=false;
+   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false,startedAt:Date.now(),edits:0,tsOpened:0};state.editing=false;
+   state.note.log={meeting_type:sim.note.meeting.type,minutes:source.kind==="audio"?durToMin(source.dur):"",services:[]};
+   applyStepRules(state.note);
+   logEvent(sim.note.key_info.name.value,"Upload",source.kind==="audio"?`Voice note ${source.name} (${source.mb.toFixed(1)} MB${source.dur?", "+source.dur:""})`:"Typed notes");
    close();startProcess("note");
   }else{
    const type=curType(), sim=simFor(type);
-   state.update={client:opts.client,type,source,...sim};
+   state.update={client:opts.client,type,source,...sim,startedAt:Date.now()};
+   state.update.log={meeting_type:sim.meeting.type,minutes:source.kind==="audio"&&source.dur?durToMin(source.dur):sim.meeting.minutes,services:[...sim.service_types]};
+   logEvent(opts.client.name,"Upload",`${type} · `+(source.kind==="audio"?`voice note ${source.name}`:"typed notes"));
    close();startProcess("update");
   }
  };
@@ -482,68 +572,129 @@ function renderProcess(){
 function txPane(lines,src){
  if(src.kind!=="audio"||!lines.length)return`<div class="pane"><h2>Your typed notes</h2><p class="small" style="white-space:pre-wrap">${esc(src.text||"No transcript in this sample.")}</p></div>`;
  return`<div class="pane"><h2>Transcript <span class="tag info">${esc(src.dur||"")}</span></h2>
- <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">${m}</span>`)}</span></div>`).join("")}</div>
+ <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">⚠ ${m}</span>`)}${l.consent?`<span class="consent">✓ Consent</span>`:""}</span></div>`).join("")}</div>
  <p class="small muted" style="margin-top:8px">Tap a time stamp in the note to see where it came from.</p></div>`;
 }
-function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
+function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;
+  const job=state.view==="note"?state.note:state.update;if(job){job.tsOpened=(job.tsOpened||0)+1;logEvent(job.client?job.client.name:job.key_info.name.value,"Time stamp opened",b.textContent)}app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
 const srcBtn=(id,lines,src)=>{if(!id||src.kind!=="audio")return"";const l=lines.find(x=>x.id===id);return l?`<button class="src" type="button" data-src="${id}" title="Show in transcript">${l.time}</button>`:""};
+
+/* ---------- Next steps rules (docs/specs/step1-next-steps.md) ----------
+   Agreed steps need the line where someone committed; suggestions need a need they address,
+   never cover a need an agreed step already covers, are ordered by need priority, at most 5. */
+const MAX_SUGGESTIONS=5;
+const needCat=t=>String(t).split(":")[0].trim();
+function applyStepRules(note){
+ const pr={Urgent:0,Soon:1,Later:2};
+ const needPri=c=>{const x=note.immediate_needs.find(x=>needCat(x.text)===c);return x?pr[x.priority]??3:3};
+ const steps=note.next_steps.map(x=>({kind:x.kind||"suggested",text:x.action||x.text,owner:x.owner||"Case manager",due:x.due||"",addresses:x.addresses||[],source:x.source||null,creates_reminder:!!x.creates_reminder}));
+ steps.forEach(x=>{if(x.kind==="agreed"&&!x.source)x.kind="suggested"});
+ const agreed=steps.filter(x=>x.kind==="agreed");
+ const covered=new Set(agreed.flatMap(x=>x.addresses));
+ const sug=steps.filter(x=>x.kind==="suggested"&&x.addresses.length&&!x.addresses.every(a=>covered.has(a)))
+  .sort((a,b)=>Math.min(...a.addresses.map(needPri))-Math.min(...b.addresses.map(needPri))).slice(0,MAX_SUGGESTIONS);
+ note.next_steps=[...agreed.map(x=>({...x,ticked:true})),...sug.map(x=>({...x,ticked:false}))];
+ note.noneConfirmed=false;
+}
 
 /* ---------- New client note ---------- */
 function renderNote(){
  const n=state.note, k=n.key_info, L=n.transcript, S=n.source;
  const open=n.flags.filter(f=>!f.resolved).length;
- const fld=(key,label)=>{const flagged=n.flags.some(f=>f.field===key&&!f.resolved);
+ const fld=(key,label)=>{const flagged=n.flags.some(f=>f.field===key&&!f.resolved);const mark=flagged?`<span aria-hidden="true">⚠ </span>`:"";
   if(key==="gender"){const opts=n.flags.find(f=>f.field==="gender")?.options||["Male","Female","Non-binary","Prefers not to say"];
-   return`<label class="${flagged?"flagged":""}"><span>${label}</span><select id="k-gender" ${state.editing?"":"disabled"}><option value="">Not stated</option>${opts.map(o=>`<option ${k.gender.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
-  return`<label class="${flagged?"flagged":""}"><span>${label} ${srcBtn(k[key].source,L,S)}</span><input id="k-${key}" value="${esc(k[key].value)}" ${state.editing?"":"readonly"}></label>`};
+   return`<label class="${flagged?"flagged":""}"><span>${mark}${label}${flagged?" (to confirm)":""}</span><select id="k-gender" ${state.editing?"":"disabled"}><option value="">Not stated</option>${opts.map(o=>`<option ${k.gender.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
+  return`<label class="${flagged?"flagged":""}"><span>${mark}${label}${flagged?" (to confirm)":""} ${srcBtn(k[key].source,L,S)}</span><input id="k-${key}" value="${esc(k[key].value)}" ${state.editing?"":"readonly"}></label>`};
  const pc={Urgent:"u",Soon:"s",Later:"l"};
  const ce=state.editing?'contenteditable="true"':"";
+ n.log.services=[...new Set(n.immediate_needs.map(x=>x.service_type).filter(Boolean))];
+ const untyped=n.immediate_needs.filter(x=>!x.service_type).length;
+ const stSel=(x,i)=>`<select class="stype ${x.service_type?"":"missing"}" data-stype="${i}" aria-label="Service type"><option value="">Service type…</option>${serviceTypes().map(t=>`<option ${t===x.service_type?"selected":""}>${esc(t)}</option>`).join("")}</select>`;
+ const agreedIdx=[],sugIdx=[];n.next_steps.forEach((x,i)=>(x.kind==="suggested"?sugIdx:agreedIdx).push(i));
+ const needSrc=a=>{const x=n.immediate_needs.find(x=>needCat(x.text)===a);return x?x.source:null};
+ const stepLi=i=>{const x=n.next_steps[i];
+  const ev=x.kind==="suggested"?(x.addresses[0]?srcBtn(needSrc(x.addresses[0])||x.source,L,S):""):srcBtn(x.source,L,S);
+  return`<li class="${x.ticked?"":"off"}"><input type="checkbox" data-tick="${i}" ${x.ticked?"checked":""} aria-label="Save this step"><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span><button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button>
+   <span class="meta"><span>Owner: ${state.editing?`<select data-owner="${i}" aria-label="Owner">${["Case manager","Client","Both"].map(o=>`<option ${o===x.owner?"selected":""}>${o}</option>`).join("")}</select>`:esc(x.owner)}</span>
+   <span>Due: ${state.editing?`<input data-due="${i}" value="${esc(x.due)}" placeholder="not said" aria-label="Due" size="10">`:(x.due?esc(x.due):"not said")}</span>
+   ${x.addresses.length?`<span>Addresses: ${esc(x.addresses.join(", "))}</span>`:""}
+   ${x.kind==="added"?`<span class="tag info">Added by case manager</span>`:x.kind==="suggested"?`<span>Evidence: need ${ev}</span>`:ev?`<span>Agreed at ${ev}</span>`:""}
+   ${x.creates_reminder&&x.ticked?`<span class="tag info">Creates reminder</span>`:""}</span></li>`};
+ const noneNeeded=!agreedIdx.length;
+ const canSave=()=>!open&&n.rv1&&(!noneNeeded||n.noneConfirmed)&&!untyped&&n.log.minutes>0;
  app.innerHTML=mock+`
  <div class="notehead"><div><p class="small muted">New client · ${esc(n.template)}</p><h1>Client note: ${esc(k.name.value||"New client")}</h1></div>
   <div class="btns"><button class="btn" id="btn-edit" type="button" aria-pressed="${state.editing}">${state.editing?"Done editing":"Edit note"}</button></div></div>
+ <div class="flagbar" id="flags" aria-label="Flags">${n.flags.map(f=>f.resolved?`<div class="flagitem res"><div><b><span class="ic" aria-hidden="true">✓</span> Resolved · ${esc(f.kind)}: ${esc(f.field)}</b> Set to ${esc(f.value)}</div></div>`:`<div class="flagitem"><div><b><span class="ic" aria-hidden="true">⚠</span> ${esc(f.kind)}: ${esc(f.field)}</b> ${esc(f.text)}</div><div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}">`}<button class="btn" type="button" data-fix="${f.id}">Save</button></div></div>`).join("")}</div>
  <div class="notegrid">
   ${txPane(L,S)}
   <div class="pane note ${state.editing?"editing":""}" id="note">
    <section><h4>Key information ${open?`<span class="tag warn">${open} to confirm</span>`:`<span class="tag ok">Complete</span>`}</h4>
     <div class="keyinfo">${keyFields(n.template).map(([f,l])=>fld(f,l)).join("")}</div></section>
-   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li><span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span><span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
-   <section><h4>Next steps</h4><ul class="items" id="steps">${n.next_steps.map((x,i)=>`<li><span aria-hidden="true">→</span><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span>${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button></section>
+   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li>${state.editing?`<select class="pri-sel" data-pri="${i}" aria-label="Priority">${["Urgent","Soon","Later"].map(o=>`<option ${o===x.priority?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span>`}<span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${stSel(x,i)}${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
+   <section id="steps"><h4>Next steps <span class="small muted" style="font-weight:400">Only ticked steps are saved</span></h4>
+    <div class="stepgrp">Agreed in meeting</div>
+    ${agreedIdx.length?`<ul class="items steps" id="steps-agreed">${agreedIdx.map(stepLi).join("")}</ul>`:`<p class="nosteps" id="nosteps"><span aria-hidden="true">⚠ </span>No next steps agreed</p>`}
+    <button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button>
+    ${sugIdx.length?`<div class="stepgrp">AI suggested <span class="tag sug">You decide</span></div><ul class="items steps" id="steps-suggested">${sugIdx.map(stepLi).join("")}</ul>`:""}
+   </section>
   </div>
   <div class="pane review" id="review">
    <h2>Review check</h2>
-   <div class="flags">${n.flags.map(f=>f.resolved?`<div class="flagitem res"><b>✓ ${esc(f.kind)}: ${esc(f.field)}</b>Set to ${esc(f.value)}</div>`:`<div class="flagitem"><b>${esc(f.kind)}: ${esc(f.field)}</b>${esc(f.text)}<div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}">`}<button class="btn" type="button" data-fix="${f.id}">Save</button></div></div>`).join("")}</div>
    <div class="checks">
-    <div class="auto ${open?"n":"y"}"><i>${open?"!":"✓"}</i><span>${open?open+" item"+(open>1?"s":"")+" to confirm":"All flags resolved"}</span></div>
-    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> I read the note and it matches what the client said</label>
+    <div class="auto ${open?"n":"y"}"><i aria-hidden="true">${open?"⚠":"✓"}</i><span>${open?open+" flag"+(open>1?"s":"")+" to resolve (see top)":"All flags resolved"}</span></div>
+    <div class="auto ${untyped?"n":"y"}" id="chk-types"><i aria-hidden="true">${untyped?"⚠":"✓"}</i><span>${untyped?untyped+" need"+(untyped>1?"s":"")+" without a service type":"Every need has a service type"}</span></div>
+    <div class="auto ${n.log.minutes>0?"y":"n"}" id="chk-min"><i aria-hidden="true">${n.log.minutes>0?"✓":"⚠"}</i><span>${n.log.minutes>0?"Minutes logged":"Add the meeting length in minutes"}</span></div>
+    ${logBox(n.log,false)}
+    ${noneNeeded?`<label class="chk"><input type="checkbox" id="rv-none" ${n.noneConfirmed?"checked":""}> I confirm no next steps were agreed in this meeting</label>`:""}
+    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> I reviewed this note against the conversation</label>
    </div>
-   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${open||!n.rv1?"disabled":""}>Approve and save to case file</button>
+   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${canSave()?"":"disabled"}>Approve and save to case file</button>
   </div>
  </div>`;
  wireSrc();
  document.getElementById("btn-edit").onclick=()=>{syncNote();state.editing=!state.editing;renderNote()};
- app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();n[b.dataset.del].splice(+b.dataset.i,1);renderNote()});
- app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",source:null}:{text:"New step",source:null});renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
- app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const f=n.flags.find(x=>x.id===b.dataset.fix);const v=document.getElementById("fx-"+f.id).value.trim();if(!v)return;syncNote();f.resolved=true;f.value=v;k[f.field].value=v;renderNote()});
- document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;document.getElementById("btn-save").disabled=open>0||!n.rv1};
+ app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.del,[gone]=n[l].splice(+b.dataset.i,1);n.edits++;logEvent(k.name.value,l==="immediate_needs"?"Need removed":"Next step removed",gone.text);renderNote()});
+ app.querySelectorAll("[data-pri]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.pri];const before=x.priority;x.priority=sel.value;n.edits++;logEvent(k.name.value,"Priority changed",`${x.text}: ${before} → ${sel.value}`);renderNote()});
+ app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",service_type:"",source:null,added:true}:{kind:"added",text:"New step",owner:"Case manager",due:"",addresses:[],source:null,ticked:true,added:true});
+ if(l==="next_steps")n.noneConfirmed=false;n.edits++;renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=l==="next_steps"?app.querySelector(`[data-list="next_steps"][data-i="${n.next_steps.length-1}"]`):items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
+ app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>{const f=n.flags.find(x=>x.id===b.dataset.fix);const v=document.getElementById("fx-"+f.id).value.trim();if(!v)return;syncNote();const before=k[f.field].value;f.resolved=true;f.value=v;k[f.field].value=v;logEvent(k.name.value,"Flag resolved",`${f.kind} ${f.field}: "${before||"blank"}" → "${v}"`);renderNote()});
+ document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;logEvent(k.name.value,e.target.checked?"Review box ticked":"Review box unticked","I reviewed this note against the conversation");document.getElementById("btn-save").disabled=!canSave()};
+ const rn=document.getElementById("rv-none");if(rn)rn.onchange=e=>{n.noneConfirmed=e.target.checked;logEvent(k.name.value,e.target.checked?"No steps confirmed":"No steps unconfirmed","I confirm no next steps were agreed in this meeting");document.getElementById("btn-save").disabled=!canSave()};
+ app.querySelectorAll("[data-stype]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.stype];const before=x.service_type||"none";x.service_type=sel.value;n.edits++;logEvent(k.name.value,"Service type changed",`${x.text}: ${before} → ${sel.value||"none"}`);renderNote()});
+ wireLog(n.log,()=>{const m=document.getElementById("chk-min"),ok=n.log.minutes>0;m.className="auto "+(ok?"y":"n");m.innerHTML=`<i aria-hidden="true">${ok?"✓":"⚠"}</i><span>${ok?"Minutes logged":"Add the meeting length in minutes"}</span>`;document.getElementById("btn-save").disabled=!canSave()});
+ app.querySelectorAll("[data-tick]").forEach(cb=>cb.onchange=()=>{syncNote();n.next_steps[+cb.dataset.tick].ticked=cb.checked;renderNote()});
  document.getElementById("btn-save").onclick=()=>{
   syncNote();
   const nm=k.name.value||"New client", first=nm.split(" ")[0];
   const r=fill(n.reminder,{first});
-  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"Active"},true);
-  const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,
-   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${n.next_steps.map(x=>x.text).join("; ")}.`});
-  n.immediate_needs.forEach(x=>Store.insert("Need",{ClientId:c.Id,Text:x.text,Priority:x.priority,Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id}));
-  n.next_steps.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id}));
-  Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
-  approve(it.Id,"I read the note and it matches what the client said");
+  const kept=n.next_steps.filter(x=>x.ticked);
+  const makesReminder=kept.some(x=>x.creates_reminder);
+  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"New intake"},true);
+  const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,MeetingType:n.log.meeting_type,Minutes:n.log.minutes,
+   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${kept.map(x=>x.text).join("; ")||"none agreed"}.`});
+  logServices(c.Id,it,n.log.services);
+  n.immediate_needs.forEach(x=>Store.insert("Need",{ClientId:c.Id,Text:x.text,ServiceType:x.service_type,Priority:x.priority,Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id}));
+  kept.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id,Owner:x.owner,DueText:x.due||null,Addresses:x.addresses,Origin:x.kind==="agreed"?"Agreed in meeting":x.kind==="added"?"Added by case manager":"AI suggestion accepted"}));
+  if(makesReminder)Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,"I reviewed this note against the conversation");
+  n.immediate_needs.filter(x=>x.added).forEach(x=>logEvent(nm,"Need added",`${x.priority}: ${x.text}`));
+  n.next_steps.filter(x=>x.added).forEach(x=>logEvent(nm,"Next step added",x.text));
+  n.next_steps.filter(x=>x.kind==="suggested").forEach(x=>logEvent(nm,x.ticked?"Suggestion accepted":"Suggestion declined",x.text));
+  n.next_steps.filter(x=>x.kind==="agreed"&&!x.ticked).forEach(x=>logEvent(nm,"Agreed step not saved",x.text));
+  if(makesReminder)logEvent(nm,"Reminder created",`${r.type}, ${fmt(parseDate(r.date))}: ${r.text}`);
+  logEvent(nm,"Note approved",`${secs(Date.now()-n.startedAt)} from upload to approval · ${n.edits} edit${n.edits===1?"":"s"} · ${n.tsOpened} time stamp${n.tsOpened===1?"":"s"} opened`);
   Store.save();
-  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("clients");toast(`Saved. ${nm} is now in your clients.`);
+  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("services");toast(`Saved. ${nm} is now in your clients. Next: match services.`);
  };
 }
 function syncNote(){
  const n=state.note;if(!n)return;
- keyFields(n.template).forEach(([f])=>{const el=document.getElementById("k-"+f);if(el)n.key_info[f].value=el.value});
- app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];if(it)it.text=el.textContent.trim()});
+ const who=n.key_info.name.value;
+ keyFields(n.template).forEach(([f,label])=>{const el=document.getElementById("k-"+f);if(el&&el.value!==n.key_info[f].value){logEvent(who,"Field edited",`${label}: "${n.key_info[f].value||"blank"}" → "${el.value||"blank"}"`);n.edits++;n.key_info[f].value=el.value}});
+ app.querySelectorAll("[data-owner]").forEach(el=>{const x=n.next_steps[+el.dataset.owner];if(x&&el.value!==x.owner){logEvent(who,"Step owner changed",`${x.text}: ${x.owner} → ${el.value}`);n.edits++;x.owner=el.value}});
+ app.querySelectorAll("[data-due]").forEach(el=>{const x=n.next_steps[+el.dataset.due];const v=el.value.trim();if(x&&v!==x.due){logEvent(who,"Step due changed",`${x.text}: "${x.due||"not said"}" → "${v||"not said"}"`);n.edits++;x.due=v}});
+ app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];const t=el.textContent.trim();if(it&&t!==it.text){if(!it.added){logEvent(who,el.dataset.list==="immediate_needs"?"Need edited":"Next step edited",`"${it.text}" → "${t}"`);n.edits++}it.text=t}});
 }
 
 /* ---------- Existing client update ---------- */
@@ -563,6 +714,8 @@ function renderUpdate(){
   <div class="pane review">
    <h2>Review check</h2>
    <div class="checks">
+    <div class="auto ${u.log.minutes>0&&u.log.services.length?"y":"n"}" id="chk-log"><i>${u.log.minutes>0&&u.log.services.length?"✓":"!"}</i><span>${u.log.minutes>0&&u.log.services.length?"Service log complete":"Add minutes and at least one service"}</span></div>
+    ${logBox(u.log,true)}
     <label class="chk"><input type="checkbox" id="urv"> I checked these changes against the ${S.kind==="audio"?"recording":"notes"}</label>
    </div>
    <button class="btn primary" id="usave" type="button" style="width:100%" disabled>Add to case file</button>
@@ -570,16 +723,20 @@ function renderUpdate(){
  </div>`;
  wireSrc();
  const sv=document.getElementById("usave");
- document.getElementById("urv").onchange=e=>sv.disabled=!e.target.checked;
+ const logOk=()=>u.log.minutes>0&&u.log.services.length>0;
+ const refresh=()=>{const ok=logOk(),m=document.getElementById("chk-log");m.className="auto "+(ok?"y":"n");m.innerHTML=`<i>${ok?"✓":"!"}</i><span>${ok?"Service log complete":"Add minutes and at least one service"}</span>`;sv.disabled=!(ok&&document.getElementById("urv").checked)};
+ document.getElementById("urv").onchange=e=>{refresh();logEvent(c.name,e.target.checked?"Review box ticked":"Review box unticked",u.type)};
+ wireLog(u.log,refresh);
  document.getElementById("btn-back").onclick=()=>go("clients");
  sv.onclick=()=>{
   const keep=[...app.querySelectorAll("[data-keep]")].map(x=>x.checked);
-  const it=Store.insert("Interaction",{ClientId:c.id,Date:TODAY_ISO,Type:u.type,Summary:document.getElementById("usum").textContent.trim(),Channel:S.kind==="audio"?"Voice note":"Typed",Template:u.type+" update",SourceName:S.name||null});
+  const it=Store.insert("Interaction",{ClientId:c.id,Date:TODAY_ISO,Type:u.type,Summary:document.getElementById("usum").textContent.trim(),Channel:S.kind==="audio"?"Voice note":"Typed",Template:u.type+" update",SourceName:S.name||null,MeetingType:u.log.meeting_type,Minutes:u.log.minutes});
+  logServices(c.id,it,u.log.services);
   let newRem=null;
   u.changes.forEach((ch,i)=>{if(!keep[i])return;
    if(ch.field==="status")Store.update("Client",c.id,{Status:ch.to});
    if(ch.field==="need"){const ex=ch.from&&Store.all("Need").find(x=>x.ClientId===c.id&&x.Status==="Open"&&x.Text===ch.from);
-    if(ex)Store.update("Need",ex.Id,{Text:ch.to});else Store.insert("Need",{ClientId:c.id,Text:ch.to,Priority:"Soon",Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id})}
+    if(ex)Store.update("Need",ex.Id,{Text:ch.to,...(ch.service_type?{ServiceType:ch.service_type}:{})});else Store.insert("Need",{ClientId:c.id,Text:ch.to,ServiceType:ch.service_type||"",Priority:"Soon",Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id})}
    if(ch.field==="note"&&ch.label==="Next step")Store.insert("Goal",{ClientId:c.id,Text:ch.to,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id});
    if(ch.field==="reminder")newRem=ch.reminder;
   });
@@ -587,9 +744,31 @@ function renderUpdate(){
   Store.where("Goal",g=>g.ClientId===c.id&&g.Status==="Open"&&g.DueDate).forEach(g=>Store.update("Goal",g.Id,{Status:"Done",CompletedDate:TODAY_ISO}));
   if(newRem)Store.insert("Goal",{ClientId:c.id,Text:newRem.text,Type:newRem.type,DueDate:newRem.date,Status:"Open",InteractionId:it.Id});
   approve(it.Id,`I checked these changes against the ${S.kind==="audio"?"recording":"notes"}`);
+  u.changes.forEach((ch,i)=>logEvent(c.name,keep[i]?"Change accepted":"Change removed",`${ch.label}: ${ch.to}`));
+  if(newRem)logEvent(c.name,"Reminder created",`${newRem.type}, ${fmt(parseDate(newRem.date))}: ${newRem.text}`);
+  logEvent(c.name,"Update approved",`${u.type} · ${secs(Date.now()-u.startedAt)} from upload to approval`);
   Store.save();
   state.sel=c.id;state.newIds.add(c.id);go("clients");toast(`Added to ${c.name}'s case file.`);
  };
+}
+
+/* ---------- Activity log view ---------- */
+function renderActivity(){
+ const count=e=>ACTIVITY.filter(a=>a.event===e).length;
+ const approvals=ACTIVITY.filter(a=>a.event==="Note approved"||a.event==="Update approved");
+ app.innerHTML=mock+`
+ <div class="notehead"><div><h1>Activity log</h1><p class="small muted">What happened in this session, newest first. Kept on screen only and cleared on reload.</p></div></div>
+ <div class="pane">
+  <div class="metrics">
+   <div><b>${approvals.length}</b><span>Notes and updates approved</span></div>
+   <div><b>${count("Field edited")+count("Need edited")+count("Next step edited")+count("Priority changed")+count("Need added")+count("Need removed")+count("Next step added")+count("Next step removed")+count("Step owner changed")+count("Step due changed")}</b><span>Edits to AI drafts</span></div>
+   <div><b>${count("Flag resolved")}</b><span>Flags resolved</span></div>
+   <div><b>${count("Suggestion accepted")} of ${count("Suggestion accepted")+count("Suggestion declined")}</b><span>AI suggestions accepted</span></div>
+   <div><b>${count("Time stamp opened")}</b><span>Time stamps opened</span></div>
+   <div><b>${count("Reminder created")}</b><span>Reminders created</span></div>
+  </div>
+  ${ACTIVITY.length?`<div class="tablewrap"><table class="log" id="activity"><thead><tr><th>Time</th><th>Client</th><th>Event</th><th>Detail</th></tr></thead><tbody>${ACTIVITY.map(a=>`<tr><td class="when">${a.at}</td><td>${esc(a.client)}</td><td class="ev">${esc(a.event)}</td><td>${esc(a.detail)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted small">Nothing yet. Start a new client or log a response, and each upload, edit, flag, review tick and approval shows up here.</p>`}
+ </div>`;
 }
 
 /* ---------- Start: load the simulated AI responses ---------- */
@@ -597,3 +776,4 @@ fetch("simulated_responses.json").then(r=>{if(!r.ok)throw new Error(r.status);re
  .then(j=>{SIM=j;Store.load();render()})
  .catch(()=>{app.innerHTML=`<div class="pane"><h3>Couldn't load simulated_responses.json</h3><p class="small" style="margin-top:6px">Browsers block this file when the page is opened by double-click. From this folder run <code>python3 -m http.server 8000</code> and open <code>http://localhost:8000</code>. If the JSON was edited, check it for a missing comma or quote.</p></div>`});
 </script>
+<script src="matched-services.js"></script>

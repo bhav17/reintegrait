@@ -71,9 +71,10 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     (await p.inputValue('#k-locality')).includes('63rd') && (await p.textContent('#steps')).includes('winter coat'));
   await p.selectOption('#fx-f1', 'Male'); await p.click('[data-fix="f1"]');
   await p.fill('#fx-f2', '773-555-0186'); await p.click('[data-fix="f2"]');
+  await p.fill('#lg-min', '50');
   await p.check('#rv1');
   check('5. Saving is allowed once flags are resolved and the review box is ticked', !(await p.isDisabled('#btn-save')));
-  await p.click('#btn-save'); await p.waitForSelector('#detail-name');
+  await p.click('#btn-save'); await p.click('#tab-casefile'); await p.waitForSelector('#detail-name');
   check('5. The approved note is saved to the new client\'s case file',
     (await p.textContent('#detail-name')) === 'Andre Williams' &&
     (await p.textContent('#timeline')).includes('winter coat') &&
@@ -98,7 +99,7 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   check('6. A typed update (text instead of voice) also works', (await p.textContent('#detail')).includes('Dec 3'));
 
   // Records behind the screens (step 1)
-  const recs = () => p.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v1')));
+  const recs = () => p.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
   let R = await recs();
   const types = ['Client', 'Interaction', 'Need', 'Service', 'Goal', 'Referral', 'Approval'];
   check('9. The store holds all seven record types', types.every(t => Array.isArray(R[t])));
@@ -113,6 +114,10 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
     R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-11' && g.Status === 'Done') &&
     R.Goal.some(g => g.ClientId === 'c1' && g.DueDate === '2026-11-18' && g.Status === 'Open'));
   check('9. Sample referrals are Referral records', R.Referral.length === 2);
+  const andreSvc = R.Service.filter(sv => sv.ClientId === andre.Id);
+  check('12. An intake writes one Service per service type, splitting the minutes',
+    andreSvc.length === 5 && andreSvc.reduce((t, sv) => t + sv.Minutes, 0) === 50 &&
+    R.Interaction.some(i => i.ClientId === andre.Id && i.Minutes === 50 && i.MeetingType === 'In-person visit'));
   await p.reload(); await p.waitForSelector('#btn-new'); await p.click('#nav-clients');
   const afterReload = await p.textContent('tbody');
   check('9. A reload keeps new clients and updates', afterReload.includes('Andre Williams') && afterReload.includes('Enrolled'));
@@ -131,6 +136,137 @@ const waitForAI = async p => { await p.waitForSelector('#seenote:not([hidden])',
   await p3.waitForSelector('#mgo:not([disabled])'); await p3.click('#mgo'); await waitForAI(p3);
   const hasField = (await p3.$$eval('.keyinfo label', ls => ls.map(l => l.textContent))).some(t => t.includes('Preferred name'));
   check('9. Templates (update types, key fields) come from simulated_responses.json', hasType && hasField);
+
+  // 10. Step 1 spec (Step 1 spec - Client Note.docx)
+  const s = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  s.on('pageerror', e => errors.push(e.message));
+  await s.goto(URL); await s.waitForSelector('#btn-new');
+  await s.click('[data-reset]'); await s.waitForSelector('#reminders');
+  const remText = await s.textContent('#reminders');
+  check('10. Home lists reminders due today and this week (Keisha Moore, Nov 16), each with Log response',
+    remText.includes('Keisha Moore') && remText.includes('Nov 16') &&
+    (await s.$$('#reminders [data-logresp]')).length === (await s.$$('#reminders .row')).length);
+  await s.click('#reminders [data-logresp="c1"]');
+  check('10. Log response on a home reminder opens the update flow with its type',
+    (await s.textContent('#mtitle')).includes('Marcus Reed') && (await s.inputValue('#utype')) === 'Referral check');
+  await s.click('#mclose');
+  await s.click('#btn-new');
+  check('10. Pop-up offers "Type notes instead"', (await s.textContent('.modal')).toLowerCase().includes('type notes instead'));
+  await s.setInputFiles('#file', { name: 'notes.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4') });
+  const refusal = await s.textContent('#filebox');
+  check('10. A file in another format is refused, saying why and what to do',
+    refusal.includes("Can't use this file") && refusal.includes('MP3, M4A, WAV or AAC') && await s.isDisabled('#mgo'));
+  await s.click('#sample'); await s.waitForSelector('#mgo:not([disabled])');
+  check('10. Sample recording matches the spec', (await s.textContent('#filebox')).includes('intake-andre-williams-2026-11-11.m4a'));
+  await s.click('#mgo'); await waitForAI(s);
+  const flagsTop = await s.evaluate(() => { const f = document.getElementById('flags'), n = document.getElementById('note'); return !!f && !!(f.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING); });
+  check('10. Flags appear at the top of the note, with an icon and text', flagsTop &&
+    (await s.textContent('#flags')).includes('⚠') && (await s.textContent('#flags')).includes('Gender') && (await s.textContent('#flags')).includes('00:38:14'));
+  check('10. Consent to recording is shown in the transcript', (await s.textContent('#t2')).includes('Consent'));
+  await s.click('[data-src="t5"]');
+  await s.click('#btn-edit');
+  await s.selectOption('[data-pri="4"]', 'Soon');
+  check('10. A need\'s priority can be changed', (await s.$$eval('#needs li', ls => ls[4].querySelector('select').value)) === 'Soon');
+  await s.fill('#k-age', '35'); await s.click('#btn-edit');
+  check('10. Review box says "I reviewed this note against the conversation"',
+    (await s.textContent('#review')).includes('I reviewed this note against the conversation'));
+  await s.selectOption('#fx-f1', 'Male'); await s.click('[data-fix="f1"]');
+  await s.fill('#fx-f2', '773-555-0186'); await s.click('[data-fix="f2"]');
+  await s.check('#rv1'); await s.click('#btn-save'); await s.click('#tab-casefile'); await s.waitForSelector('#detail-name');
+  check('10. A new client gets status "New intake" and a follow-up reminder',
+    (await s.textContent('#detail')).includes('New intake') && (await s.textContent('#remcard')).includes('Nov 13'));
+  await s.click('#nav-activity');
+  const log = await s.textContent('#activity');
+  check('10. Activity log shows edits (before → after), priority change, flags, review tick, reminder and approval time',
+    log.includes('"34" → "35"') && log.includes('Later → Soon') && log.includes('Flag resolved') && log.includes('Review box ticked') &&
+    log.includes('Reminder created') && log.includes('from upload to approval') && log.includes('Time stamp opened'));
+  await shot(s, '10-activity-log');
+  await s.click('#nav-clients'); await s.click('tr[data-id="c1"]'); await s.click('#btn-addinfo'); await s.click('#sample');
+  await s.waitForSelector('#mgo:not([disabled])'); await s.click('#mgo'); await waitForAI(s);
+  await s.uncheck('[data-keep="2"]'); await s.check('#urv'); await s.click('#usave'); await s.waitForSelector('#timeline');
+  await s.click('#nav-activity');
+  const log2 = await s.textContent('#activity');
+  check('10. Activity log shows the update type and which changes were accepted or removed',
+    log2.includes('Referral check · voice note') && log2.includes('Change accepted') && log2.includes('Change removed') && log2.includes('Update approved'));
+  await s.click('[data-reset]');
+
+  // 11. Next steps rules (docs/specs/step1-next-steps.md)
+  const ns = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  ns.on('pageerror', e => errors.push(e.message));
+  await ns.goto(URL); await ns.waitForSelector('#btn-new'); await ns.click('[data-reset]');
+  await ns.click('#btn-new'); await ns.click('#sample'); await ns.waitForSelector('#mgo:not([disabled])');
+  await ns.click('#mgo'); await waitForAI(ns);
+  const agreed = await ns.$$eval('#steps-agreed li', ls => ls.map(l => ({ t: l.textContent, on: l.querySelector('[data-tick]').checked })));
+  const sugg = await ns.$$eval('#steps-suggested li', ls => ls.map(l => ({ t: l.textContent, on: l.querySelector('[data-tick]').checked })));
+  check('11. Agreed steps and AI suggestions show separately; agreed ticked, suggestions not',
+    agreed.length === 3 && sugg.length >= 1 && agreed.every(x => x.on) && sugg.every(x => !x.on));
+  check('11. Each step shows owner, due and evidence',
+    agreed.every(x => x.t.includes('Owner:') && x.t.includes('Due:') && x.t.includes('Agreed at')) && sugg.every(x => x.t.includes('Evidence: need')));
+  check('11. Suggestions are capped at 5, in need-priority order, and skip needs an agreed step covers',
+    sugg.length <= 5 && sugg[0].t.includes('Housing') && !sugg.some(x => /Medication|ID\b/.test(x.t.split('Addresses:')[1] || '')));
+  check('11. Suggestions name no provider', !sugg.some(x => /ABE|Cara|Safer|Center\b/.test(x.t)));
+  await ns.check('#steps-suggested li:first-child [data-tick]');
+  await ns.uncheck('#steps-agreed li:nth-child(3) [data-tick]');
+  check('11. Unticking the follow-up call removes its reminder badge', !(await ns.textContent('#steps-agreed')).includes('Creates reminder'));
+  await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
+  await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]');
+  await ns.check('#rv1'); await ns.click('#btn-save'); await ns.click('#tab-casefile'); await ns.waitForSelector('#detail-name');
+  const R11 = await ns.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
+  const cid = R11.Client.find(c => c.Name === 'Andre Williams').Id;
+  const goals = R11.Goal.filter(g => g.ClientId === cid);
+  check('11. Only ticked steps are saved, and no reminder without the ticked call',
+    goals.some(g => g.Origin === 'AI suggestion accepted' && g.Text.includes('housing')) && !goals.some(g => g.Text.includes('SNAP')) &&
+    !goals.some(g => g.Text === 'Follow-up call') && !goals.some(g => g.DueDate));
+  await ns.click('#nav-activity');
+  const log11 = await ns.textContent('#activity');
+  check('11. Activity log records suggestions accepted and declined', log11.includes('Suggestion accepted') && log11.includes('Suggestion declined'));
+  await ns.click('#nav-home'); await ns.click('#btn-new'); await ns.click('#sample'); await ns.waitForSelector('#mgo:not([disabled])');
+  await ns.click('#mgo'); await waitForAI(ns);
+  await ns.click('#btn-edit');
+  for (let i = 0; i < 3; i++) await ns.click('#steps-agreed li:first-child [data-del]');
+  await ns.click('#btn-edit');
+  await ns.selectOption('#fx-f1', 'Male'); await ns.click('[data-fix="f1"]');
+  await ns.fill('#fx-f2', '773-555-0186'); await ns.click('[data-fix="f2"]'); await ns.check('#rv1');
+  const blocked = (await ns.textContent('#nosteps')).includes('No next steps agreed') && await ns.isDisabled('#btn-save');
+  await ns.check('#rv-none');
+  check('11. With no agreed steps, approval needs the "no next steps agreed" confirmation', blocked && !(await ns.isDisabled('#btn-save')));
+  await shot(ns, '11-no-steps');
+  await ns.click('[data-reset]');
+
+  // 12. Service type and dosage (step 2)
+  const p4 = await browser.newPage();
+  await p4.goto(URL); await p4.click('#btn-new'); await p4.click('#sample');
+  await p4.waitForSelector('#mgo:not([disabled])'); await p4.click('#mgo'); await waitForAI(p4);
+  const needTypes = await p4.$$eval('[data-stype]', s => s.map(x => x.value));
+  check('12. Each need in the drafted note has a service type', needTypes.length === 5 && needTypes.every(Boolean));
+  check('12. Minutes are filled from the recording length (46:58 is 47 min)', (await p4.inputValue('#lg-min')) === '47');
+  await p4.selectOption('#fx-f1', 'Male'); await p4.click('[data-fix="f1"]');
+  await p4.fill('#fx-f2', '773-555-0186'); await p4.click('[data-fix="f2"]');
+  await p4.click('#btn-edit'); await p4.click('[data-add="immediate_needs"]'); await p4.keyboard.type('Winter coat'); await p4.click('#btn-edit');
+  await p4.check('#rv1');
+  const blockedType = await p4.isDisabled('#btn-save') && (await p4.textContent('#chk-types')).includes('1 need without');
+  await p4.selectOption('[data-stype="5"]', 'Benefits'); await p4.check('#rv1');
+  await p4.fill('#lg-min', '');
+  const blockedMin = await p4.isDisabled('#btn-save');
+  await p4.fill('#lg-min', '50');
+  check('12. A note can\'t be saved until every need has a service type and minutes are logged',
+    blockedType && blockedMin && !(await p4.isDisabled('#btn-save')));
+  await p4.click('#nav-clients');
+  await p4.click('tr[data-id="c3"]'); await p4.click('#btn-addinfo'); await p4.selectOption('#utype', 'Second visit');
+  await p4.click('#sample'); await p4.waitForSelector('#mgo:not([disabled])'); await p4.click('#mgo'); await waitForAI(p4);
+  const svcs = await p4.$$eval('#lg-svcs input:checked', s => s.map(x => x.value));
+  check('12. An update suggests the services covered and the meeting type', svcs.join() === 'Housing,Health' && (await p4.inputValue('#lg-type')) === 'In-person visit');
+  for (const v of svcs) await p4.uncheck(`#lg-svcs input[value="${v}"]`);
+  await p4.check('#urv');
+  const blockedSvc = await p4.isDisabled('#usave');
+  await p4.check('#lg-svcs input[value="Housing"]');
+  check('12. An update can\'t be saved without at least one service', blockedSvc && !(await p4.isDisabled('#usave')));
+  await p4.click('#usave'); await p4.waitForSelector('#dosage');
+  const R4 = await p4.evaluate(() => JSON.parse(localStorage.getItem('reintegrait.records.v2')));
+  const luisSvc = R4.Service.filter(x => x.ClientId === 'c3' && x.Date === '2026-11-11');
+  check('12. Saving an update writes Service records with type and minutes', luisSvc.length === 1 && luisSvc[0].ServiceType === 'Housing' && luisSvc[0].Minutes === 17);
+  check('12. The client shows a dosage summary (contacts, minutes, service types, referrals)',
+    (await p4.innerText('#dosage')).replace(/\s+/g, ' ').includes('2 contacts 62 min 2 service types 0 referrals'));
 
   // Simulated AI lives in the JSON file
   const p2 = await browser.newPage();
