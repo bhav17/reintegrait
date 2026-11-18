@@ -622,7 +622,7 @@ const needCat=t=>String(t).split(":")[0].trim();
 function applyStepRules(note){
  const pr={Urgent:0,Soon:1,Later:2};
  const needPri=c=>{const x=note.immediate_needs.find(x=>needCat(x.text)===c);return x?pr[x.priority]??3:3};
- const steps=note.next_steps.map(x=>({kind:x.kind||"suggested",text:x.action||x.text,owner:x.owner||"Case manager",due:x.due||"",addresses:x.addresses||[],source:x.source||null,creates_reminder:!!x.creates_reminder}));
+ const steps=note.next_steps.map(x=>({kind:x.kind||"suggested",text:x.action||x.text,owner:x.owner||"Case manager",due:x.due||"",addresses:x.addresses||[],source:x.source||null,quote:x.quote||"",creates_reminder:!!x.creates_reminder}));
  steps.forEach(x=>{if(x.kind==="agreed"&&!x.source)x.kind="suggested"});
  const agreed=steps.filter(x=>x.kind==="agreed");
  const covered=new Set(agreed.flatMap(x=>x.addresses));
@@ -653,7 +653,7 @@ function renderNote(){
    <span class="meta"><span>Owner: ${state.editing?`<select data-owner="${i}" aria-label="Owner">${["Case manager","Client","Both"].map(o=>`<option ${o===x.owner?"selected":""}>${o}</option>`).join("")}</select>`:esc(x.owner)}</span>
    <span>Due: ${state.editing?`<input data-due="${i}" value="${esc(x.due)}" placeholder="not said" aria-label="Due" size="10">`:(x.due?esc(x.due):"not said")}</span>
    ${x.addresses.length?`<span>Addresses: ${esc(x.addresses.join(", "))}</span>`:""}
-   ${x.kind==="added"?`<span class="tag info">Added by case manager</span>`:x.kind==="suggested"?`<span>Evidence: need ${ev}</span>`:ev?`<span>Agreed at ${ev}</span>`:""}
+   ${x.kind==="added"?`<span class="tag info">Added by case manager</span>`:x.kind==="suggested"?`<span class="tag warn">AI suggested. Nobody agreed to this in the meeting</span><span>Evidence: need ${ev}</span>`:`${ev?`<span>Agreed at ${ev}</span>`:""}${x.quote?`<span class="small muted">“${esc(x.quote)}”</span>`:""}`}
    ${x.creates_reminder&&x.ticked?`<span class="tag info">Creates reminder</span>`:""}</span></li>`};
  const noneNeeded=!agreedIdx.length;
  const canSave=()=>!open&&n.rv1&&(!noneNeeded||n.noneConfirmed)&&!untyped&&n.log.minutes>0;
@@ -698,13 +698,16 @@ function renderNote(){
  const rn=document.getElementById("rv-none");if(rn)rn.onchange=e=>{n.noneConfirmed=e.target.checked;logEvent(k.name.value,e.target.checked?"No steps confirmed":"No steps unconfirmed","I confirm no next steps were agreed in this meeting");document.getElementById("btn-save").disabled=!canSave()};
  app.querySelectorAll("[data-stype]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.stype];const before=x.service_type||"none";x.service_type=sel.value;n.edits++;logEvent(k.name.value,"Service type changed",`${x.text}: ${before} → ${sel.value||"none"}`);renderNote()});
  wireLog(n.log,()=>{const m=document.getElementById("chk-min"),ok=n.log.minutes>0;m.className="auto "+(ok?"y":"n");m.innerHTML=`<i aria-hidden="true">${ok?"✓":"⚠"}</i><span>${ok?"Minutes logged":"Add the meeting length in minutes"}</span>`;document.getElementById("btn-save").disabled=!canSave()});
- app.querySelectorAll("[data-tick]").forEach(cb=>cb.onchange=()=>{syncNote();n.next_steps[+cb.dataset.tick].ticked=cb.checked;renderNote()});
+ app.querySelectorAll("[data-tick]").forEach(cb=>cb.onchange=()=>{syncNote();const st=n.next_steps[+cb.dataset.tick];st.ticked=cb.checked;st.userTicked=cb.checked;renderNote()});
  document.getElementById("btn-save").onclick=()=>{
   syncNote();
   const nm=k.name.value||"New client", first=nm.split(" ")[0];
   const r=fill(n.reminder,{first});
-  const kept=n.next_steps.filter(x=>x.ticked);
-  const makesReminder=kept.some(x=>x.creates_reminder);
+  /* Save gate: a step is saved only if it is ticked AND (agreed with a transcript line, added by the case manager, or an AI suggestion the case manager ticked herself). Nothing else is saved, and no reminder comes from anything but an agreed, sourced step. */
+  const passes=x=>x.ticked&&(x.kind==="agreed"?!!x.source:x.kind==="added"?true:!!x.userTicked);
+  const kept=n.next_steps.filter(passes);
+  n.next_steps.filter(x=>x.ticked&&!passes(x)).forEach(x=>logEvent(nm,"Blocked at save",x.text));
+  const makesReminder=kept.some(x=>x.creates_reminder&&x.kind==="agreed"&&!!x.source);
   const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,ClientSince:TODAY_ISO,Status:"New intake"},true);
   const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,MeetingType:n.log.meeting_type,Minutes:n.log.minutes,
    Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${kept.map(x=>x.text).join("; ")||"none agreed"}.`});
@@ -719,6 +722,7 @@ function renderNote(){
   n.next_steps.filter(x=>x.kind==="agreed"&&!x.ticked).forEach(x=>logEvent(nm,"Agreed step not saved",x.text));
   if(makesReminder)logEvent(nm,"Reminder created",`${r.type}, ${fmt(parseDate(r.date))}: ${r.text}`);
   logEvent(nm,"Note approved",`${secs(Date.now()-n.startedAt)} from upload to approval · ${n.edits} edit${n.edits===1?"":"s"} · ${n.tsOpened} time stamp${n.tsOpened===1?"":"s"} opened`);
+  if(!n.tsOpened)logEvent(nm,"Approved without opening any time stamp","0 time stamps opened before approval");
   Store.save();
   state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("services");toast(`Saved. ${nm} is now in your clients. Next: match services.`);
  };

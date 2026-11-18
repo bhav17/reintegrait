@@ -40,7 +40,7 @@
       { "id": "t9", "time": "00:21:47", "speaker": "Andre", "text": "I'm not on food stamps or nothing." },
       { "id": "t10", "time": "00:38:10", "speaker": "Denise", "text": "What's the best number to reach you?" },
       { "id": "t11", "time": "00:38:14", "speaker": "Andre", "text": "It's my cousin's phone, 773-555-01 [inaudible, 2 sec]" },
-      { "id": "t12", "time": "00:46:50", "speaker": "Denise", "text": "So this week we start your state ID, get your pills refilled, and I'll call you Friday." }
+      { "id": "t12", "time": "00:46:50", "speaker": "Denise", "text": "So this week we start your state ID application with your release papers, we find a clinic for a same-week refill, and I'll call you Friday, November thirteenth." }
     ],
     "note": {
       "template": "Standard intake note",
@@ -61,9 +61,9 @@
         { "priority": "Later", "text": "Work: wants a job, has a forklift certificate", "service_type": "Jobs", "source": "t8" }
       ],
       "next_steps": [
-        { "kind": "agreed", "action": "Get blood pressure pills refilled", "owner": "Both", "due": "This week", "addresses": ["Medication"], "source": "t12" },
-        { "kind": "agreed", "action": "Start the Illinois state ID application with release papers", "owner": "Both", "due": "This week", "addresses": ["ID"], "source": "t12" },
-        { "kind": "agreed", "action": "Follow-up call", "owner": "Case manager", "due": "Fri Nov 13", "addresses": ["Medication", "ID"], "source": "t12", "creates_reminder": true },
+        { "kind": "agreed", "action": "Find a clinic for a same-week blood pressure refill", "owner": "Both", "due": "This week", "addresses": ["Medication"], "source": "t12", "quote": "we find a clinic for a same-week refill" },
+        { "kind": "agreed", "action": "Start the Illinois state ID application with release papers", "owner": "Both", "due": "This week", "addresses": ["ID"], "source": "t12", "quote": "we start your state ID application with your release papers" },
+        { "kind": "agreed", "action": "Follow-up call", "owner": "Case manager", "due": "Fri Nov 13", "addresses": ["Medication", "ID"], "source": "t12", "quote": "I'll call you Friday, November thirteenth", "creates_reminder": true },
         { "kind": "suggested", "action": "Find short-term housing before the couch stay ends", "owner": "Case manager", "due": "", "addresses": ["Housing"], "source": "t5" },
         { "kind": "suggested", "action": "Help apply for SNAP", "owner": "Both", "due": "", "addresses": ["Food"], "source": "t9" },
         { "kind": "suggested", "action": "Find a job readiness program that uses the forklift certificate", "owner": "Case manager", "due": "", "addresses": ["Work"], "source": "t8" }
@@ -73,7 +73,7 @@
         { "id": "f2", "field": "contact", "kind": "Unclear", "text": "Phone number cut off at 00:38:14 (inaudible). Last two digits missing.", "fix": "input", "placeholder": "773-555-01__" }
       ]
     },
-    "reminder": { "date": "2026-11-13", "type": "Weekly phone check", "text": "Follow-up call with {first}: ID, pills, SNAP." }
+    "reminder": { "date": "2026-11-13", "type": "Weekly phone check", "text": "Follow-up call with {first}: ID and pills." }
   },
 
   "typed_text_processing": {
