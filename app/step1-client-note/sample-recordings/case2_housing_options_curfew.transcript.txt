@@ -1,0 +1,9 @@
+Case 2: Andre hears the housing options and refuses the curfew shelter; agrees to share with Teamwork
+Use to trigger 'Not this one -> Client declined' and the consent tick. The ranking cards themselves come from the Step 2 UI.
+
+[00:00:00] Denise: Okay Andre, I found three housing options. Teamwork Englewood has openings this week and it's close to your cousin's place. There's also a men's transitional house, and a shelter.
+[00:00:12] Andre: What's the shelter like?
+[00:00:15] Denise: It has a nine P M curfew.
+[00:00:18] Andre: Nah. I won't stay anywhere with a curfew. Not doing that.
+[00:00:23] Denise: Understood. I'll take that one off. Do I have your okay to share your information with Teamwork Englewood?
+[00:00:31] Andre: Yes, that's fine. You can share it with them.

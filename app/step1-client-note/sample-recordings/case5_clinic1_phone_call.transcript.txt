@@ -1,0 +1,9 @@
+Case 5: Denise calls Clinic #1 and hears 'We're full until Monday'
+Use to trigger 'Not this one -> Full'. Walk-in rule stays unanswered. Medicaid is never discussed in this clip.
+
+[00:00:00] Clinic: Community Health Clinic, how can I help you?
+[00:00:03] Denise: Hi, I'm a case manager calling for a client who needs a blood pressure refill this week. Do you have any openings?
+[00:00:11] Clinic: We're full until Monday.
+[00:00:14] Denise: Do you take uninsured walk-ins?
+[00:00:17] Clinic: You'd have to call back Monday and ask about that.
+[00:00:21] Denise: Okay, thank you.
