@@ -11,6 +11,7 @@ This folder holds a small helper program that runs on your own laptop. With it, 
 | --- | --- |
 | Turning the recording into text, with time stamps | **Real model** (set in `ai-config.json`) |
 | Labelling who said what, and the drafted new-client note (key fields, needs, next steps, flags) | **Real model** (`note` in `ai-config.json`), if you add an Anthropic key |
+| Reading a document (release papers, ID, benefits letter) to check the note against it | **Real model** (`document` in `ai-config.json`), with the same Anthropic key |
 | Updates for existing clients | Still `simulated_responses.json` |
 | Step 2 matched services | Still `simulated_responses.json` |
 
@@ -100,6 +101,8 @@ If it says **Key: NOT FOUND**, go back to step 3. If the **Note** line says what
 4. The steps **Look for errors and missing information** and **Match to the template** wait for the note model. That usually takes under a minute.
 5. Click **Review the note**. The transcript has a green **Real AI** tag and speaker labels, and a line above the note says which model drafted it. Tap a time stamp in the note to jump to the line it came from. The Terminal prints one line per model, such as `✓ claude-opus-5-5 drafted the note in 21.4 s`.
 
+6. On the note, click **Verify with a document**. Take a photo or choose a JPG, PNG or PDF, or click **Sample release papers** (a made-up document for Andre, sent to the real model too). Click **Read document**. After 10 to 30 seconds, matching fields get a green **Verified** tag, a different value becomes a flag where you pick which one is right, and values found only on the document are offered with **Add to note** or **Leave out**. The document itself is not saved anywhere, only what was read from it. The Terminal prints a line such as `✓ claude-opus-5-5 read andre-release-papers.png in 8.2 s`.
+
 If anything goes wrong (wrong key, no credits, no internet), the prototype says so in that step, shows a yellow banner on the note saying the sample is being shown, and writes the error to the log. Nothing breaks.
 
 ## Switching between real and simulated
@@ -186,8 +189,9 @@ To start a fresh log, stop the helper, delete `ai-log.jsonl`, and start again. T
 | File | What it is | Shared on GitHub? |
 | --- | --- | --- |
 | `server.py` | The helper. Shows the prototype, passes recordings to the model, writes the log. | Yes |
-| `ai_client.py` | The two functions that call the AI models: `transcribe()` and `draft_note()`. | Yes |
+| `ai_client.py` | The functions that call the AI models: `transcribe()`, `draft_note()` and `read_document()`. | Yes |
 | `prompts/draft-note.md` | The instructions the note model gets. | Yes |
+| `prompts/read-document.md` | The instructions the document reader gets. It only copies what is printed; the prototype does the comparing. | Yes |
 | `ai-config.json` | Providers, models, instructions, and the real/simulated setting. | Yes |
 | `.env.example` | Shows teammates what to put in their own `.env`. | Yes |
 | `.env` | Your keys. | **Never** |

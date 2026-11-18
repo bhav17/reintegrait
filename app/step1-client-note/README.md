@@ -15,6 +15,8 @@ The AI is simulated. Nothing is sent anywhere, and there is no server or login. 
 | `index.html` | The whole prototype: screens, the record store with the sample clients, and the logic that plays back the simulated AI |
 | `simulated_responses.json` | Note templates (intake key fields, update types, service types, meeting types) and every simulated AI response: processing results, transcripts, the drafted client note, flags, and the updates for existing clients. Edit it and reload |
 | `acceptance-test.js` | Optional automated check of the acceptance criteria below |
+| `acceptance-test-documents.js` | Automated check of Verify with a document |
+| `sample-documents/` | Two made-up documents for the fictional client Andre: release papers and a state ID. Marked SAMPLE. Never put a real person's document here |
 
 ## Launch
 
@@ -68,7 +70,7 @@ It prints PASS or FAIL for each criterion and saves a screenshot of each screen 
 
 ## Records
 
-The screens read and write seven record types, kept in `localStorage` under `reintegrait.records.v2`. Their names follow Salesforce Nonprofit Cloud so an export maps cleanly later.
+The screens read and write eight record types, kept in `localStorage` under `reintegrait.records.v2`. Their names follow Salesforce Nonprofit Cloud so an export maps cleanly later.
 
 | Record | What it holds | Salesforce equivalent |
 |---|---|---|
@@ -79,6 +81,11 @@ The screens read and write seven record types, kept in `localStorage` under `rei
 | Goal | Next steps, and reminders (a reminder is an open goal with a due date) | GoalAssignment |
 | Referral | Referrals sent to partners (statuses grow in step 4) | Referral |
 | Approval | Who approved which note or update, and when | Audit log |
+| Document | A document on a client's file: type, number, date added, who added it, a note, and the file name. When it was checked against a new client's note, also which fields matched, which differed and which value Denise chose, which were added or left out. The file itself is kept only if Denise asked, in this browser's IndexedDB, under `FileKey` | DocumentChecklistItem |
+
+**Documents.** Each client's case file has a Documents list. **+ Add document** takes a photo or PDF (up to 20 MB), a document type (release papers, state ID, birth certificate, Social Security card, benefits letter, signed consent form, release of information, other), an optional number and note. The file is saved in this browser only (IndexedDB, not localStorage, because files are large). **View** opens it and **Remove** deletes the record and the file after a second click. Adding, opening and removing are in the activity log. Reset sample data also clears the files.
+
+**Verify with a document.** On a new client's note, **Verify with a document** reads a photo or PDF of release papers, a state ID or a benefits letter. It checks name, date of birth (and age from it), neighborhood, release date, facility, supervision, officer and conditions. Gender is never read from a document. A match gets a green "Verified · Release papers" tag, which goes away if the field is edited by hand. A difference is a flag that shows both values, and the note can't be saved until Denise picks one. A value found only on the document is offered with **Add to note** or **Leave out**. Tick **Keep a copy in the client's documents** to also keep the file. Saving writes a Document record, lists the verified fields on the Client record (`VerifiedFields`), and adds "Checked against: …" to the intake note. Every match, difference and choice goes to the activity log. In Simulated mode only the two sample documents work; reading your own needs the laptop helper (see `backend/README.md`).
 
 Logging a response on a client closes their open reminders, and the update's own reminder, if kept, becomes the next one.
 

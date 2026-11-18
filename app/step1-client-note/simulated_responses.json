@@ -475,5 +475,40 @@
         "client_text": "Hi {first}, it's Denise. Pick up your bus pass at {provider}, {address}, {when}. Reply if anything changes."
       }
     }
+  },
+  "document_check": {
+    "_about": "Verify with a document. 'fields' are the key fields a document is checked against (gender is left out on purpose: a sex marker on an ID is not the client's gender, and age is checked from the date of birth). 'samples' are made-up documents for a fictional client, with what the AI reads from each. In Simulated mode the prototype uses these answers. With the helper and real AI on, the sample image itself is sent to the model.",
+    "fields": ["name", "birth_date", "locality", "release_date", "facility", "supervision_type", "supervision_officer", "conditions"],
+    "document_types": ["Release papers", "State ID", "Birth certificate", "Social Security card", "Benefits letter", "Signed consent form", "Release of information", "Other"],
+    "samples": [
+      {
+        "id": "release", "label": "Sample release papers", "file": "sample-documents/andre-release-papers.png", "media_type": "image/png",
+        "document": {
+          "readable": true, "document_type": "Release papers", "document_number": "S00000", "issued_by": "Sample Department of Corrections",
+          "fields": [
+            {"key": "name", "value": "Andre L Williams", "printed_as": "WILLIAMS, ANDRE L"},
+            {"key": "birth_date", "value": "1992-04-17", "printed_as": "04/17/1992"},
+            {"key": "locality", "value": "Englewood", "printed_as": "Englewood, Chicago"},
+            {"key": "release_date", "value": "2026-11-03", "printed_as": "11/03/2026"},
+            {"key": "facility", "value": "Sheridan Correctional Center", "printed_as": ""},
+            {"key": "supervision_type", "value": "Parole", "printed_as": "Mandatory Supervised Release (MSR)"},
+            {"key": "supervision_officer", "value": "Agent T. Ramirez, 312-555-0191", "printed_as": "Agent T. Ramirez · 312-555-0191"},
+            {"key": "conditions", "value": "Report to parole agent within 72 hours; curfew 9 PM to 6 AM for the first 90 days; no travel outside Cook County without permission", "printed_as": ""}
+          ],
+          "comment": "The document is marked as a sample."
+        }
+      },
+      {
+        "id": "stateid", "label": "Sample state ID", "file": "sample-documents/andre-state-id.png", "media_type": "image/png",
+        "document": {
+          "readable": true, "document_type": "State ID", "document_number": "W000-0000-0000", "issued_by": "Sample State",
+          "fields": [
+            {"key": "name", "value": "Andre L Williams", "printed_as": "WILLIAMS ANDRE L"},
+            {"key": "birth_date", "value": "1992-04-17", "printed_as": "04/17/1992"}
+          ],
+          "comment": "The card is marked as a sample and not valid."
+        }
+      }
+    ]
   }
 }

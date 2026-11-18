@@ -17,5 +17,14 @@
     "location": "Chicago, Illinois",
     "max_tokens": 16000,
     "timeout_seconds": 180
+  },
+  "document": {
+    "_help": "Reads a photo or PDF of release papers, an ID or a letter so the note can be checked against it. Uses the same ANTHROPIC_API_KEY as the note. Set enabled to false to use the sample documents only.",
+    "enabled": true,
+    "provider": "anthropic",
+    "model": "claude-opus-5-5",
+    "effort": "low",
+    "max_tokens": 4000,
+    "timeout_seconds": 120
   }
 }

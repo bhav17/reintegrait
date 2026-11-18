@@ -20,7 +20,7 @@ from pathlib import Path
 
 import importlib.util
 
-from ai_client import AIError, draft_note, transcribe
+from ai_client import AIError, draft_note, read_document, transcribe
 
 HERE = Path(__file__).resolve().parent          # backend/
 SITE = HERE.parent                              # step1-client-note/ (the prototype)
@@ -101,7 +101,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self._json(200, {"helper": True, "mode": cfg.get("mode", "simulated"),
                                     "provider": cfg.get("provider"), "model": cfg.get("model"),
                                     "key_found": bool(read_env().get("HF_TOKEN")),
-                                    "note": note_status(cfg)})
+                                    "note": note_status(cfg), "document": document_status(cfg)})
         return super().do_GET()
 
     def do_POST(self):
@@ -113,6 +113,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._transcribe(body)
         if self.path.startswith("/api/draft-note"):
             return self._draft_note(body)
+        if self.path.startswith("/api/read-document"):
+            return _read_document_handler(self, body)
         if self.path.startswith("/api/log"):
             try:
                 ev = json.loads(body or b"{}")
@@ -202,6 +204,52 @@ def _draft_note_handler(handler, body):
     return handler._json(200, {"ok": True, "model": r["request"]["model"], "note": r["note"], "seconds": r["seconds"]})
 
 
+def document_config(cfg):
+    """The document reader uses the "document" part of ai-config.json, or the note settings if it is missing."""
+    return {**(cfg.get("note") or {}), "effort": "low", "max_tokens": 4000, **(cfg.get("document") or {})}
+
+
+def document_status(cfg):
+    d = document_config(cfg)
+    return {"enabled": bool(d.get("enabled")) and cfg.get("mode") == "real", "model": d.get("model"),
+            "key_found": bool(read_env().get("ANTHROPIC_API_KEY")),
+            "sdk_installed": importlib.util.find_spec("anthropic") is not None}
+
+
+def _read_document_handler(handler, body):
+    cfg = read_config()
+    dcfg = document_config(cfg)
+    try:
+        req = json.loads(body or b"{}")
+    except json.JSONDecodeError:
+        return handler._json(400, {"ok": False, "error": "Bad request."})
+    data, media_type = req.get("data") or "", req.get("media_type") or ""
+    entry = {"run": _run(req.get("run")), "type": "ai_request", "step": "read document",
+             "input": {"file_name": req.get("file_name", ""), "content_type": media_type,
+                       "size_bytes": len(data) * 3 // 4, "client": req.get("client", ""),
+                       "note": "The document itself is not stored in this log."}}
+    if not document_status(cfg)["enabled"]:
+        entry.update(mode="simulated", output="Document reading is off in ai-config.json.")
+        write_log(entry)
+        return handler._json(200, {"ok": False, "mode": "simulated", "error": "Document reading is off in ai-config.json."})
+    try:
+        r = read_document(data, media_type, req.get("fields") or [], dcfg, read_env().get("ANTHROPIC_API_KEY", ""))
+    except AIError as e:
+        entry.update(mode="real", request={"provider": "anthropic", "model": dcfg.get("model"), "effort": dcfg.get("effort")},
+                     error={"message": str(e), "status": e.status, "detail": e.detail})
+        write_log(entry)
+        print(f"  ✗ Document read error: {e}", flush=True)
+        return handler._json(200, {"ok": False, "mode": "real", "error": str(e)})
+    doc = r["document"]
+    entry.update(mode="real", request=r["request"], output=doc,
+                 confidence={"note": "No probability score. readable is the model's own judgment.", "readable": doc.get("readable")},
+                 stop_reason=r["stop_reason"], usage=r["usage"], request_id=r["request_id"], seconds=r["seconds"], error=None)
+    write_log(entry)
+    print(f"  ✓ {r['request']['model']} read {req.get('file_name', 'a document')} in {r['seconds']} s "
+          f"({doc.get('document_type')}, {len(doc.get('fields') or [])} fields)", flush=True)
+    return handler._json(200, {"ok": True, "model": r["request"]["model"], "document": doc, "seconds": r["seconds"]})
+
+
 def main():
     cfg = read_config()
     key = bool(read_env().get("HF_TOKEN"))
@@ -216,6 +264,13 @@ def main():
         print(f"  Note:     {ns['model']} drafts the note" + (f" (to turn on: {'; '.join(problems)})" if problems else ""))
     else:
         print("  Note:     sample note (note drafting is off)")
+    ds = document_status(cfg)
+    if ds["enabled"]:
+        problems = [m for ok, m in ((ds["key_found"], "add ANTHROPIC_API_KEY to backend/.env"),
+                                    (ds["sdk_installed"], "run: python3 -m pip install anthropic")) if not ok]
+        print(f"  Document: {ds['model']} reads documents" + (f" (to turn on: {'; '.join(problems)})" if problems else ""))
+    else:
+        print("  Document: sample documents only (document reading is off)")
     print(f"  Log file: {LOG.relative_to(SITE)}")
     print("  Stop:     press Control + C\n", flush=True)
     try:
