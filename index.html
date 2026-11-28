@@ -1,366 +1,1329 @@
-<!doctype html>
-<html lang="en">
-<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="ReintegrAIt: an AI copilot for Chicago reentry case managers.">
-<title>ReintegrAIt</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ReintegrAIt Client Note</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: civic, Chicago-flag palette. Hero with a real referral card, then About, Product loop, Safeguards, Demo. One column of 1080px max, two-column rows that stack on phones. */
+/* Layout: same case-file workspace as the ReturnPath prototype. Sticky header, one view at a time (home, clients, processing, note), modals for uploads. */
 :root{
-  --bg:#f6f8fa; --surface:#ffffff; --ink:#14212e; --muted:#566676; --line:#d9e1e8;
-  --sky:#1b8fc4; --sky-soft:#e3f2fa; --star:#d6283a; --good:#1f7a4d; --good-soft:#e2f3ea; --warn:#a15c00; --warn-soft:#fbefdc;
-  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
-  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --bg:#f3f5f7; --panel:#ffffff; --ink:#18222d; --muted:#5b6876; --line:#d9dfe5;
+  --accent:#1f5f8b; --accent-soft:#e3eef6; --sim:#7a6a52; --sim-soft:#f4efe6;
+  --ok:#2e7d4f; --ok-soft:#e3f2e8; --warn:#9a6400; --warn-soft:#fbf0d9; --bad:#a63d3d; --bad-soft:#f8e4e4;
+  --hl:#fff2b8; --scrim:rgba(16,24,32,.45);
+  --f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e1620; --surface:#15212d; --ink:#e7eef4; --muted:#9aabba; --line:#28384a;
-  --sky:#5bbbe8; --sky-soft:#13314a; --star:#ff5d6c; --good:#5fcf95; --good-soft:#123826; --warn:#f0b35a; --warn-soft:#3a2a10; color-scheme:dark}}
+  --bg:#11171d; --panel:#19212a; --ink:#e4e9ee; --muted:#9aa7b4; --line:#2c3743;
+  --accent:#7db4dc; --accent-soft:#1d3346; --sim:#cbb48e; --sim-soft:#2f2a21;
+  --ok:#7ccb9a; --ok-soft:#1a3326; --warn:#e2b55a; --warn-soft:#352a14; --bad:#e58f8f; --bad-soft:#3a1f1f; --hl:#4a4116; --scrim:rgba(0,0,0,.6); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0e1620; --surface:#15212d; --ink:#e7eef4; --muted:#9aabba; --line:#28384a;
-  --sky:#5bbbe8; --sky-soft:#13314a; --star:#ff5d6c; --good:#5fcf95; --good-soft:#123826; --warn:#f0b35a; --warn-soft:#3a2a10; color-scheme:dark}
+  --bg:#11171d; --panel:#19212a; --ink:#e4e9ee; --muted:#9aa7b4; --line:#2c3743;
+  --accent:#7db4dc; --accent-soft:#1d3346; --sim:#cbb48e; --sim-soft:#2f2a21;
+  --ok:#7ccb9a; --ok-soft:#1a3326; --warn:#e2b55a; --warn-soft:#352a14; --bad:#e58f8f; --bad-soft:#3a1f1f; --hl:#4a4116; --scrim:rgba(0,0,0,.6); color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;margin:0}
-.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-a{color:var(--sky)}
-a:focus-visible,.btn:focus-visible{outline:3px solid var(--sky);outline-offset:3px;border-radius:6px}
-h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
-h2{font-size:clamp(1.7rem,3.2vw,2.3rem);font-weight:800;letter-spacing:-.01em}
-h3{font-size:1.15rem;font-weight:700}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding-block:12px}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;background:none;border:0;color:var(--ink);font-family:inherit;cursor:pointer;padding:0}
+.brand small{font-weight:500;color:var(--muted);font-size:13px;margin-left:6px}
+nav.main{display:flex;gap:4px}
+nav.main button{font:inherit;font-size:14px;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:6px 10px;cursor:pointer}
+nav.main button[aria-current="page"]{color:var(--ink);border-color:var(--accent);font-weight:600}
+.who{margin-left:auto;font-size:13px;color:var(--muted)}
+.who b{color:var(--ink)}
+main{padding-block:20px 56px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.tag.sim{color:var(--sim);background:var(--sim-soft);border:1px dashed var(--sim)}
+.tag.ok{color:var(--ok);background:var(--ok-soft)}
+.tag.warn{color:var(--warn);background:var(--warn-soft)}
+.tag.bad{color:var(--bad);background:var(--bad-soft)}
+.tag.info{color:var(--accent);background:var(--accent-soft)}
+h1{font-size:26px;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h3{font-size:16px;margin:0;text-wrap:balance}
 p{margin:0}
-.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.lead{font-size:1.15rem;color:var(--muted);max-width:62ch}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.mono{font-family:var(--f-mono);font-size:12px}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:8px 14px;border-radius:5px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.btn.ghost{border-color:transparent;background:none;color:var(--accent);padding-inline:6px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,[contenteditable]:focus-visible,tr[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mockbar{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px}
 
-/* top bar */
-.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-.bar .wrap{display:flex;align-items:center;gap:20px;padding-block:12px;flex-wrap:wrap}
-.logo{font-family:var(--display);font-weight:800;font-size:1.25rem;text-decoration:none;color:var(--ink);display:flex;align-items:center;gap:8px;margin-right:auto}
-.logo b{color:var(--sky)}
-.star{width:14px;height:14px;flex:none}
-.bar nav{display:flex;gap:18px;font-size:.95rem}
-.bar nav a{color:var(--muted);text-decoration:none}
-.bar nav a:hover{color:var(--ink)}
-.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:1rem;text-decoration:none;padding:12px 20px;border-radius:8px;border:2px solid var(--sky);transition:transform .15s}
-.btn.primary{background:var(--sky);color:#fff}
-:root[data-theme="dark"] .btn.primary{color:#06121c}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn.primary{color:#06121c}}
-.btn.ghost{color:var(--sky);background:transparent}
-.btn:hover{transform:translateY(-1px)}
-.btn.small{padding:8px 14px;font-size:.9rem}
-@media (prefers-reduced-motion: reduce){.btn{transition:none}.btn:hover{transform:none}}
+/* Home */
+.hello{display:flex;flex-direction:column;gap:4px;margin-bottom:20px}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}
+@media (max-width:640px){.choices{grid-template-columns:1fr}}
+.choice{font:inherit;text-align:left;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:22px 22px 20px;cursor:pointer;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+.choice:hover{border-color:var(--accent)}
+.choice .ic{width:40px;height:40px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:6px}
+.choice b{font-size:20px}
+.choice span{color:var(--muted);font-size:14px}
+.homegrid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px}
+@media (max-width:860px){.homegrid{grid-template-columns:1fr}}
+.rem{display:flex;flex-direction:column}
+.rem button{font:inherit;color:var(--ink);text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:10px 2px;display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;cursor:pointer}
+.rem button:first-child{border-top:0}
+.rem button:hover .rn{color:var(--accent)}
+.rem .rd{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.rem .rn{font-weight:600}
+.rem .rt{font-size:13px;color:var(--muted);display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat b{display:block;font-size:24px;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted)}
 
-/* hero */
-.hero{padding-block:64px 56px}
-.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
-.hero h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.02em;margin-top:12px}
-.hero h1 em{font-style:normal;color:var(--sky);border-bottom:4px solid var(--star)}
-.hero .lead{margin-top:20px}
-.ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
-.fine{font-size:.88rem;color:var(--muted);margin-top:14px}
-.hero > .wrap > *{min-width:0}
+/* Clients */
+.clients{display:grid;grid-template-columns:minmax(0,6fr) minmax(0,5fr);gap:20px;align-items:start}
+@media (max-width:900px){.clients{grid-template-columns:1fr}}
+.search{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.search input{flex:1;min-width:0;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--bg)}
+tbody tr[aria-selected="true"] td{background:var(--accent-soft)}
+td .sub{display:block;font-size:12px;color:var(--muted)}
+.due{font-family:var(--f-mono);font-size:12px;white-space:nowrap}
+.due.over{color:var(--bad)} .due.today{color:var(--warn)}
+.detail{position:sticky;top:120px}
+@media (max-width:900px){.detail{position:static}}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;margin-block:12px}
+.kv div span{display:block;font-size:12px;color:var(--muted)}
+.kv div b{font-weight:600;font-size:14px}
+.timeline{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.timeline li{display:grid;grid-template-columns:58px 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.timeline li.new{background:var(--ok-soft);margin-inline:-8px;padding-inline:8px;border-radius:4px}
+.timeline .d{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:2px}
+.timeline .t{font-size:12px;font-weight:600;color:var(--accent)}
+.timeline p{font-size:14px}
+.remcard{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 12px;border-radius:5px;background:var(--warn-soft);font-size:14px;margin-block:12px;flex-wrap:wrap}
+.remcard.calm{background:var(--accent-soft)}
 
-/* mock referral card */
-.mock{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 18px 40px -24px rgba(20,33,46,.35);display:grid;gap:14px}
-.mock-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.mock-head span{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
-.svc{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:6px}
-.svc-top{display:flex;justify-content:space-between;gap:10px;align-items:center}
-.svc-top strong{font-family:var(--display);font-size:1.02rem}
-.rank{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
-.pill{font-family:var(--mono);font-size:.74rem;font-weight:500;padding:3px 9px;border-radius:99px;white-space:nowrap}
-.pill.likely{background:var(--good-soft);color:var(--good)}
-.pill.call{background:var(--warn-soft);color:var(--warn)}
-.svc small{font-size:.85rem;color:var(--muted);line-height:1.45}
-.conf{font-family:var(--mono);font-size:.76rem}
-.conf.good{color:var(--good)} .conf.low{color:var(--warn)}
-.note-line{font-size:.9rem;background:var(--sky-soft);border-radius:8px;padding:10px 12px;line-height:1.45}
-.note-line code{font-family:var(--mono);font-size:.78rem;color:var(--sky)}
+/* Modal */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
+.modal{background:var(--panel);border-radius:8px;width:100%;max-width:560px;padding:20px 22px;display:flex;flex-direction:column;gap:14px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.modal header{position:static;border:0;padding:0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;background:none}
+.x{font:inherit;font-size:20px;line-height:1;background:none;border:0;color:var(--muted);cursor:pointer;padding:2px 6px}
+.drop{border:2px dashed var(--line);border-radius:8px;padding:22px 16px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop.over,.drop:hover{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{font-size:15px}
+.limits{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px}
+@media (max-width:480px){.limits{grid-template-columns:1fr}}
+.limits div{background:var(--bg);border-radius:5px;padding:8px 10px}
+.limits b{display:block;font-size:14px}
+.file{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+.file .meta{flex:1;min-width:0}
+.file .nm{font-weight:600;overflow-wrap:anywhere}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s linear}
+.or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+textarea,select,.field input{font:inherit;font-size:14px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+label.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}
+label.chk input{margin-top:3px;accent-color:var(--accent)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.field>span{color:var(--muted)}
 
-/* sections */
-section.block{padding-block:64px;border-top:1px solid var(--line)}
-.head{display:grid;gap:12px;margin-bottom:36px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:40px}
-.two > *{min-width:0}
-.stack{display:grid;gap:32px}
-.prose{display:grid;gap:16px;max-width:62ch}
-.facts{align-self:start;display:grid;gap:0;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
-.fact{display:grid;grid-template-columns:7.5rem 1fr;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line);align-items:baseline}
-.fact:last-child{border-bottom:0}
-.fact b{font-family:var(--display);font-size:1.9rem;font-weight:800;color:var(--sky);font-variant-numeric:tabular-nums;line-height:1}
-.fact p{font-size:.95rem;color:var(--muted)}
-.fact cite{display:block;font-style:normal;font-family:var(--mono);font-size:.72rem;margin-top:4px}
+/* Processing */
+.proc{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.stages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.stages li{display:grid;grid-template-columns:28px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+.stages li:first-child{border-top:0}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+li.run .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+li.done .dot{background:var(--ok);border-color:var(--ok);color:var(--panel)}
+li.flag .dot{background:var(--warn);border-color:var(--warn);color:var(--panel)}
+li.skip .dot{border-style:dashed}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){li.run .dot{animation:none;border-top-color:var(--accent)}}
+.stages b{display:block}
+.stages .res{font-size:13px;color:var(--muted);margin-top:2px}
+.stages li.wait b{color:var(--muted);font-weight:500}
 
-/* loop */
-.loop{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:10px;align-content:start;position:relative}
-.step .n{font-family:var(--mono);font-size:.78rem;color:var(--sky)}
-.step p{font-size:.95rem;color:var(--muted)}
-.who{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding-top:10px;border-top:1px dashed var(--line);color:var(--muted)}
-.who b{color:var(--ink);font-weight:500}
-
-/* safeguards */
-.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:0 28px}
-.rule{display:grid;grid-template-columns:28px 1fr;gap:12px;padding-block:16px;border-bottom:1px solid var(--line)}
-.rule svg{width:22px;height:22px;margin-top:3px}
-.rule p{font-size:.95rem;color:var(--muted)}
-.rule h3{margin-bottom:4px}
-
-/* demo */
-.demo{background:var(--ink);color:var(--bg);border-radius:18px;padding:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px}
-.demo > *{min-width:0}
-.demo .eyebrow{color:color-mix(in srgb,var(--bg) 70%,var(--ink))}
-.demo .lead{color:color-mix(in srgb,var(--bg) 78%,var(--ink))}
-.demo h2{color:var(--bg)}
-.cases{display:grid;gap:10px;list-style:none;margin:0;padding:0}
-.cases li{border:1px solid color-mix(in srgb,var(--bg) 22%,var(--ink));border-radius:10px;padding:12px 14px;display:grid;gap:2px}
-.cases li b{font-family:var(--display)}
-.cases li span{font-size:.9rem;color:color-mix(in srgb,var(--bg) 72%,var(--ink))}
-.demo .btn.primary{background:var(--sky);border-color:var(--sky)}
-.demo .btn.ghost{color:var(--bg);border-color:color-mix(in srgb,var(--bg) 40%,var(--ink))}
-.demo .fine{color:color-mix(in srgb,var(--bg) 65%,var(--ink))}
-.demo .fine a{color:var(--bg)}
-
-
-/* second chance band */
-.chance{padding-block:8px 64px}
-.chance .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center}
-.chance .wrap > *{min-width:0}
-.chance-fig{margin:0}
-.illo{display:block;width:100%;height:auto;max-width:100%;border-radius:18px;box-shadow:0 18px 40px -26px rgba(20,33,46,.45)}
-@media (max-width:900px){.chance .wrap{grid-template-columns:1fr;gap:28px}}
-footer{padding-block:36px;color:var(--muted);font-size:.88rem}
-footer .wrap{display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
-
-@media (max-width:900px){
-  .hero .wrap,.two,.demo{grid-template-columns:1fr}
-  .loop{grid-template-columns:1fr 1fr}
-  .rules{grid-template-columns:1fr 1fr}
-}
-@media (max-width:560px){
-  .loop,.rules{grid-template-columns:1fr}
-  .bar nav{display:none}
-  .demo{padding:26px 20px}
-  .fact{grid-template-columns:1fr;gap:6px}
-  section.block{padding-block:48px}
-  .hero{padding-block:40px}
-}
+/* Note */
+.notehead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:16px}
+.notegrid{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr) minmax(0,3fr);gap:16px;align-items:start}
+@media (max-width:1100px){.notegrid{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.review{grid-column:1/-1}}
+@media (max-width:760px){.notegrid{grid-template-columns:1fr}}
+.tx{display:flex;flex-direction:column;gap:2px;font-size:14px;max-height:620px;overflow-y:auto}
+.tx div{display:grid;grid-template-columns:64px 1fr;gap:8px;padding:5px 6px;border-radius:4px;scroll-margin:40px}
+.tx div.on{background:var(--hl)}
+.tx .ts{font-family:var(--f-mono);font-size:12px;color:var(--muted);padding-top:1px}
+.tx .sp{font-weight:600;font-size:13px;margin-right:4px}
+.tx .gap{color:var(--bad);font-style:italic}
+.note section{border-top:1px solid var(--line);padding-block:12px}
+.note section:first-of-type{border-top:0;padding-top:0}
+.note h4{margin:0 0 8px;font-size:13px;font-weight:700;letter-spacing:.03em;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.keyinfo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+@media (max-width:480px){.keyinfo{grid-template-columns:1fr}}
+.keyinfo label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted)}
+.keyinfo input,.keyinfo select{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:1px solid transparent;border-radius:4px;padding:5px 6px;margin-left:-7px;width:100%}
+.editing .keyinfo input,.editing .keyinfo select{border-color:var(--line);background:var(--panel);margin-left:0}
+.keyinfo .flagged input,.keyinfo .flagged select{background:var(--warn-soft);border-color:var(--warn)}
+.keyinfo select:disabled,.keyinfo input:read-only{opacity:1;cursor:default;appearance:none}
+.keyinfo input::placeholder{color:var(--muted)}
+.keyinfo .heardas{font-size:11px;color:var(--muted)}
+.keyinfo .verified{font-size:11px;color:var(--ok);font-weight:600}
+.dochead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.docs{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
+.doc{border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:5px;padding:8px 10px;font-size:13px}
+.doc.bad{border-left-color:var(--warn)}
+.doc .offer{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;border-top:1px solid var(--line);padding-top:6px;margin-top:6px}
+.doc .offer .v{flex:1;min-width:180px}
+.choose{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.docprev{max-width:100%;max-height:220px;border:1px solid var(--line);border-radius:5px;align-self:center}
+.samplebtns{display:flex;flex-wrap:wrap;gap:8px}
+.doclist{list-style:none;margin:0 0 14px;padding:0}
+.doclist li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.doclist li .nm{flex:1;min-width:160px}
+.doclist li .nm b{font-size:14px}
+.dochd{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px}
+.keep{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.kgroup{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+.knot{margin-top:8px}
+.linkbtn{font:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.items li{display:flex;gap:8px;align-items:baseline}
+.items .txt{flex:1;min-width:0;border-radius:3px;padding:1px 3px;margin-left:-3px}
+.editing .items .txt{outline:1px dashed var(--line)}
+.items .txt:focus{background:var(--accent-soft);outline:none}
+.pri{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1px 5px;border-radius:3px;white-space:nowrap}
+.pri.u{color:var(--bad);background:var(--bad-soft)} .pri.s{color:var(--warn);background:var(--warn-soft)} .pri.l{color:var(--muted);background:var(--bg)}
+.src{font-family:var(--f-mono);font-size:11px;color:var(--accent);cursor:pointer;border:0;background:none;padding:0;white-space:nowrap}
+.del{display:none;border:0;background:none;color:var(--bad);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.editing .del{display:inline}
+.add{display:none;margin-top:6px}
+.editing .add{display:inline-block}
+.flags{display:flex;flex-direction:column;gap:8px}
+.flagitem{border-left:3px solid var(--warn);background:var(--warn-soft);border-radius:4px;padding:8px 10px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.flagitem.res{border-color:var(--ok);background:var(--ok-soft)}
+.flagitem .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.flagitem input,.flagitem select{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);flex:1;min-width:120px}
+.checks{display:flex;flex-direction:column;gap:10px;margin-block:10px 14px}
+.auto{display:flex;gap:8px;font-size:14px;align-items:flex-start}
+.auto i{font-style:normal;font-weight:700;width:16px;text-align:center}
+.auto.y i{color:var(--ok)} .auto.n i{color:var(--warn)}
+.diff{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.diff li{display:grid;grid-template-columns:70px 1fr;gap:8px}
+.diff .k{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.diff .k.add{color:var(--ok)} .diff .k.chg{color:var(--accent)} .diff .k.rem{color:var(--muted)}
+.diff s{color:var(--muted)}
+.flagbar{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.flagitem.banner{border-left-width:6px;font-size:14px;margin-bottom:12px}
+.flagitem select[id^="fxs-"]{min-width:200px}
+.fxerr{color:var(--bad);font-size:13px;font-weight:600;margin:0}
+.items .why{flex-basis:100%;grid-column:2/-1;font-size:13px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;color:var(--warn)}
+.items .why.missing{color:var(--bad);font-weight:600}
+.items .why select{width:auto;font:inherit;font-size:13px;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink)}
+.flagbar .flagitem{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.flagbar .flagitem>div{flex:1;min-width:220px}
+.flagbar .flagitem>.row{flex:0 1 360px}
+.flagitem .ic{font-weight:700}
+.rem .row button{display:inline;grid-template-columns:none;border-top:0;padding:0;width:auto}
+.rem .row .btn{padding:6px 12px;border:1px solid var(--line);white-space:nowrap}
+.rem .row{display:grid;grid-template-columns:118px minmax(0,1fr) auto;gap:10px;align-items:center;border-top:1px solid var(--line);padding:10px 2px}
+.rem .row:first-child{border-top:0}
+.rem .rn{font:inherit;font-weight:600;background:none;border:0;padding:0;color:var(--ink);cursor:pointer;text-align:left}
+.rem .rn:hover{color:var(--accent);text-decoration:underline}
+.items .pri-sel{width:auto;flex:none;padding:1px 2px;font:inherit;font-size:11px;font-weight:700;text-transform:uppercase;border:1px solid var(--line);border-radius:3px;padding:1px 2px;background:var(--panel);color:var(--ink)}
+.consent{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ok);background:var(--ok-soft);border-radius:3px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.log{width:100%;font-size:13px}
+.log td{vertical-align:top}
+.log .when{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.log .ev{font-weight:600;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.metrics div{background:var(--bg);border-radius:5px;padding:8px 10px}
+.metrics b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.metrics span{font-size:12px;color:var(--muted)}
+.stepgrp{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stepgrp:first-of-type{margin-top:0}
+.steps li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:4px 8px;align-items:start}
+.steps li input[type=checkbox]{margin-top:4px;accent-color:var(--accent)}
+.steps .meta{grid-column:2/-1;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.steps .meta select,.steps .meta input{font:inherit;font-size:12px;padding:1px 4px;border:1px solid var(--line);border-radius:3px;background:var(--panel);color:var(--ink);width:auto}
+.steps li.off .txt{color:var(--muted)}
+.tag.sug{color:var(--sim);background:var(--sim-soft);border:1px dashed var(--sim)}
+.nosteps{font-size:14px;padding:6px 10px;border-radius:4px;background:var(--warn-soft)}
+.stype{font:inherit;font-size:12px;padding:1px 4px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);max-width:150px}
+.stype.missing{border-color:var(--warn);background:var(--warn-soft)}
+.svclog{border-top:1px solid var(--line);padding-top:12px;margin-top:4px;display:flex;flex-direction:column;gap:10px}
+.logrow{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px}
+.svcs{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.svcs legend{font-size:13px;color:var(--muted);margin-bottom:4px;padding:0}
+.svcs label{display:inline-flex;gap:4px;align-items:center;font-size:13px;border:1px solid var(--line);border-radius:14px;padding:2px 9px;cursor:pointer}
+.svcs label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.svcs input{accent-color:var(--accent);margin:0}
+.dosage{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.dosage b{color:var(--ink);font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;border-radius:6px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
 </style>
-</head>
-<body>
-<header class="bar">
-  <div class="wrap">
-    <a class="logo" href="#top"><svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path fill="var(--star)" d="M12 0l2.6 7.5L22 4.5l-4.4 6.6L24 12l-6.4.9L22 19.5l-7.4-3L12 24l-2.6-7.5L2 19.5l4.4-6.6L0 12l6.4-.9L2 4.5l7.4 3z"/></svg><span>Reintegr<b>AI</b>t</span></a>
-    <nav aria-label="Sections"><a href="#about">About</a><a href="#product">Product</a><a href="#safeguards">Safeguards</a></nav>
-    <a class="btn primary small" href="app/step1-client-note/" data-demo>Try the demo</a>
+<link rel="stylesheet" href="matched-services.css">
+<link rel="stylesheet" href="matched-network.css">
+<link rel="stylesheet" href="failure-handling.css">
+<link rel="stylesheet" href="grant-report.css">
+
+<header>
+  <div class="wrap top">
+    <button class="brand" id="brand" type="button">ReintegrAIt <small>Step 1 · Client note</small></button>
+    <nav class="main" aria-label="Main">
+      <button type="button" data-go="home" id="nav-home">Home</button>
+      <button type="button" data-go="clients" id="nav-clients">Clients</button>
+      <button type="button" data-go="network" id="nav-network">Matched services</button>
+      <button type="button" data-go="grant" id="nav-grant">Grant report</button>
+      <button type="button" data-go="activity" id="nav-activity">Activity log</button>
+    </nav>
+    <div class="who"><b>Denise</b> · Case manager</div>
   </div>
 </header>
 
-<main id="top">
-  <section class="hero">
-    <div class="wrap">
-      <div>
-        <p class="eyebrow">For Chicago reentry case managers</p>
-        <h1>Send each returning individual to a service that will <em>take them this week</em>.</h1>
-        <p class="lead">ReintegrAIt is an AI copilot for the case workers who help returning individuals after prison. It turns a short voice memo into a case note, then ranks services across Chicago by how likely each one is to accept the person. The case manager makes every decision.</p>
-        <div class="ctas">
-          <a class="btn primary" href="app/step1-client-note/" data-demo>Try the demo</a>
-          <a class="btn ghost" href="#product">See how it works</a>
-        </div>
-        <p class="fine">Runs in your browser with sample cases. No sign-up, no API key.</p>
-      </div>
+<main class="wrap" id="app"></main>
+<div id="modal-root"></div>
 
-      <div class="mock" aria-label="Example of the Matched services screen">
-        <div class="mock-head"><h3>Housing for Andre</h3><span>Englewood · Nov 11</span></div>
-        <p class="note-line"><code>From the approved note</code><br>“Couch at cousin’s place runs out in 2 to 3 weeks.” Every line cites the recording it came from.</p>
-        <div class="svc">
-          <div class="svc-top"><strong>Teamwork Englewood CRSC</strong><span class="pill likely">Likely</span></div>
-          <small><span class="rank">#1 · 0.4 mi</span> · Housing navigation slots this week: 3</small>
-          <span class="conf good">Confidence: openings updated 1 day ago · based on 11 referrals</span>
-        </div>
-        <div class="svc">
-          <div class="svc-top"><strong>New to you: a nearby shelter</strong><span class="pill call">Call first</span></div>
-          <small><span class="rank">From the city directory</span> · Not a partner yet</small>
-          <span class="conf low">Low confidence: call before you send</span>
-        </div>
-      </div>
-    </div>
-  </section>
+<script>
+/* ReintegrAIt Step 1 prototype.
+   - Client records live in a small record store (below), saved in this browser only. No server, no login.
+   - Every simulated AI response, and the note templates, are loaded from simulated_responses.json. */
+const TODAY = new Date(2026,10,11);
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const parseDate=s=>{const [y,m,dd]=s.split("-").map(Number);return new Date(y,m-1,dd)};
+const iso=dt=>dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+const TODAY_ISO=iso(TODAY);
+const fmt=dt=>MONTHS[dt.getMonth()]+" "+dt.getDate();
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const dayDiff=dt=>Math.round((dt-TODAY)/864e5);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const fill=(o,vars)=>JSON.parse(JSON.stringify(o).replace(/\{(first|duration)\}/g,(m,k)=>vars[k]??m));
 
+/* ---------- Records ----------
+   Eight record types. Names follow Salesforce Nonprofit Cloud so an export maps cleanly later:
+   Client       one person served (Salesforce: Account / Contact)
+   Interaction  a visit, call, text or intake note, with meeting type and minutes (Interaction + InteractionSummary)
+   Need         an open need found in a note, tagged with a service type (care plan need)
+   Service      a service delivered in an interaction: type and minutes, for dosage reporting (BenefitDisbursement)
+   Goal         a next step or a dated reminder (GoalAssignment). Reminders are open Goals with a due date.
+   Referral     a referral sent to a partner (Referral). Statuses grow in step 4.
+   Approval     who approved which note, and when (audit log)
+   Document     a document on a client's file (Salesforce: DocumentChecklistItem): type, number, date added, and,
+                when it was checked against a note, which fields matched or differed. The file itself, if kept,
+                is in this browser's IndexedDB under FileKey (see Files below), never in the record store.
+   Provider     a service Denise added by hand, or a mark that a directory service is on her partner list (Matched services tab)
+   Everything is saved to localStorage under STORE_KEY. "Reset sample data" puts the five sample clients back. */
+const STORE_KEY="reintegrait.records.v2";
+const RECORD_TYPES=["Client","Interaction","Need","Service","Goal","Referral","Approval","Document","Provider"];
+const uid=t=>t.slice(0,3).toLowerCase()+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
-  <section class="chance">
-    <div class="wrap">
-      <figure class="chance-fig"><svg class="illo" viewBox="0 0 600 440" role="img" aria-labelledby="illo-t">
-  <title id="illo-t">A case worker shakes hands with a smiling man carrying a backpack, in front of a sunrise over the Chicago skyline.</title>
-  <defs>
-    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd98a"/><stop offset="1" stop-color="#ffab5e"/></linearGradient>
-    <clipPath id="frame"><rect width="600" height="440" rx="18"/></clipPath>
-  </defs>
-  <g clip-path="url(#frame)">
-    <rect width="600" height="440" fill="#dff0f9"/>
-    <circle cx="300" cy="300" r="170" fill="url(#sun)"/>
-    <g fill="#1b8fc4" opacity=".28">
-      <rect x="20" y="250" width="40" height="110"/><rect x="66" y="215" width="34" height="145"/><rect x="106" y="262" width="46" height="98"/>
-      <rect x="150" y="150" width="30" height="210"/><rect x="158" y="128" width="14" height="24"/><rect x="164" y="104" width="2" height="26"/>
-      <rect x="430" y="120" width="44" height="240"/><rect x="438" y="98" width="6" height="24"/><rect x="460" y="98" width="6" height="24"/>
-      <rect x="480" y="210" width="36" height="150"/><rect x="522" y="240" width="48" height="120"/><rect x="574" y="200" width="30" height="160"/>
-    </g>
-    <rect y="356" width="600" height="84" fill="#b9dcc4"/>
-    <path d="M0 356 Q300 336 600 356" fill="#b9dcc4"/>
-    <ellipse cx="300" cy="404" rx="190" ry="14" fill="#14212e" opacity=".12"/>
+const SAMPLE_CLIENTS=[
+ {id:"c1",name:"Marcus Reed",age:41,gender:"Male",locality:"Austin",phone:"773-555-0142",since:"2026-10-02",status:"Referral pending",
+  needs:[["Job readiness program","Jobs"],["Steady housing (staying with sister)","Housing"]],
+  reminder:{date:"2026-11-11",type:"Referral check",text:"Did Marcus attend the Cara Collective orientation on Tue Nov 10?"},
+  entries:[{date:"2026-11-03",type:"Referral sent",text:"Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",referral:{partner:"Cara Collective",service:"Job readiness",answered:"2026-11-04",appointment:{date:"2026-11-10",time:"09:00"}},mt:"Phone call",min:10,svc:["Jobs"]},
+           {date:"2026-10-20",type:"Second visit",text:"Has state ID now. Wants warehouse work. Sister's place is stable through December.",mt:"In-person visit",min:30,svc:["Jobs","Housing"]},
+           {date:"2026-10-02",type:"Intake note",text:"Released Sep 28 from Stateville. Needs ID, job, and SNAP.",mt:"In-person visit",min:55,svc:["ID and documents","Jobs","Benefits"]}]},
+ {id:"c2",name:"Tanya Brooks",age:29,gender:"Female",locality:"Roseland",phone:"312-555-0178",since:"2026-09-14",status:"Active",
+  needs:[["Childcare during GED classes","Family"],["SNAP recertification","Benefits"]],
+  reminder:{date:"2026-11-11",type:"Weekly phone check",text:"Weekly call. Ask how GED classes are going."},
+  entries:[{date:"2026-11-04",type:"Weekly phone check",text:"Started GED classes at Olive-Harvey. Childcare is the main barrier.",mt:"Phone call",min:8,svc:["Family"]},
+           {date:"2026-10-08",type:"Second visit",text:"SNAP approved. Interested in GED.",mt:"In-person visit",min:25,svc:["Benefits"]},
+           {date:"2026-09-14",type:"Intake note",text:"Released Sep 9 from Logan. Two kids staying with her mother.",mt:"In-person visit",min:50,svc:["Benefits","Family"]}]},
+ {id:"c3",name:"Luis Herrera",age:52,gender:"Male",locality:"Little Village",phone:"773-555-0119",since:"2026-10-21",status:"Needs follow-up",
+  needs:[["Housing application paperwork","Housing"],["Diabetes care","Health"]],
+  reminder:{date:"2026-11-09",type:"Second visit",text:"Bring the housing application and help fill it in."},
+  entries:[{date:"2026-10-21",type:"Intake note",text:"Released Oct 15. In a shelter. Needs a clinic for diabetes medication.",mt:"In-person visit",min:45,svc:["Housing","Health"]}]},
+ {id:"c4",name:"Keisha Moore",age:36,gender:"Female",locality:"North Lawndale",phone:"872-555-0163",since:"2026-08-30",status:"Active",
+  needs:[["Driver's license reinstatement","Legal"]],
+  reminder:{date:"2026-11-16",type:"Weekly message check",text:"Text check-in about the license hearing date."},
+  entries:[{date:"2026-11-09",type:"Weekly message check",text:"Working at a restaurant 30 hrs/week. Hearing date not set yet.",mt:"Text message",min:5,svc:["Legal"]},
+           {date:"2026-08-30",type:"Intake note",text:"Released Aug 24. Has housing with partner.",mt:"In-person visit",min:40,svc:["Legal","Jobs"]}]},
+ {id:"c5",name:"James Carter",age:24,gender:"Male",locality:"Humboldt Park",phone:"773-555-0127",since:"2026-10-28",status:"Referral pending",
+  needs:[["Job training","Jobs"],["Phone (lost his)","Benefits"]],
+  reminder:{date:"2026-11-20",type:"Referral check",text:"Did James start the Safer Foundation program?"},
+  entries:[{date:"2026-11-05",type:"Referral sent",text:"Referred to Safer Foundation job training. Start date Nov 18.",referral:{partner:"Safer Foundation",service:"Job training"},mt:"Phone call",min:12,svc:["Jobs"]},
+           {date:"2026-10-28",type:"Intake note",text:"Released Oct 24. Staying with grandmother.",mt:"In-person visit",min:40,svc:["Jobs","Benefits"]}]},
+];
 
-    <!-- case worker (left) -->
-    <g>
-      <rect x="187" y="296" width="17" height="104" rx="7" fill="#2f3e4e"/>
-      <rect x="211" y="296" width="17" height="104" rx="7" fill="#2f3e4e"/>
-      <ellipse cx="194" cy="402" rx="15" ry="7" fill="#14212e"/><ellipse cx="224" cy="402" rx="15" ry="7" fill="#14212e"/>
-      <path d="M176 222 Q178 196 207 194 Q238 196 240 222 L244 308 L172 308 Z" fill="#2a7f8f"/>
-      <path d="M198 196 L207 222 L216 196 Z" fill="#f4f1ea"/>
-      <path d="M207 222 L207 262" stroke="#d6283a" stroke-width="3"/>
-      <rect x="199" y="262" width="16" height="20" rx="3" fill="#ffffff" stroke="#d6283a" stroke-width="2"/>
-      <path d="M182 220 Q160 250 172 284" stroke="#2a7f8f" stroke-width="17" stroke-linecap="round" fill="none"/>
-      <rect x="150" y="258" width="34" height="44" rx="4" fill="#f4f1ea" stroke="#8a6a44" stroke-width="3"/>
-      <path d="M158 272h18M158 281h18M158 290h12" stroke="#9aabba" stroke-width="2.5" stroke-linecap="round"/>
-      <circle cx="176" cy="288" r="8" fill="#8d5a3b"/>
-      <path d="M234 218 Q262 236 288 258" stroke="#2a7f8f" stroke-width="17" stroke-linecap="round" fill="none"/>
-      <rect x="200" y="176" width="16" height="22" rx="6" fill="#8d5a3b"/>
-      <circle cx="209" cy="160" r="27" fill="#8d5a3b"/>
-      <path d="M182 158 Q180 126 211 128 Q240 130 236 154 Q226 142 206 144 Q192 146 186 164 Z" fill="#1f1410"/>
-      <circle cx="187" cy="134" r="12" fill="#1f1410"/>
-      <circle cx="214" cy="160" r="2.6" fill="#1f1410"/><circle cx="228" cy="160" r="2.6" fill="#1f1410"/>
-      <path d="M214 172 Q222 179 231 171" stroke="#1f1410" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-      <circle cx="210" cy="168" r="4" fill="#c46a5a" opacity=".35"/>
-    </g>
+/* Turn the sample clients into records. Entries are added oldest first so the store reads like a real history. */
+function sampleRecords(){
+ const R={};RECORD_TYPES.forEach(t=>R[t]=[]);
+ let n=0;const id=p=>p+"-s"+(++n);
+ SAMPLE_CLIENTS.forEach(s=>{
+  R.Client.push({Id:s.id,Name:s.name,Age:s.age,Gender:s.gender,Locality:s.locality,Phone:s.phone,ClientSince:s.since,Status:s.status});
+  s.needs.forEach(([t,st])=>R.Need.push({Id:id("nee"),ClientId:s.id,Text:t,ServiceType:st,Priority:"Soon",Status:"Open",CreatedDate:s.since,InteractionId:null}));
+  s.entries.slice().reverse().forEach(e=>{const iid=id("int");
+   R.Interaction.push({Id:iid,ClientId:s.id,Date:e.date,Type:e.type,Summary:e.text,Channel:"Sample",Template:null,SourceName:null,MeetingType:e.mt,Minutes:e.min});
+   splitMinutes(e.min,e.svc).forEach(([st,m])=>R.Service.push({Id:id("ser"),ClientId:s.id,InteractionId:iid,Date:e.date,ServiceType:st,Minutes:m,MeetingType:e.mt}));
+   if(e.referral)R.Referral.push({Id:id("ref"),ClientId:s.id,InteractionId:iid,Partner:e.referral.partner,Service:e.referral.service,Status:e.referral.appointment?"Accepted":"Sent",SentDate:e.date,
+    ...(e.referral.appointment?{AnswerDate:e.referral.answered,Appointment:e.referral.appointment}:{})});
+  });
+  R.Goal.push({Id:id("goa"),ClientId:s.id,Text:s.reminder.text,Type:s.reminder.type,DueDate:s.reminder.date,Status:"Open",InteractionId:null});
+ });
+ return R;
+}
 
-    <!-- returning individual (right) -->
-    <g>
-      <rect x="400" y="200" width="44" height="78" rx="12" fill="#3a5a40"/>
-      <rect x="372" y="298" width="18" height="102" rx="7" fill="#3c5a85"/>
-      <rect x="397" y="298" width="18" height="102" rx="7" fill="#3c5a85"/>
-      <ellipse cx="378" cy="402" rx="16" ry="7" fill="#14212e"/><ellipse cx="410" cy="402" rx="16" ry="7" fill="#14212e"/>
-      <path d="M356 224 Q358 194 392 192 Q426 194 430 224 L434 310 L352 310 Z" fill="#f0952f"/>
-      <path d="M372 196 Q392 214 412 196" stroke="#d27a1c" stroke-width="4" fill="none"/>
-      <path d="M382 210 L382 236 M402 210 L402 236" stroke="#d27a1c" stroke-width="3" stroke-linecap="round"/>
-      <path d="M420 202 Q432 232 424 300" stroke="#2c4732" stroke-width="7" fill="none"/>
-      <path d="M362 220 Q334 238 308 258" stroke="#f0952f" stroke-width="18" stroke-linecap="round" fill="none"/>
-      <path d="M424 222 Q446 250 436 282" stroke="#f0952f" stroke-width="18" stroke-linecap="round" fill="none"/>
-      <circle cx="436" cy="288" r="9" fill="#6b4226"/>
-      <g transform="translate(430 290)"><circle r="6" fill="none" stroke="#c9a227" stroke-width="3"/><path d="M4 4 L14 14 M10 10 L14 6 M12 12 L16 8" stroke="#c9a227" stroke-width="3" stroke-linecap="round"/></g>
-      <rect x="384" y="174" width="17" height="22" rx="6" fill="#6b4226"/>
-      <circle cx="392" cy="156" r="28" fill="#6b4226"/>
-      <path d="M364 152 Q362 124 392 124 Q422 124 420 150 Q410 136 392 136 Q374 136 364 152 Z" fill="#1a110c"/>
-      <path d="M368 166 Q372 188 392 190 Q412 188 416 166 Q410 178 392 178 Q374 178 368 166 Z" fill="#1a110c"/>
-      <circle cx="378" cy="156" r="2.8" fill="#1a110c"/><circle cx="394" cy="156" r="2.8" fill="#1a110c"/>
-      <path d="M375 147 Q379 144 383 147 M390 147 Q394 144 398 147" stroke="#1a110c" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <path d="M374 168 Q385 178 397 168" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" fill="none"/>
-    </g>
+const Store={
+ data:null,
+ load(){let d=null;try{d=JSON.parse(localStorage.getItem(STORE_KEY))}catch(e){}
+  /* A record type added later (Document) starts empty, so saved clients are kept. */
+  if(d&&RECORD_TYPES.slice(0,7).every(t=>Array.isArray(d[t])))RECORD_TYPES.forEach(t=>{if(!Array.isArray(d[t]))d[t]=[]});
+  this.data=d&&RECORD_TYPES.every(t=>Array.isArray(d[t]))?d:sampleRecords();this.save()},
+ save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(this.data))}catch(e){}},
+ reset(){this.data=sampleRecords();this.save()},
+ all(t){return this.data[t]},
+ where(t,f){return this.data[t].filter(f)},
+ get(t,id){return this.data[t].find(r=>r.Id===id)},
+ insert(t,rec,atFront){const r={Id:uid(t),...rec};this.data[t][atFront?"unshift":"push"](r);return r},
+ update(t,id,patch){Object.assign(this.get(t,id),patch)},
+};
 
-    <!-- handshake -->
-    <circle cx="292" cy="260" r="10" fill="#8d5a3b"/>
-    <circle cx="304" cy="259" r="10" fill="#6b4226"/>
-    <path d="M286 254 Q298 248 310 254" stroke="#5a3820" stroke-width="2" fill="none" opacity=".6"/>
+/* ---------- Files ----------
+   Document files (photos, PDFs) are too big for localStorage, so they go into this browser's IndexedDB.
+   Like the records, they stay on this computer only. A Document record points to its file by FileKey. */
+const Files={
+ db:null,
+ open(){if(this.db)return this.db;this.db=new Promise((ok,no)=>{try{const r=indexedDB.open("reintegrait.files",1);r.onupgradeneeded=()=>r.result.createObjectStore("files");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}});return this.db},
+ async run(mode,fn){const db=await this.open();return new Promise((ok,no)=>{const tx=db.transaction("files",mode);const req=fn(tx.objectStore("files"));tx.oncomplete=()=>ok(req&&req.result);tx.onerror=()=>no(tx.error)})},
+ put(key,blob){return this.run("readwrite",s=>s.put(blob,key))},
+ get(key){return this.run("readonly",s=>s.get(key))},
+ del(key){return this.run("readwrite",s=>s.delete(key)).catch(()=>{})},
+ clear(){return this.run("readwrite",s=>s.clear()).catch(()=>{})},
+};
+const ADD_TYPES=()=>SIM.document_check.document_types;
 
-    <g fill="#ffffff" opacity=".9">
-      <path d="M300 196 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3z"/>
-      <path d="M262 214 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
-      <path d="M340 212 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
-    </g>
-  </g>
-</svg>
-</figure>
-      <div class="prose">
-        <p class="eyebrow">Why it matters</p>
-        <h2>A second chance starts in the first week</h2>
-        <p>Coming home from prison is a fresh start. Whether it holds often depends on the first few days: a bed, an ID, a refill, a first shift at work. When the referral lands, a returning individual walks in, is accepted and starts building again.</p>
-        <p>ReintegrAIt helps case workers make that first match the right one.</p>
-      </div>
-    </div>
-  </section>
+/* The screens read a client "view": the client plus its open needs, next reminder and case file, built from the records. */
+function clientView(c){
+ const due=Store.where("Goal",g=>g.ClientId===c.Id&&g.Status==="Open"&&g.DueDate).sort((a,b)=>a.DueDate.localeCompare(b.DueDate))[0];
+ return{id:c.Id,name:c.Name,age:c.Age,gender:c.Gender,locality:c.Locality,phone:c.Phone,since:parseDate(c.ClientSince),status:c.Status,
+  needs:Store.where("Need",x=>x.ClientId===c.Id&&x.Status==="Open").map(x=>x.Text),
+  needTypes:Store.where("Need",x=>x.ClientId===c.Id&&x.Status==="Open").map(x=>x.ServiceType||""),
+  reminder:due?{goalId:due.Id,date:parseDate(due.DueDate),type:due.Type,text:due.Text}:null,
+  entries:Store.where("Interaction",x=>x.ClientId===c.Id).reverse().sort((a,b)=>b.Date.localeCompare(a.Date)).map(x=>({date:parseDate(x.Date),type:x.Type,text:x.Summary}))};
+}
+const clients=()=>Store.all("Client").map(clientView);
 
-  <section class="block" id="about">
-    <div class="wrap two">
-      <div class="prose">
-        <p class="eyebrow">About the company</p>
-        <h2>Referrals fail on rules nobody writes down</h2>
-        <p>When someone comes home from prison, the first weeks decide a lot: a bed, an ID, medication, a job. Case managers make those referrals by phone and memory. A program can be full this week, close intake on Fridays, or quietly not take a certain offense. None of that is in a directory, so returning individuals make wasted trips and case managers spend hours calling.</p>
-        <p>ReintegrAIt learns which services actually accept which returning individuals, from the outcomes case managers already know, and keeps that knowledge current. It also gives back the time spent typing notes after every visit.</p>
-        <p>We are a student venture from the <strong>Building an AI Company</strong> course (43120), building and testing the product with Chicago case managers, provider intake staff and program directors.</p>
-      </div>
-      <div class="facts">
-        <div class="fact"><b>~111</b><p>Chicago reentry organizations in our service directory, each rule with a source and a date it was checked.</p></div>
-        <div class="fact"><b>65%</b><p>of referrals connected when the service was funded, versus 38% when it was not.<cite>NCCARE360 study</cite></p></div>
-        <div class="fact"><b>0</b><p>of the public data sources we reviewed record whether a provider accepted a referral. That missing label is what we collect.</p></div>
-      </div>
-    </div>
-  </section>
+/* ---------- Dosage (step 2) ----------
+   Every interaction logs a meeting type and minutes. Its minutes are split evenly across the service types it covered,
+   one Service record per type. That gives the dosage funders ask for: contacts, minutes, and breadth of service types. */
+function splitMinutes(total,types){const n=types.length;if(!n)return[];const each=Math.floor(total/n);return types.map((t,i)=>[t,each+(i<total-each*n?1:0)])}
+function logServices(clientId,it,types){splitMinutes(it.Minutes,types).forEach(([st,m])=>Store.insert("Service",{ClientId:clientId,InteractionId:it.Id,Date:it.Date,ServiceType:st,Minutes:m,MeetingType:it.MeetingType}))}
+const durToMin=d=>{if(!d)return"";const p=String(d).split(":").map(Number);if(p.some(isNaN))return"";const sec=p.reduce((a,x)=>a*60+x,0);return Math.max(1,Math.ceil(sec/60))};
+function dosage(clientId){
+ const its=Store.where("Interaction",x=>x.ClientId===clientId&&x.Minutes>0), sv=Store.where("Service",x=>x.ClientId===clientId);
+ return{contacts:its.length,minutes:its.reduce((a,x)=>a+x.Minutes,0),types:[...new Set(sv.map(x=>x.ServiceType))],referrals:Store.where("Referral",x=>x.ClientId===clientId).length};
+}
+const serviceTypes=()=>SIM.templates.service_types;
+const meetingTypes=()=>SIM.templates.meeting_types;
+/* The service log box, shown in the review panel of a new note and of an update. */
+function logBox(log,pickServices){
+ return`<div class="svclog" id="svclog"><h2 style="margin:0">Service log</h2>
+  <div class="logrow"><label class="field"><span>Meeting</span><select id="lg-type">${meetingTypes().map(t=>`<option ${t===log.meeting_type?"selected":""}>${esc(t)}</option>`).join("")}</select></label>
+  <label class="field"><span>Minutes</span><input id="lg-min" type="number" min="1" step="1" inputmode="numeric" value="${esc(log.minutes)}"></label></div>
+  ${pickServices?`<fieldset class="svcs" id="lg-svcs"><legend>Services covered</legend>${serviceTypes().map(t=>`<label><input type="checkbox" value="${esc(t)}" ${log.services.includes(t)?"checked":""}>${esc(t)}</label>`).join("")}</fieldset>`
+   :`<p class="small muted" id="lg-svcs">Services covered: <b>${esc(log.services.join(", ")||"none yet")}</b>. These come from the needs' service types.</p>`}
+ </div>`;
+}
+function wireLog(log,onChange){
+ document.getElementById("lg-type").onchange=e=>{log.meeting_type=e.target.value;onChange()};
+ document.getElementById("lg-min").oninput=e=>{const v=parseInt(e.target.value,10);log.minutes=v>0?v:"";onChange()};
+ app.querySelectorAll("#lg-svcs input").forEach(b=>b.onchange=()=>{log.services=[...app.querySelectorAll("#lg-svcs input:checked")].map(x=>x.value);onChange()});
+}
+const approve=(recordId,statement)=>Store.insert("Approval",{RecordType:"Interaction",RecordId:recordId,ApprovedBy:"Denise",ApprovedAt:new Date().toISOString(),Statement:statement});
 
-  <section class="block" id="product">
-    <div class="wrap">
-      <div class="head">
-        <p class="eyebrow">Product overview</p>
-        <h2>One loop, from visit to outcome</h2>
-        <p class="lead">The AI does the language and the ranking. The case manager approves, picks and records. Every outcome makes the next ranking better.</p>
-      </div>
-      <div class="loop">
-        <div class="step"><span class="n">Step 1</span><h3>Record a voice memo</h3><p>After the visit, the case manager dictates for a minute or two. Speech-to-text keeps a timestamp on every line.</p><span class="who"><b>Case manager</b> speaks</span></div>
-        <div class="step"><span class="n">Step 2</span><h3>Approve the case note</h3><p>The AI drafts a note where every fact cites the recording. Unsure facts are flagged. Nothing saves until it is approved.</p><span class="who"><b>AI</b> drafts · <b>you</b> approve</span></div>
-        <div class="step"><span class="n">Step 3</span><h3>See ranked matches</h3><p>For each need, the top services ranked by chance of acceptance, with reasons, distance and how fresh the data is.</p><span class="who"><b>AI</b> ranks · <b>you</b> pick</span></div>
-        <div class="step"><span class="n">Step 4</span><h3>Refer and close the loop</h3><p>Send with the returning individual’s consent. When the appointment passes, one tap records whether they showed up and were accepted.</p><span class="who"><b>You</b> send · <b>both</b> learn</span></div>
-      </div>
-    </div>
-  </section>
+/* Templates come from simulated_responses.json ("templates"). */
+const updateTypes=()=>SIM.templates.update_types;
+const keyDefs=tpl=>SIM.templates.intake_notes[tpl].key_fields;
+const keyFields=tpl=>keyDefs(tpl).map(f=>[f.key,f.label]);
+/* Fields the template added later may be missing from a saved or sample note: give them an empty value. */
+const fieldLabel=(n,key)=>((keyDefs(n.template).find(d=>d.key===key)||{}).label||key);
+function ensureKeys(n){keyDefs(n.template).forEach(f=>{if(!n.key_info[f.key])n.key_info[f.key]={value:"",source:null}})}
 
-  <section class="block" id="safeguards">
-    <div class="wrap stack">
-      <div class="prose">
-        <p class="eyebrow">When the AI is unsure</p>
-        <h2>Built to say “check this”</h2>
-        <p>Speech recognition mishears, and listings go stale. The product shows its uncertainty instead of hiding it, and it keeps a few lines it never crosses.</p>
-      </div>
-      <div class="rules">
-        <div class="rule"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--warn-soft)"/><path d="M12 7v6m0 3.5v.5" stroke="var(--warn)" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><div><h3>Check flags</h3><p>A date said with “I think”, or a neighborhood that isn’t one of the 77 community areas, is flagged.</p></div></div>
-        <div class="rule"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--sky-soft)"/><path d="M7.5 12.5l3 3 6-7" stroke="var(--sky)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><div><h3>Confirm key facts</h3><p>Name, release date and top need are ticked before a note can be approved.</p></div></div>
-        <div class="rule"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--warn-soft)"/><path d="M8 8.5c0 4 3.5 7.5 7.5 7.5l1-2-2.5-1-1 1c-1.2-.5-2.5-1.8-3-3l1-1-1-2.5z" fill="var(--warn)"/></svg><div><h3>Call first</h3><p>Old or thin data means low confidence. Send stays off until the case manager calls or gives a reason.</p></div></div>
-        <div class="rule"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="var(--good-soft)"/><path d="M8 12h8M12 8v8" stroke="var(--good)" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg><div><h3>No risk scores</h3><p>It ranks services, never people. No parole contact, no sharing without their consent.</p></div></div>
-      </div>
-    </div>
-  </section>
+let SIM=null;
 
-  <section class="block" id="demo">
-    <div class="wrap">
-      <div class="demo">
-        <div class="prose">
-          <p class="eyebrow">Live demo</p>
-          <h2>Try it as Denise, a case manager</h2>
-          <p class="lead">The demo runs the full product with sample cases and saved AI output, right in your browser. Use the <strong>Class demo</strong> menu in the top bar to pick a case.</p>
-          <div class="ctas">
-            <a class="btn primary" href="app/step1-client-note/" data-demo>Open the demo</a>
-            <a class="btn ghost" href="https://github.com/bhav17/reintegrait">View the code</a>
-          </div>
-          <p class="fine">Everyone in the demo is made up. Nothing you enter leaves your browser. Click <b>Reset sample data</b> in the demo to start over.</p>
-        </div>
-        <ul class="cases">
-          <li><b>Happy path · Andre</b><span>Voice memo to approved note to a housing referral.</span></li>
-          <li><b>Misheard intake · Rosa</b><span>A hedged date and a local neighborhood name get flagged.</span></li>
-          <li><b>Shaky Urgent · Darius</b><span>“About ten days of pills” asks before staying Urgent.</span></li>
-          <li><b>Stale match · Andre</b><span>A 41-day-old listing drops in rank and asks you to call first.</span></li>
-          <li><b>Close the loop · Marcus</b><span>“Did Marcus show up?” records the outcome and updates the rates.</span></li>
-        </ul>
-      </div>
-    </div>
-  </section>
-</main>
+/* ---------- Activity log (spec section 4: feedback and data capture) ----------
+   Shown on screen only, kept in memory for this session. No database. */
+const ACTIVITY=[];
+const clock=()=>{const t=new Date();return String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")+":"+String(t.getSeconds()).padStart(2,"0")};
+function logEvent(client,event,detail){ACTIVITY.unshift({at:clock(),ts:Date.now(),client:client||"",event,detail:detail||""});
+ /* With the laptop helper running, every review click also goes to backend/logs/ai-log.jsonl. */
+ if(AI.helper)fetch("api/log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,client,event,detail})}).catch(()=>{})}
+/* Each upload gets a run number so its log lines group together. */
+let RUN=0;
+function nextRun(){let n=0;try{n=+localStorage.getItem("reintegrait.run")||0}catch(e){}n=Math.max(n,RUN)+1;try{localStorage.setItem("reintegrait.run",n)}catch(e){}RUN=n;return n}
+const durSec=d=>{if(!d)return 0;const p=String(d).split(":").map(Number);return p.some(isNaN)?0:p.reduce((a,x)=>a*60+x,0)};
 
-<footer>
-  <div class="wrap">
-    <span>ReintegrAIt · Chicago · 2026</span>
-    <span>Prototype with synthetic data only. Not for real client records.</span>
+/* ---------- Real AI (backend/README.md) ----------
+   With the helper running (python3 backend/server.py), a recording you upload is sent to the real
+   speech-to-text model named in backend/ai-config.json. Everything else stays simulated.
+   Without the helper, or with the switch on Simulated, the prototype works exactly as before. */
+const AI={helper:false,mode:"simulated",model:"",provider:"",key_found:false,draft_key_found:false,on:false};
+function startRealTx(job,src){
+ if(!(AI.on&&src.kind==="audio"&&src.file))return;
+ job.real={status:"running",model:AI.model};
+ job.realTx=fetch("api/transcribe",{method:"POST",headers:{"Content-Type":src.file.type||"application/octet-stream","X-File-Name":src.name,"X-Audio-Duration":src.dur||"","X-Run":String(RUN)},body:src.file})
+  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+  .then(r=>{
+   if(r.ok&&r.text){
+    const mmss=t=>t==null?"–":Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0");
+    const segs=r.segments&&r.segments.length?r.segments:[{start:0,text:r.text}];
+    const total=durSec(src.dur);
+    job.transcript=segs.map((g,i)=>({id:"rt"+(i+1),time:mmss(g.start),start:g.start||0,end:g.end??(segs[i+1]?segs[i+1].start:total||null),speaker:"Recording",text:g.text,real:true}));
+    job.real={status:"done",model:r.model,seconds:r.seconds};
+    logEvent(job.client?job.client.name:job.key_info.name.value,"Real AI transcript",`${r.model} · ${segs.length} pieces · ${r.seconds} s`);
+    if(!job.client)startRealDraft(job);
+   }else{
+    job.real={status:"failed",error:r.error||"Unknown error"};
+    logEvent(job.client?job.client.name:job.key_info.name.value,"Real AI failed",`${job.real.error} Showing the sample transcript.`);
+   }
+  });
+}
+/* Second AI step: draft the note from the real transcript (backend/prompts/draft-note.md). */
+function startRealDraft(job){
+ const ns=AI.note||{};
+ if(!ns.enabled)return;
+ if(!ns.key_found||!ns.sdk_installed){job.realDraft={status:"failed",error:!ns.key_found?"No Anthropic key in backend/.env.":"The Anthropic package is not installed (python3 -m pip install anthropic)."};return}
+ job.realDraft={status:"running",model:ns.model};
+ const lists={key_fields:keyDefs(job.template).map(f=>({key:f.key,label:f.label,type:f.type||"text",options:f.options||[]})),categories:SIM.matched_services.categories,service_types:serviceTypes(),meeting_types:SIM.templates.meeting_types};
+ job.realDraftTx=fetch("api/draft-note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,lists,lines:job.transcript.map(l=>({id:l.id,time:l.time,text:l.text}))})})
+  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+  .then(r=>{
+   if(r.ok&&r.note){applyDraft(job,r.note);job.realDraft={status:"done",model:r.model,seconds:r.seconds};
+    logEvent(job.key_info.name.value||"New client","Real AI note drafted",`${r.model} · ${job.immediate_needs.length} needs · ${job.next_steps.length} steps · ${job.flags.length} to confirm · ${r.seconds} s`)}
+   else{job.realDraft={status:"failed",error:r.error||"Unknown error"};
+    logEvent(job.key_info.name.value||"New client","Real AI note failed",`${job.realDraft.error} Showing the sample note.`)}
+  });
+}
+/* Turn the model's answer into the note the screen already knows how to show. */
+/* The note model splits each long transcript piece into speaker turns, word for word.
+   A piece whose turns do not give back its own words stays whole, so nothing is lost or invented. */
+function speakerName(role,n){
+ if(role==="Case manager")return ME;
+ if(role==="Client"){const v=(n.key_info.name||{}).value||"";return v.split(/\s+/)[0]||"Client"}
+ return role||"Unclear";
+}
+function splitTurns(n,turns){
+ const norm=t=>String(t).toLowerCase().replace(/[^a-z0-9]+/g,"");
+ const mmss=t=>Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0");
+ const idMap={},out=[];
+ n.transcript.forEach(l=>{
+  const ts=turns.filter(t=>t.line_id===l.id);
+  const whole=norm(l.text),joined=norm(ts.map(t=>t.text).join(""));
+  const ok=ts.length&&whole.length&&ts.every(t=>norm(t.text)&&whole.includes(norm(t.text)))&&Math.abs(joined.length-whole.length)<=Math.max(3,whole.length*0.05);
+  if(!ok){ts.forEach(t=>idMap[t.id]=l.id);out.push({...l,speaker:ts.length===1?ts[0].speaker:"Unclear"});return}
+  let at=0;const span=l.end!=null&&l.end>l.start?l.end-l.start:0;
+  ts.forEach(t=>{const tm=l.start+span*at/whole.length;at+=norm(t.text).length;
+   out.push({id:t.id,time:mmss(tm),start:tm,speaker:t.speaker,text:t.text.trim(),real:true,est:span>0&&tm>l.start})});
+ });
+ n.transcript=out;
+ return id=>idMap[id]||id;
+}
+function applyDraft(n,d){
+ const fix=splitTurns(n,d.turns||[]);
+ const lineTime=id=>{const l=n.transcript.find(x=>x.id===fix(id));return l?(l.est?"~":"")+l.time:""};
+ const gOpts=(SIM.new_client_intake.note.flags.find(f=>f.field==="gender")||{}).options||["Male","Female","Non-binary","Prefers not to say"];
+ const flags=[];
+ keyDefs(n.template).forEach(({key:k,label,required,type,options})=>{
+  const v=(d.key_info||{})[k]||{value:"",status:"not said",source_line:""};
+  let val=v.status==="not said"?"":v.value;
+  if(k==="gender"&&!gOpts.includes(val))val="";
+  if(type==="select"&&!(options||[]).includes(val))val="";
+  if(type==="date"&&!/^\d{4}-\d{2}-\d{2}$/.test(val))val="";
+  n.key_info[k]={value:val,source:v.source_line?fix(v.source_line):null,heard_as:v.heard_as||""};
+  const at=lineTime(v.source_line)?" at "+lineTime(v.source_line):"";
+  if(v.status==="not said"){if(required)flags.push({id:"f-"+k,field:k,kind:"Missing",text:`${label} was not stated in the recording.`,fix:k==="gender"?"select":"input",options:gOpts,placeholder:""})}
+  else if(v.status==="partly heard")flags.push({id:"f-"+k,field:k,kind:"Unclear",text:v.comment?`${v.comment.replace(/\.?$/,".")}${at?" Heard"+at+".":""}`:`${label} was only partly heard${at}.`,fix:"input",placeholder:v.value||v.heard_as||""});
+ });
+ n.flags=flags;
+ n.immediate_needs=(d.immediate_needs||[]).map(x=>({priority:x.priority,text:`${x.category}: ${x.detail}`,service_type:x.service_type,source:x.source_line?fix(x.source_line):null}));
+ n.next_steps=(d.next_steps||[]).map(x=>({kind:x.kind,action:x.action,owner:x.owner,due:x.due,addresses:x.addresses||[],source:x.source_line?fix(x.source_line):null,creates_reminder:false}));
+ n.transcript.forEach(l=>l.speaker=speakerName(l.speaker,n));
+ applyStepRules(n);
+ if(d.meeting_type)n.log.meeting_type=d.meeting_type;
+ n.drafted=true;
+ if(typeof addNoteChecks==="function")addNoteChecks(n);
+}
+/* Real drafting for typed updates to an existing client (backend/README.md).
+   Only runs for typed (not audio) updates to an existing client, so new-client
+   intake and voice notes are unaffected. With no helper, no key, or the switch
+   on Simulated, nothing here runs and the prototype works exactly as before. */
+function startRealUpdate(job,src){
+ if(!(AI.on&&AI.draft_key_found&&src.kind==="text"&&src.text))return;
+ job.realUpdate={status:"running",model:AI.draft_model||"a real model"};
+ job.realUpdateTx=fetch("api/draft-update",{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({text:src.text,type:job.type,client:{name:job.client.name,age:job.client.age,openNeeds:job.client.needs}})})
+  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+  .then(r=>{
+   if(r.ok&&r.summary){
+    job.summary=r.summary;
+    job.changes=r.changes.map(ch=>({kind:ch.kind||"change",field:ch.field||"note",label:ch.label||"Update",from:ch.from||"",to:ch.to||"",flagged:!!ch.flagged,flagReason:ch.flag_reason||""}));
+    job.realUpdate={status:"done",model:r.model,seconds:r.seconds};
+    logEvent(job.client.name,"Real AI draft",`${r.model} · ${job.changes.length} change(s) · ${r.seconds} s`);
+   }else{
+    job.realUpdate={status:"failed",error:r.error||"Unknown error"};
+    job.summary=src.text;
+    job.changes=[];
+    logEvent(job.client.name,"Real AI failed",`${job.realUpdate.error} Showing your typed notes instead of a guess.`);
+   }
+  });
+}
+const secs=ms=>{const s=Math.round(ms/1000);return s<60?s+" sec":Math.floor(s/60)+" min "+(s%60)+" sec"};
+
+const state={view:"home",sel:"c1",note:null,update:null,editing:false,newIds:new Set(),filter:""};
+const app=document.getElementById("app"), mroot=document.getElementById("modal-root");
+
+function go(v){state.view=v;render();window.scrollTo(0,0)}
+document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+document.getElementById("brand").onclick=()=>go("home");
+function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
+
+function render(){
+ ["home","clients","network","grant","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices,network:renderNetwork,grant:renderGrant})[state.view]();
+ app.querySelectorAll("[data-aimode]").forEach(b=>b.onclick=()=>{if(!AI.on&&!AI.key_found&&!AI.draft_key_found){toast("No key found. Add a key to backend/.env, then restart the helper.");return}AI.on=!AI.on;logEvent("","AI switch",AI.on?"Real ("+AI.model+")":"Simulated");render();toast(AI.on?"Real AI on.":"Simulated responses on.")});
+ app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();Files.clear();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
+}
+const mockbar=()=>`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. ${AI.on?`Voice to text uses the real model <b>${esc(AI.model)}</b>.${AI.note&&AI.note.enabled&&AI.note.key_found&&AI.note.sdk_installed?` The new-client note is drafted by <b>${esc(AI.note.model)}</b>.`:""}${AI.draft_key_found?` Typed updates are drafted by <b>${esc(AI.draft_model||"a real model")}</b>.`:""} Everything else comes from simulated_responses.json.`:"AI output comes from simulated_responses.json."}${AI.helper?`<button class="btn ghost small" type="button" data-aimode aria-pressed="${AI.on}" title="${AI.key_found||AI.draft_key_found?"":"No key found in backend/.env"}">AI: ${AI.on?"Real":"Simulated"} · switch</button>`:""}<button class="btn ghost small" type="button" data-reset>Reset sample data</button>${typeof demoBar==="function"?demoBar():""}</div>`;
+
+/* ---------- Home ---------- */
+function renderHome(){
+ const due=clients().filter(c=>c.reminder&&dayDiff(c.reminder.date)<=6).sort((a,b)=>a.reminder.date-b.reminder.date);
+ app.innerHTML=mockbar()+`
+ <div class="hello"><h1>Welcome back, Denise</h1><p class="muted">Wednesday, November 11. Who are you working with?</p></div>
+ <div class="choices three">
+  <button class="choice" id="btn-new" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="8" r="4"/><path d="M2 21c0-4 4-6 8-6s8 2 8 6"/><path d="M19 8v6M16 11h6"/></svg></span><b>New client</b><span>Upload the voice note from your first meeting. AI drafts the client note.</span></button>
+  <button class="choice" id="btn-existing" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 14h8"/></svg></span><b>Existing client</b><span>Open a case file to add a referral response, visit or check-in.</span></button>
+  <button class="choice" id="btn-network" type="button"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><b>Matched services</b><span>Find services block by block across Chicago and track every referral to its outcome.</span></button>
+ </div>
+ ${typeof fhOutcomesBox==="function"?fhOutcomesBox():""}
+ <div class="pane"><h2>Reminders due today and this week <span class="tag warn">${due.length}</span></h2><div class="rem" id="reminders">
+   ${due.map(c=>{const dd=dayDiff(c.reminder.date);return`<div class="row"><span class="rd ${dd<0?"due over":dd===0?"due today":""}">${dd<0?"Overdue · ":dd===0?"Today · ":""}${fmt(c.reminder.date)}</span><span><button class="rn" type="button" data-open="${c.id}">${esc(c.name)}</button><span class="rt">${esc(c.reminder.type)}: ${esc(c.reminder.text)}</span></span><button class="btn" type="button" data-logresp="${c.id}">Log response</button></div>`}).join("")||`<p class="muted small">Nothing due this week.</p>`}
+ </div></div>`;
+ document.getElementById("btn-new").onclick=()=>openUpload({mode:"new"});
+ document.getElementById("btn-existing").onclick=()=>go("clients");
+ document.getElementById("btn-network").onclick=()=>go("network");
+ app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{state.sel=b.dataset.open;go("clients")});
+ app.querySelectorAll("[data-logresp]").forEach(b=>b.onclick=()=>{const c=clients().find(x=>x.id===b.dataset.logresp);openUpload({mode:"update",client:c,type:c.reminder.type})});
+}
+
+/* ---------- Existing client database ---------- */
+function statusTag(s){const m={"Active":"ok","New intake":"info","Referral pending":"info","Needs follow-up":"warn","Enrolled":"ok"};return`<span class="tag ${m[s]||"info"}">${esc(s)}</span>`}
+function renderClients(){
+ const q=state.filter.toLowerCase();
+ const CL=clients();
+ const list=CL.filter(c=>!q||[c.name,c.locality,c.status].join(" ").toLowerCase().includes(q));
+ const c=CL.find(x=>x.id===state.sel)||CL[0];
+ const rd=c.reminder?dayDiff(c.reminder.date):0;
+ app.innerHTML=mockbar()+`
+ <div class="clients">
+  <div class="pane">
+   <h2>Clients <span class="tag info">${CL.length}</span></h2>
+   <div class="search"><input id="q" type="search" placeholder="Search by name, neighborhood or status" value="${esc(state.filter)}" aria-label="Search clients"></div>
+   <div class="tablewrap"><table>
+    <thead><tr><th>Client</th><th>Neighborhood</th><th>Status</th><th>Next reminder</th></tr></thead>
+    <tbody>${list.map(x=>{const dd=x.reminder?dayDiff(x.reminder.date):null;return`<tr tabindex="0" data-id="${x.id}" aria-selected="${x.id===c.id}"><td><b>${esc(x.name)}</b><span class="sub">${esc(x.age)} · ${esc(x.gender)} · ${esc(x.phone)}</span></td><td>${esc(x.locality)}</td><td>${statusTag(x.status)}</td><td>${x.reminder?`<span class="due ${dd<0?"over":dd===0?"today":""}">${dd<0?"Overdue · ":dd===0?"Today · ":""}${fmt(x.reminder.date)}</span><span class="sub">${esc(x.reminder.type)}</span>`:`<span class="muted small">None</span>`}</td></tr>`}).join("")}</tbody>
+   </table></div>
   </div>
-</footer>
-</body>
-</html>
+  <div class="pane detail" id="detail">
+   <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap">
+    <div><h3 style="font-size:20px" id="detail-name">${esc(c.name)}</h3><p class="small muted">Client since ${fmt(c.since)} · ${statusTag(c.status)}</p></div>
+    <button class="btn primary" id="btn-addinfo" type="button">+ Upload new information</button>
+   </div>
+   <div class="ms-tabs" role="tablist" aria-label="Case file sections"><button type="button" role="tab" aria-selected="true" id="tab-casefile">Case file</button><button type="button" role="tab" aria-selected="false" id="tab-services" onclick="go('services')">Matched services</button></div>
+   <div class="kv">
+    <div><span>Age</span><b>${esc(c.age)}</b></div><div><span>Gender</span><b>${esc(c.gender)}</b></div>
+    <div><span>Neighborhood</span><b>${esc(c.locality)}</b></div><div><span>Contact</span><b>${esc(c.phone)}</b></div>
+   </div>
+   ${c.reminder?`<div class="remcard ${rd>0?"calm":""}" id="remcard"><div><b>${rd<0?"Overdue":rd===0?"Due today":"Next"} · ${fmt(c.reminder.date)} · ${esc(c.reminder.type)}</b><br>${esc(c.reminder.text)}</div><button class="btn" id="btn-log" type="button">Log response</button></div>`:""}
+   ${(d=>`<div class="dosage" id="dosage"><span><b>${d.contacts}</b> contacts</span><span><b>${d.minutes}</b> min</span><span><b>${d.types.length}</b> service types</span><span><b>${d.referrals}</b> referrals</span></div>`)(dosage(c.id))}
+   ${docsSection(c)}
+   ${c.needs.length?`<h2 style="margin-top:6px">Open needs</h2><ul class="small" id="needs-list" style="margin:0 0 12px;padding-left:18px">${c.needs.map((n,i)=>`<li>${esc(n)}${c.needTypes[i]?` <span class="tag info">${esc(c.needTypes[i])}</span>`:""}</li>`).join("")}</ul>`:""}
+   <h2>Case file</h2>
+   <ol class="timeline" id="timeline">${c.entries.map((e,i)=>`<li class="${i===0&&state.newIds.has(c.id)?"new":""}"><span class="d">${fmt(e.date)}</span><div><span class="t">${esc(e.type)}</span><p>${esc(e.text)}</p></div></li>`).join("")}</ol>
+  </div>
+ </div>`;
+ const qi=document.getElementById("q");
+ qi.oninput=()=>{state.filter=qi.value;const pos=qi.selectionStart;renderClients();const n=document.getElementById("q");n.focus();n.setSelectionRange(pos,pos)};
+ app.querySelectorAll("tbody tr").forEach(tr=>{const pick=()=>{state.sel=tr.dataset.id;renderClients();if(innerWidth<900)document.getElementById("detail").scrollIntoView({behavior:"smooth"})};tr.onclick=pick;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick()}}});
+ document.getElementById("btn-addinfo").onclick=()=>openUpload({mode:"update",client:c});
+ wireDocsSection(c);
+ const log=document.getElementById("btn-log"); if(log)log.onclick=()=>openUpload({mode:"update",client:c,type:c.reminder.type});
+}
+
+/* ---------- Upload pop-up ---------- */
+function openUpload(opts){
+ const isNew=opts.mode==="new";
+ const first=isNew?"":opts.client.name.split(" ")[0];
+ const simFor=t=>isNew?SIM.new_client_intake:fill(SIM.client_update[t],{first});
+ mroot.innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <header><div><h3 id="mtitle">${isNew?"New client: upload voice note":"Upload new information for "+esc(opts.client.name)}</h3><p class="small muted">${isNew?"Upload the recording of your first meeting. Long files are fine.":"Add a voice note or type what the client told you."}</p></div><button class="x" id="mclose" type="button" aria-label="Close">×</button></header>
+  ${isNew?"":`<label class="field"><span>What is this update?</span><select id="utype">${updateTypes().map(t=>`<option ${t===(opts.type||"Referral check")?"selected":""}>${t}</option>`).join("")}</select></label>`}
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose an audio file">
+   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent)"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+   <b>Drop a voice note here or click to choose</b><span class="small muted">From your phone's voice memo app or a recorder</span>
+   <input type="file" id="file" accept="audio/*,.m4a,.mp3,.wav,.aac" hidden>
+  </div>
+  <div class="limits"><div><b>Up to 3 hours</b>per recording</div><div><b>Up to 500 MB</b>per file</div><div><b>MP3, M4A, WAV, AAC</b>audio formats</div></div>
+  <div id="filebox"></div>
+  <button class="btn ghost" id="sample" type="button" style="align-self:flex-start">Use the sample recording</button>
+  <div class="or">or type notes instead</div>
+  <textarea id="typed" placeholder="Type or paste your notes" aria-label="Typed notes"></textarea>
+  <div class="btns" style="justify-content:flex-end"><button class="btn" id="mcancel" type="button">Cancel</button><button class="btn primary" id="mgo" type="button" disabled>Process with AI</button></div>
+ </div></div>`;
+ let audio=null, uploading=false;
+ const close=()=>{mroot.innerHTML="";document.removeEventListener("keydown",onEsc)};
+ const onEsc=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",onEsc);
+ const goBtn=document.getElementById("mgo"),typed=document.getElementById("typed"),utype=document.getElementById("utype"),sampleBtn=document.getElementById("sample");
+ const refresh=()=>{goBtn.disabled=uploading||!(audio||typed.value.trim())};
+ const curType=()=>utype?utype.value:null;
+ const setSampleLabel=()=>{const s=simFor(curType());sampleBtn.textContent=s.sample_recording?`Use the sample recording (${s.sample_recording.duration})`:"Use the sample text message"};
+ setSampleLabel(); if(utype)utype.onchange=setSampleLabel;
+ typed.oninput=refresh;
+ document.getElementById("mclose").onclick=close;document.getElementById("mcancel").onclick=close;
+ document.getElementById("scrim").onclick=e=>{if(e.target.id==="scrim")close()};
+ const fi=document.getElementById("file"),drop=document.getElementById("drop");
+ drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fi.click()}};
+ drop.ondragover=e=>{e.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
+ drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])pick(e.dataTransfer.files[0])};
+ fi.onchange=()=>{if(fi.files[0])pick(fi.files[0])};
+ sampleBtn.onclick=()=>{const s=simFor(curType());if(s.sample_recording)pick(null,s.sample_recording);else{typed.value=s.sample_text;refresh()}};
+ function pick(f,sample){
+  const box=document.getElementById("filebox");
+  const name=f?f.name:sample.file_name, mb=f?f.size/1e6:sample.size_mb;
+  const okExt=/\.(mp3|m4a|wav|aac)$/i.test(name);
+  if(!okExt){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> Can't use this file</b>${esc(name)} isn't an MP3, M4A, WAV or AAC audio file. Export the recording in one of those formats, or type notes instead.</div>`;return}
+  if(mb>500){audio=null;refresh();box.innerHTML=`<div class="flagitem" role="alert"><b><span class="ic" aria-hidden="true">⚠</span> File too large</b>This file is ${mb.toFixed(0)} MB. The limit is 500 MB. Split the recording or export it as M4A.</div>`;return}
+  audio={name,mb,dur:f?null:sample.duration,file:f||null};
+  box.innerHTML=`<div class="file"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><div class="meta"><div class="nm">${esc(name)}</div><div class="small muted">${mb.toFixed(1)} MB · <span id="fdur">${f?"reading length…":sample.duration}</span> · <span id="fstat">Uploading…</span></div><div class="bar"><i id="fbar"></i></div></div></div>`;
+  if(f){try{const a=new Audio();a.preload="metadata";a.onloadedmetadata=()=>{const el=document.getElementById("fdur");if(!el||!audio)return;if(isFinite(a.duration)){const s=Math.round(a.duration);audio.dur=(s>=3600?Math.floor(s/3600)+":"+String(Math.floor(s%3600/60)).padStart(2,"0"):Math.floor(s/60))+":"+String(s%60).padStart(2,"0");el.textContent=audio.dur;if(s>3*3600){document.getElementById("fstat").textContent="Over 3 hours. Split the recording.";audio=null;refresh()}}else el.textContent="length unknown"};a.onerror=()=>{const el=document.getElementById("fdur");if(el)el.textContent="length unknown"};a.src=URL.createObjectURL(f)}catch(e){}}
+  uploading=true;refresh();let p=0;const bar=document.getElementById("fbar");
+  const iv=setInterval(()=>{p+=12;bar.style.width=Math.min(p,100)+"%";if(p>=100){clearInterval(iv);uploading=false;const st=document.getElementById("fstat");if(st&&audio)st.textContent="Uploaded";refresh()}},120);
+ }
+ goBtn.onclick=()=>{
+  const source=audio?{kind:"audio",...audio}:{kind:"text",text:typed.value.trim()};nextRun();
+  if(isNew){
+   const sim=clone(SIM.new_client_intake);
+   state.note={...sim.note,transcript:sim.transcript,processing:sim.processing,reminder:sim.reminder,source,rv1:false,startedAt:Date.now(),edits:0,tsOpened:0};state.editing=false;
+   state.note.log={meeting_type:sim.note.meeting.type,minutes:source.kind==="audio"?durToMin(source.dur):"",services:[]};
+   applyStepRules(state.note);if(typeof addNoteChecks==="function")addNoteChecks(state.note);startRealTx(state.note,source);
+   logEvent(sim.note.key_info.name.value,"Upload",source.kind==="audio"?`Voice note ${source.name} (${source.mb.toFixed(1)} MB${source.dur?", "+source.dur:""})`:"Typed notes");
+   close();startProcess("note");
+  }else{
+   const type=curType(), sim=simFor(type);
+   state.update={client:opts.client,type,source,...sim,startedAt:Date.now()};
+   startRealTx(state.update,source);
+   startRealUpdate(state.update,source);
+   state.update.log={meeting_type:sim.meeting.type,minutes:source.kind==="audio"&&source.dur?durToMin(source.dur):sim.meeting.minutes,services:[...sim.service_types]};
+   logEvent(opts.client.name,"Upload",`${type} · `+(source.kind==="audio"?`voice note ${source.name}`:"typed notes"));
+   close();startProcess("update");
+  }
+ };
+}
+
+/* ---------- AI processing (simulated) ---------- */
+let procTimer=null;
+function startProcess(next){state.procNext=next;state.view="process";render();window.scrollTo(0,0)}
+function renderProcess(){
+ const isNew=state.procNext==="note";
+ const job=isNew?state.note:state.update, src=job.source;
+ const P=src.kind==="audio"?job.processing:{...job.processing,...SIM.typed_text_processing};
+ const stages=[["quality_check","Check recording quality"],["transcription","Turn voice into text"],["missing_info_check","Look for errors and missing information"],["template_match","Match to the template"]]
+  .map(([k,t])=>{const r=P[k]||SIM.typed_text_processing[k];return{k,t,status:r.status,r:r.result.replace("{duration}",src.dur||"the recording")}});
+ app.innerHTML=mockbar()+`<div class="proc">
+  <div><h1 style="font-size:22px">${isNew?"Drafting the client note":"Reading the update for "+esc(state.update.client.name)}</h1><p class="muted small">${src.kind==="audio"?esc(src.name)+" · "+esc(src.dur||"")+" · "+src.mb.toFixed(1)+" MB":"Typed notes"}</p></div>
+  <div class="pane"><ol class="stages" id="stages">${stages.map((s,i)=>`<li class="wait" data-i="${i}"><span class="dot">${i+1}</span><div><b>${s.t}</b><div class="res" hidden>${esc(s.r)}</div></div></li>`).join("")}</ol></div>
+  <div class="btns"><button class="btn primary" id="seenote" type="button" hidden>Review the ${isNew?"note":"update"}</button><button class="btn" id="cancelp" type="button">Cancel</button></div>
+ </div>`;
+ const lis=[...app.querySelectorAll("#stages li")];let i=0;
+ clearTimeout(procTimer);
+ const step=()=>{
+  if(!lis[0].isConnected)return;
+  if(i>0&&stages[i-1].k==="quality_check"&&job.real){stages[i-1].status="done";stages[i-1].r=`Recording received${src.dur?" ("+src.dur+")":""}. An automatic quality check is not part of the real AI yet.`}
+  if(i>0&&(stages[i-1].k==="missing_info_check"||stages[i-1].k==="template_match")&&job.realDraft){
+   const d=job.realDraft,cur=stages[i-1];
+   if(d.status==="running"){lis[i-1].querySelector("b").textContent=cur.t+" (real model: "+d.model+")";job.realDraftTx.then(step);return}
+   if(d.status==="failed"){cur.status=cur.k==="template_match"?"done":"flag";cur.r=cur.k==="template_match"?"Sample note used.":`Note drafting failed: ${d.error} Showing the sample note instead.`}
+   else if(cur.k==="missing_info_check"){cur.status=job.flags.length?"flag":"done";cur.r=job.flags.length?`${job.flags.length} thing${job.flags.length>1?"s":""} to confirm: ${job.flags.map(f=>f.text.replace(/\.$/,"").toLowerCase()).join("; ")}.`:"Nothing missing or unclear."}
+   else{const ag=job.next_steps.filter(x=>x.kind==="agreed").length;cur.status="done";cur.r=`Drafted by ${d.model} in ${d.seconds} sec. ${job.immediate_needs.length} needs, ${ag} agreed next step${ag===1?"":"s"}, ${job.next_steps.length-ag} suggestion${job.next_steps.length-ag===1?"":"s"}.`}
+  }
+  if(i>0&&stages[i-1].k==="transcription"&&job.real&&job.realTx){
+   if(job.real.status==="running"){lis[i-1].querySelector("b").textContent="Turn voice into text (real model: "+job.real.model+")";job.realTx.then(step);return}
+   stages[i-1].status=job.real.status==="done"?"done":"flag";
+   stages[i-1].r=job.real.status==="done"?`Real transcript from ${job.real.model} in ${job.real.seconds} sec.${job.realDraft?"":" The note draft is still the simulated sample."}`:`Real AI failed: ${job.real.error} Showing the sample transcript instead.`;
+  }
+  if(i>0&&stages[i-1].k==="template_match"&&job.realUpdate){
+   const u=job.realUpdate;
+   if(u.status==="running"){lis[i-1].querySelector("b").textContent="Match to the template (real model: "+u.model+")";job.realUpdateTx.then(step);return}
+   stages[i-1].status=u.status==="done"?"done":"flag";
+   stages[i-1].r=u.status==="done"
+    ?`Matched using ${u.model} in ${u.seconds} sec. ${job.changes.length} change${job.changes.length===1?"":"s"} to the case file, from your typed notes.`
+    :`Real AI failed: ${u.error} Showing your typed notes instead of a guess.`;
+  }
+  if(i>0){const s=stages[i-1],li=lis[i-1];li.className=s.status==="skip"?"skip":s.status==="flag"?"flag":"done";li.querySelector(".res").textContent=s.r;li.querySelector(".dot").textContent=s.status==="skip"?"–":s.status==="flag"?"!":"✓";li.querySelector(".res").hidden=false}
+  if(i<lis.length){lis[i].className="run";lis[i].querySelector(".dot").textContent="";i++;procTimer=setTimeout(step,stages[i-1].status==="skip"?400:1000)}
+  else{const b=document.getElementById("seenote");b.hidden=false;b.focus()}
+ };
+ step();
+ document.getElementById("seenote").onclick=()=>go(state.procNext);
+ document.getElementById("cancelp").onclick=()=>{clearTimeout(procTimer);go(isNew?"home":"clients")};
+}
+
+/* ---------- Transcript pane ---------- */
+function txPane(lines,src,drafted){
+ if(src.kind!=="audio"||!lines.length)return`<div class="pane"><h2>Your typed notes</h2><p class="small" style="white-space:pre-wrap">${esc(src.text||"No transcript in this sample.")}</p></div>`;
+ const real=lines[0]&&lines[0].real;
+ return`<div class="pane"><h2>Transcript <span class="tag info">${esc(src.dur||"")}</span>${real?' <span class="tag ok">Real AI</span>':""}</h2>${real?`<p class="small muted" style="margin-bottom:8px">Written by the real speech-to-text model.${drafted?` Split into speakers by the note model. Times marked ~ are estimated. Time stamps in the note point to these lines.`:" The note fields are still the simulated sample, so their time stamps do not point here."}</p>`:""}
+ <div class="tx" id="tx">${lines.map(l=>`<div id="${l.id}"><span class="ts">${l.est?"~":""}${l.time}</span><span><span class="sp">${esc(l.speaker)}:</span>${esc(l.text).replace(/\[inaudible[^\]]*\]/,m=>`<span class="gap">⚠ ${m}</span>`)}${l.consent?`<span class="consent">✓ Consent</span>`:""}</span></div>`).join("")}</div>
+ <p class="small muted" style="margin-top:8px">Tap a time stamp in the note to see where it came from.</p></div>`;
+}
+function wireSrc(){app.querySelectorAll("[data-src]").forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.src);if(!el)return;
+  const job=state.view==="note"?state.note:state.update;if(job){job.tsOpened=(job.tsOpened||0)+1;logEvent(job.client?job.client.name:job.key_info.name.value,"Time stamp opened",b.textContent)}app.querySelectorAll(".tx .on").forEach(x=>x.classList.remove("on"));el.classList.add("on");el.scrollIntoView({behavior:"smooth",block:"nearest"})})}
+const srcBtn=(id,lines,src)=>{if(!id||src.kind!=="audio")return"";const l=lines.find(x=>x.id===id);return l?`<button class="src" type="button" data-src="${id}" title="Show in transcript">${l.time}</button>`:""};
+
+/* ---------- Next steps rules (docs/specs/step1-next-steps.md) ----------
+   Agreed steps need the line where someone committed; suggestions need a need they address,
+   never cover a need an agreed step already covers, are ordered by need priority, at most 5. */
+const MAX_SUGGESTIONS=5;
+const needCat=t=>String(t).split(":")[0].trim();
+function applyStepRules(note){
+ const pr={Urgent:0,Soon:1,Later:2};
+ const needPri=c=>{const x=note.immediate_needs.find(x=>needCat(x.text)===c);return x?pr[x.priority]??3:3};
+ const steps=note.next_steps.map(x=>({kind:x.kind||"suggested",text:x.action||x.text,owner:x.owner||"Case manager",due:x.due||"",addresses:x.addresses||[],source:x.source||null,creates_reminder:!!x.creates_reminder}));
+ steps.forEach(x=>{if(x.kind==="agreed"&&!x.source)x.kind="suggested"});
+ const agreed=steps.filter(x=>x.kind==="agreed");
+ const covered=new Set(agreed.flatMap(x=>x.addresses));
+ const sug=steps.filter(x=>x.kind==="suggested"&&x.addresses.length&&!x.addresses.every(a=>covered.has(a)))
+  .sort((a,b)=>Math.min(...a.addresses.map(needPri))-Math.min(...b.addresses.map(needPri))).slice(0,MAX_SUGGESTIONS);
+ note.next_steps=[...agreed.map(x=>({...x,ticked:true})),...sug.map(x=>({...x,ticked:false}))];
+ note.noneConfirmed=false;
+}
+
+/* ---------- Review safeguards (from the test log, Nov 17) ---------- */
+const ME="Denise";
+const SOURCES=["Asked client","From ID or documents","Not known"];
+const WHY=["Client has a plan","Already referred elsewhere","Not now, revisit next visit","Client declined"];
+const reviewText=src=>src.kind==="audio"?"I checked this note against the recording myself":"I checked this note against my notes myself";
+/* A suggestion that is the only step for an Urgent need needs a reason if left unticked. */
+function needsWhy(n,x){if(x.kind!=="suggested"||x.ticked)return false;
+ return x.addresses.some(a=>n.immediate_needs.some(y=>needCat(y.text)===a&&y.priority==="Urgent")&&!n.next_steps.some(s=>s!==x&&s.ticked&&s.addresses.includes(a)))}
+/* Check a fix the way the AI is checked: phones need 10 digits and must keep what was heard. */
+function checkFix(f,v,how){
+ if(f.kind==="Missing"){if(!how)return{block:"Choose where this came from."};if(how!=="Not known"&&!v)return{block:"Choose a value, or pick Not known."};return{}}
+ if(!v)return{block:"Enter a value."};
+ if(f.field==="contact"){const d=v.replace(/\D/g,"");if(d.length!==10)return{block:`Phone numbers need 10 digits. This has ${d.length}.`};
+  const heard=(f.placeholder||"").replace(/\D/g,"");
+  if(heard&&!d.startsWith(heard))return{warn:`The recording says ${f.placeholder}. Your number changes the part that was heard. Check the recording, or save anyway.`}}
+ return{};
+}
+function sampleBanner(job){
+ if(job.realDraft&&job.realDraft.status==="failed")return`<div class="flagitem banner" role="alert" id="sample-banner"><b><span class="ic" aria-hidden="true">⚠</span> The transcript is from your recording, but the note below is the sample note.</b>Note drafting failed: ${esc(job.realDraft.error)} Fill the note from the transcript yourself, or switch to Simulated.</div>`;
+ if(job.drafted&&job.realDraft.replay)return`<p class="small muted" id="draft-note-info" style="margin-bottom:10px"><span class="tag sim">Saved real-AI run</span> This transcript and note are the real models' output from a lab-case run, replayed so the demo works without the helper. The checks below run live. Check every line against the transcript before you approve.</p>`;
+ if(job.drafted)return`<p class="small muted" id="draft-note-info" style="margin-bottom:10px">Drafted by ${esc(job.realDraft.model)} from your recording. Check every line against the transcript before you approve.</p>`;
+ if(!(job.real&&job.real.status==="failed"))return"";
+ return`<div class="flagitem banner" role="alert" id="sample-banner"><b><span class="ic" aria-hidden="true">⚠</span> This draft is from the sample transcript, not your recording.</b>The real model failed: ${esc(job.real.error)} Check every field against the recording yourself, or switch to Simulated.</div>`;
+}
+
+/* ---------- Verify with a document ----------
+   Denise photographs or uploads release papers, an ID or a letter. AI only reads it (backend/prompts/read-document.md);
+   the comparison below is plain code, so the same values always give the same result, and Denise decides every difference.
+   Match: the field gets a green "Verified" tag. Difference: a flag shows both values and Denise picks one.
+   On the document only: offered to add. Every match and difference goes to the activity log, and saving writes a Document record. */
+const DOC_MAX_MB=20;
+const docDefs=n=>keyDefs(n.template).filter(d=>SIM.document_check.fields.includes(d.key));
+const docReady=()=>!!(AI.helper&&AI.on&&AI.document&&AI.document.enabled&&AI.document.key_found&&AI.document.sdk_installed);
+const normTxt=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+function ageOn(birth){const b=parseDate(birth);let a=TODAY.getFullYear()-b.getFullYear();if(TODAY.getMonth()<b.getMonth()||(TODAY.getMonth()===b.getMonth()&&TODAY.getDate()<b.getDate()))a--;return String(a)}
+/* How a note value compares with the document's value. */
+function compareDoc(def,noteV,docV){
+ noteV=String(noteV||"").trim();docV=String(docV||"").trim();
+ if(!docV)return null;
+ if(!noteV)return"add";
+ if(noteV.includes("_")){const re=new RegExp("^"+noteV.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/_/g,"[A-Za-z0-9]")+"$","i");return re.test(docV)?"add":"differs"}
+ if(def.type==="date"||def.type==="select")return noteV.toLowerCase()===docV.toLowerCase()?"match":"differs";
+ const a=normTxt(noteV),b=normTxt(docV);
+ if(a===b)return"match";
+ if(def.key==="name"){const x=a.split(" "),y=b.split(" ");return x[0]===y[0]&&x[x.length-1]===y[y.length-1]?"match":"differs"}
+ if(a.length>=4&&b.length>=4&&(a.includes(b)||b.includes(a)))return"match";
+ return"differs";
+}
+function markVerified(f,docType,value){
+ if(f.verified&&f.verified.value===value){if(!f.verified.docs.includes(docType))f.verified.docs.push(docType)}
+ else f.verified={docs:[docType],value};
+}
+/* Turn what the AI read into results on the note. */
+function applyDocument(n,doc,meta){
+ const k=n.key_info, who=k.name.value||"New client";
+ const D={id:"doc"+((n.docs||[]).length+1),type:doc.document_type||"Other",file:meta.file,by:meta.by,seconds:meta.seconds,
+  number:doc.document_number||"",issued_by:doc.issued_by||"",comment:doc.comment||"",readable:doc.readable!==false,results:[],blob:meta.blob||null,media_type:meta.media_type||""};
+ n.docs=n.docs||[];n.docs.push(D);
+ if(!D.readable){logEvent(who,"Document unreadable",`${D.file} · ${D.comment||"AI could not read it"}`);return D}
+ const read={};(doc.fields||[]).forEach(f=>{if(f&&f.key&&String(f.value||"").trim())read[f.key]=f});
+ const docDefsN=docDefs(n);
+ docDefsN.forEach(def=>{const f=read[def.key];if(!f)return;
+  const cur=k[def.key]||(k[def.key]={value:"",source:null});
+  const out=compareDoc(def,cur.value,f.value);if(!out)return;
+  const r={key:def.key,label:def.label,doc:f.value,printed:f.printed_as||"",note:cur.value,outcome:out,state:out==="add"?"offered":"done"};
+  if(out==="match"){markVerified(cur,D.type,cur.value);logEvent(who,"Document matches",`${def.label}: "${cur.value}" · ${D.type}`)}
+  if(out==="differs"){n.flags.push({id:`f-${D.id}-${def.key}`,field:def.key,kind:"Document differs",fix:"choose",noteValue:cur.value,docValue:f.value,printed:r.printed,docType:D.type,
+    text:`The note says “${cur.value}”. The ${D.type.toLowerCase()} say${/s$/i.test(D.type)?"":"s"} “${f.value}”.`});
+   logEvent(who,"Document differs",`${def.label}: note "${cur.value}" · ${D.type} "${f.value}"${r.printed?` (printed "${r.printed}")`:""}`)}
+  if(out==="add")logEvent(who,"Document value found",`${def.label}: "${f.value}" · ${D.type} · offered to add`);
+  D.results.push(r)});
+ /* Age is never read from a document: it is worked out from the date of birth on it. */
+ const bd=read.birth_date&&/^\d{4}-\d{2}-\d{2}$/.test(read.birth_date.value)?read.birth_date.value:"";
+ if(bd&&k.age){const a=ageOn(bd),out=compareDoc({key:"age"},k.age.value,a);
+  if(out){const r={key:"age",label:"Age",doc:a,printed:`from date of birth ${read.birth_date.printed_as||bd}`,note:k.age.value,outcome:out,state:out==="add"?"offered":"done"};
+   if(out==="match"){markVerified(k.age,D.type+" (date of birth)",k.age.value);logEvent(who,"Document matches",`Age: "${k.age.value}" · from date of birth on ${D.type}`)}
+   if(out==="differs"){n.flags.push({id:`f-${D.id}-age`,field:"age",kind:"Document differs",fix:"choose",noteValue:k.age.value,docValue:a,printed:r.printed,docType:D.type,
+     text:`The note says ${k.age.value}. The date of birth on the ${D.type.toLowerCase()} (${bd}) makes the client ${a} today.`});
+    logEvent(who,"Document differs",`Age: note "${k.age.value}" · ${a} from date of birth on ${D.type}`)}
+   D.results.push(r)}}
+ const c=docCounts(D);
+ logEvent(who,"Document read",`${D.type} · ${D.file} · ${D.by}${D.seconds?` · ${D.seconds} s`:""} · ${c.match} match, ${c.differs} differ, ${c.add} to add${D.number?` · no. ${D.number}`:""}`);
+ return D;
+}
+const docCounts=D=>({match:D.results.filter(r=>r.outcome==="match").length,differs:D.results.filter(r=>r.outcome==="differs").length,add:D.results.filter(r=>r.outcome==="add").length});
+/* Fill a field from a document, and close any open flag on it. */
+function fillFromDoc(n,key,value,docType){
+ const f=n.key_info[key];f.value=value;f.by=ME;f.how="From "+docType;markVerified(f,docType,value);
+ n.flags.filter(x=>x.field===key&&!x.resolved).forEach(x=>{x.resolved=true;x.value=value;x.how="From "+docType});
+ n.edits++;
+}
+function docPanel(n){
+ if(!(n.docs||[]).length)return"";
+ return`<div class="docs" id="docs">${n.docs.map(D=>{
+  if(!D.readable)return`<div class="doc bad" data-doc="${D.id}"><b><span aria-hidden="true">⚠ </span>Couldn't read ${esc(D.file)}</b><br>${esc(D.comment||"Try a clearer photo.")}</div>`;
+  const c=docCounts(D),offers=D.results.filter(r=>r.state==="offered"),added=D.results.filter(r=>r.state==="added"),skipped=D.results.filter(r=>r.state==="left out");
+  return`<div class="doc ${c.differs?"bad":""}" data-doc="${D.id}"><b>${esc(D.type)}</b> <span class="muted">· ${esc(D.file)}${D.number?` · no. ${esc(D.number)}`:""} · ${esc(D.by)}${D.blob?" · a copy is kept when you save":""}</span><br>
+   <span class="tag ok">${c.match} match</span> ${c.differs?`<span class="tag warn">${c.differs} differ${c.differs>1?"":"s"}</span>`:""} ${c.add?`<span class="tag info">${c.add} on the document only</span>`:""}
+   ${D.comment?`<div class="small muted" style="margin-top:4px">${esc(D.comment)}</div>`:""}
+   ${offers.map(r=>`<div class="offer"><span class="v">${esc(r.label)}: <b>${esc(r.doc)}</b>${r.printed&&r.printed!==r.doc?` <span class="small muted">(${esc(r.printed)})</span>`:""}${r.note?` <span class="small muted">· note has “${esc(r.note)}”</span>`:""}</span><button class="btn small" type="button" data-offer="${D.id}|${r.key}|add">Add to note</button><button class="btn ghost small" type="button" data-offer="${D.id}|${r.key}|skip">Leave out</button></div>`).join("")}
+   ${added.length?`<div class="small muted" style="margin-top:4px">Added from this document: ${added.map(r=>esc(r.label)).join(", ")}</div>`:""}
+   ${skipped.length?`<div class="small muted">Left out: ${skipped.map(r=>esc(r.label)).join(", ")}</div>`:""}</div>`}).join("")}</div>`;
+}
+function chooseFlag(f){
+ return`<div class="flagitem" data-flag="${f.id}"><div><b><span class="ic" aria-hidden="true">⚠</span> ${esc(f.kind)}: ${esc(fieldLabel(state.note,f.field))}</b> ${esc(f.text)}${f.printed&&f.printed!==f.docValue?` Printed as “${esc(f.printed)}”.`:""} Which is right?</div>
+  <div class="choose"><button class="btn" type="button" data-choose="${f.id}|note">Keep the note: ${esc(f.noteValue)}</button><button class="btn" type="button" data-choose="${f.id}|doc">Use the ${esc(f.docType.toLowerCase())}: ${esc(f.docValue)}</button></div></div>`;
+}
+function wireDocs(n){
+ const who=()=>n.key_info.name.value||"New client";
+ const vb=document.getElementById("btn-verify");if(vb)vb.onclick=()=>{syncNote();openDocCheck(n)};
+ app.querySelectorAll("[data-choose]").forEach(b=>b.onclick=()=>{syncNote();const[id,pick]=b.dataset.choose.split("|");const f=n.flags.find(x=>x.id===id);if(!f||f.resolved)return;
+  const label=fieldLabel(n,f.field);
+  if(pick==="doc"){fillFromDoc(n,f.field,f.docValue,f.docType);f.value=f.docValue;f.how="From "+f.docType}
+  else{f.resolved=true;f.value=f.noteValue;f.how=`Kept the note. ${f.docType} says ${f.docValue}`}
+  logEvent(who(),"Document value chosen",`${label}: ${pick==="doc"?`used ${f.docType} "${f.docValue}" (note had "${f.noteValue}")`:`kept note "${f.noteValue}" (${f.docType} has "${f.docValue}")`} · chosen by ${ME}`);
+  renderNote()});
+ app.querySelectorAll("[data-offer]").forEach(b=>b.onclick=()=>{syncNote();const[did,key,act]=b.dataset.offer.split("|");const D=n.docs.find(x=>x.id===did);const r=D&&D.results.find(x=>x.key===key);if(!r)return;
+  if(act==="add"){fillFromDoc(n,key,r.doc,D.type);r.state="added";logEvent(who(),"Document value added",`${r.label}: "${r.doc}" from ${D.type} · added by ${ME}`)}
+  else{r.state="left out";logEvent(who(),"Document value left out",`${r.label}: "${r.doc}" from ${D.type}`)}
+  renderNote()});
+}
+const blobB64=b=>new Promise((ok,no)=>{const fr=new FileReader();fr.onload=()=>ok(String(fr.result).split(",")[1]);fr.onerror=no;fr.readAsDataURL(b)});
+/* Phone photos can be large. Shrink big images so the model gets a sharp but small JPEG. */
+async function shrinkImage(blob){
+ if(!/^image\/(jpeg|png|webp)$/.test(blob.type))return blob;
+ try{const bmp=await createImageBitmap(blob);const sc=Math.min(1,2200/Math.max(bmp.width,bmp.height));
+  if(sc===1&&blob.size<3.5e6)return blob;
+  const cv=document.createElement("canvas");cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);cv.getContext("2d").drawImage(bmp,0,0,cv.width,cv.height);
+  return await new Promise(ok=>cv.toBlob(b=>ok(b||blob),"image/jpeg",0.88))}catch(e){return blob}
+}
+function openDocCheck(n){
+ const real=docReady(),dc=SIM.document_check;
+ mroot.innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dtitle">
+  <header><div><h3 id="dtitle">Verify with a document</h3><p class="small muted">Take a photo or upload a scan of release papers, a state ID or a benefits letter. AI reads it and compares it with the note. You decide every difference.</p></div><button class="x" id="dclose" type="button" aria-label="Close">×</button></header>
+  <div class="drop" id="ddrop" tabindex="0" role="button" aria-label="Choose a photo or PDF">
+   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent)"><rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 6l1.5-2h5L16 6"/></svg>
+   <b>Take a photo or choose a file</b><span class="small muted">JPG, PNG or PDF, up to ${DOC_MAX_MB} MB</span>
+   <input type="file" id="dfile" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,.jpg,.jpeg,.png" hidden>
+  </div>
+  <div><p class="small muted" style="margin-bottom:6px">Or try a made-up document for Andre:</p><div class="samplebtns">${dc.samples.map(s=>`<button class="btn ghost small" type="button" data-sample="${s.id}">${esc(s.label)}</button>`).join("")}</div></div>
+  <div id="dbox"></div>
+  <label class="keep"><input type="checkbox" id="dkeep"> <span>Keep a copy in the client's documents when the note is saved. It is saved in this browser only.</span></label>
+  <p class="small muted" id="dmode">${real?`Read by <b>${esc(AI.document.model)}</b> on your laptop helper. The document is not saved.`:"Simulated: sample documents use their saved answers. To read your own documents, run the laptop helper with your Anthropic key and switch AI to Real."}</p>
+  <div class="btns" style="justify-content:flex-end"><button class="btn" id="dcancel" type="button">Cancel</button><button class="btn primary" id="dgo" type="button" disabled>Read document</button></div>
+ </div></div>`;
+ let pick=null,busy=false;
+ const close=()=>{mroot.innerHTML="";document.removeEventListener("keydown",onEsc)};
+ const onEsc=e=>{if(e.key==="Escape"&&!busy)close()};document.addEventListener("keydown",onEsc);
+ const go=document.getElementById("dgo"),box=document.getElementById("dbox"),fi=document.getElementById("dfile"),drop=document.getElementById("ddrop");
+ const err=(t,m)=>{box.innerHTML=`<div class="flagitem" role="alert" id="derr"><b><span class="ic" aria-hidden="true">⚠</span> ${esc(t)}</b>${esc(m)}</div>`};
+ document.getElementById("dclose").onclick=close;document.getElementById("dcancel").onclick=close;
+ document.getElementById("scrim").onclick=e=>{if(e.target.id==="scrim"&&!busy)close()};
+ drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fi.click()}};
+ drop.ondragover=e=>{e.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
+ drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])choose({file:e.dataTransfer.files[0]})};
+ fi.onchange=()=>{if(fi.files[0])choose({file:fi.files[0]})};
+ mroot.querySelectorAll("[data-sample]").forEach(b=>b.onclick=()=>choose({sample:dc.samples.find(s=>s.id===b.dataset.sample)}));
+ function choose(p){
+  pick=null;go.disabled=true;
+  if(p.file){const f=p.file,isPdf=f.type==="application/pdf"||/\.pdf$/i.test(f.name),isImg=/^image\/(jpeg|png|webp|gif)$/.test(f.type);
+   if(!isPdf&&!isImg)return err("Can't use this file",`${f.name} isn't a JPG, PNG or PDF. On an iPhone, set Camera > Formats to "Most Compatible", or take a screenshot of the photo.`);
+   if(f.size>DOC_MAX_MB*1e6)return err("File too large",`This file is ${(f.size/1e6).toFixed(0)} MB. The limit is ${DOC_MAX_MB} MB.`);
+   if(!real)return err("Real AI is off","Reading your own document needs the laptop helper with your Anthropic key, and the AI switch on Real. Try a sample document instead.");
+   pick={name:f.name,blob:f,media_type:isPdf?"application/pdf":f.type}}
+  else pick={name:p.sample.file.split("/").pop(),sample:p.sample,media_type:p.sample.media_type};
+  box.innerHTML=`<div class="file" id="dfilebox"><div class="meta"><div class="nm">${esc(pick.name)}</div><div class="small muted" id="dstat">Ready to read</div></div></div>${pick.media_type!=="application/pdf"?`<img class="docprev" id="dprev" alt="Preview of ${esc(pick.name)}">`:""}`;
+  const pv=document.getElementById("dprev");if(pv)pv.src=pick.blob?URL.createObjectURL(pick.blob):pick.sample.file;
+  go.disabled=false;
+ }
+ go.onclick=async()=>{
+  if(!pick||busy)return;busy=true;go.disabled=true;const st=document.getElementById("dstat");st.textContent=real?"Reading with AI… this takes about 10 to 30 seconds":"Reading…";
+  const who=n.key_info.name.value||"New client";
+  try{
+   let doc,meta;
+   const keep=document.getElementById("dkeep").checked;
+   if(!real){await new Promise(r=>setTimeout(r,700));doc=clone(pick.sample.document);meta={file:pick.name,by:"Sample answer (simulated)",media_type:pick.media_type};
+    if(keep)meta.blob=pick.blob||await fetch(pick.sample.file).then(r=>r.ok?r.blob():null).catch(()=>null)}
+   else{
+    let blob=pick.blob||await fetch(pick.sample.file).then(r=>{if(!r.ok)throw new Error("Could not open the sample document.");return r.blob()});
+    blob=await shrinkImage(blob);
+    const media_type=pick.media_type==="application/pdf"?"application/pdf":(blob.type||pick.media_type);
+    const fields=docDefs(n).map(f=>({key:f.key,label:f.label,type:f.type||"text",options:f.options||[]}));
+    const r=await fetch("api/read-document",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,client:who,file_name:pick.name,media_type,data:await blobB64(blob),fields})})
+     .then(x=>x.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}));
+    if(!r.ok||!r.document){busy=false;go.disabled=false;logEvent(who,"Document read failed",`${pick.name} · ${r.error||"Unknown error"}`);return err("Couldn't read the document",r.error||"Unknown error.")}
+    doc=r.document;meta={file:pick.name,by:`Read by ${r.model}`,seconds:r.seconds,media_type,blob:keep?blob:null};
+   }
+   const D=applyDocument(n,doc,meta);busy=false;close();renderNote();
+   const c=docCounts(D);
+   toast(!D.readable?"Couldn't read that document. See the note.":`${D.type}: ${c.match} match, ${c.differs} differ${c.differs===1?"s":""}, ${c.add} to add.`);
+   const el=document.getElementById("docs");if(el)el.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }catch(e){busy=false;go.disabled=false;err("Couldn't read the document",String(e.message||e))}
+ };
+}
+/* ---------- Documents on a client's file ----------
+   Each client has a Documents list: ID, release papers, benefits letters, signed forms. Denise adds a photo or PDF with its type;
+   the file goes into this browser's IndexedDB (Files above) and a Document record points to it. Documents read by
+   "Verify with a document" show here too, with what matched. */
+function docsSection(c){
+ const ds=Store.where("Document",x=>x.ClientId===c.id).slice().sort((a,b)=>String(b.AddedDate||b.VerifiedDate).localeCompare(String(a.AddedDate||a.VerifiedDate)));
+ const tag=x=>x.Status==="Checked"||x.Matched?`<span class="tag ${(x.Differed||[]).length?"warn":"ok"}">${(x.Differed||[]).length?"Checked, differed":"Verified"}</span>`:`<span class="tag info">On file</span>`;
+ return`<div class="dochd"><h2 style="margin:0">Documents <span class="tag info">${ds.length}</span></h2><button class="btn ghost small" id="btn-adddoc" type="button">+ Add document</button></div>
+  ${ds.length?`<ul class="doclist" id="doclist">${ds.map(x=>`<li data-docid="${x.Id}"><span class="nm"><b>${esc(x.DocumentType)}</b>${x.DocumentNumber?` · no. ${esc(x.DocumentNumber)}`:""} ${tag(x)}<br><span class="muted small">Added ${fmt(parseDate(x.AddedDate||x.VerifiedDate))} by ${esc(x.AddedBy||x.VerifiedBy||ME)} · ${esc(x.FileName||"no file")}${x.FileStored?"":" · file not kept"}${x.Note?` · ${esc(x.Note)}`:""}</span></span>
+   ${x.FileStored?`<button class="btn small" type="button" data-viewdoc="${x.Id}">View</button>`:""}<button class="btn ghost small" type="button" data-rmdoc="${x.Id}">Remove</button></li>`).join("")}</ul>`
+   :`<p class="small muted" id="doclist-empty" style="margin:6px 0 14px">No documents yet. Add a photo or PDF of an ID, release papers, a benefits letter or a signed form.</p>`}`;
+}
+function wireDocsSection(c){
+ const b=document.getElementById("btn-adddoc");if(b)b.onclick=()=>openAddDocument(c);
+ app.querySelectorAll("[data-viewdoc]").forEach(v=>v.onclick=async()=>{const x=Store.get("Document",v.dataset.viewdoc);
+  const blob=await Files.get(x.FileKey).catch(()=>null);
+  if(!blob){toast("This file isn't saved in this browser.");return}
+  logEvent(c.name,"Document opened",`${x.DocumentType} · ${x.FileName}`);
+  window.open(URL.createObjectURL(blob),"_blank","noopener")});
+ app.querySelectorAll("[data-rmdoc]").forEach(r=>r.onclick=()=>{
+  if(r.dataset.sure!=="1"){r.dataset.sure="1";r.textContent="Remove for good?";r.classList.remove("ghost");return}
+  const x=Store.get("Document",r.dataset.rmdoc);Store.data.Document=Store.data.Document.filter(d=>d.Id!==x.Id);Store.save();
+  if(x.FileKey)Files.del(x.FileKey);
+  logEvent(c.name,"Document removed",`${x.DocumentType} · ${x.FileName||"no file"} · removed by ${ME}`);renderClients();toast("Document removed.")});
+}
+function openAddDocument(c){
+ const dc=SIM.document_check;
+ mroot.innerHTML=`<div class="scrim" id="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="atitle">
+  <header><div><h3 id="atitle">Add a document for ${esc(c.name)}</h3><p class="small muted">A photo or PDF of an ID, release papers, a benefits letter or a signed form. It is saved in this browser only.</p></div><button class="x" id="aclose" type="button" aria-label="Close">×</button></header>
+  <div class="drop" id="adrop" tabindex="0" role="button" aria-label="Choose a photo or PDF">
+   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="color:var(--accent)"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 18v-6M9 15h6"/></svg>
+   <b>Take a photo or choose a file</b><span class="small muted">JPG, PNG or PDF, up to ${DOC_MAX_MB} MB</span>
+   <input type="file" id="afile" accept="image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf,.jpg,.jpeg,.png" hidden>
+  </div>
+  <div class="samplebtns"><span class="small muted" style="align-self:center">Or a made-up sample:</span>${dc.samples.map(s=>`<button class="btn ghost small" type="button" data-asample="${s.id}">${esc(s.label)}</button>`).join("")}</div>
+  <div id="abox"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"><label class="field"><span>Document type</span><select id="atype"><option value="">Choose…</option>${ADD_TYPES().map(t=>`<option>${esc(t)}</option>`).join("")}</select></label>
+   <label class="field"><span>Number on it (optional)</span><input id="anum" placeholder="ID or case number"></label></div>
+  <label class="field"><span>Note (optional)</span><input id="anote" placeholder="For example: expires April 2030"></label>
+  <div class="btns" style="justify-content:flex-end"><button class="btn" id="acancel" type="button">Cancel</button><button class="btn primary" id="ago" type="button" disabled>Add to documents</button></div>
+ </div></div>`;
+ let pick=null;
+ const close=()=>{mroot.innerHTML="";document.removeEventListener("keydown",onEsc)};
+ const onEsc=e=>{if(e.key==="Escape")close()};document.addEventListener("keydown",onEsc);
+ const go=document.getElementById("ago"),box=document.getElementById("abox"),fi=document.getElementById("afile"),drop=document.getElementById("adrop"),ty=document.getElementById("atype");
+ const refresh=()=>{go.disabled=!(pick&&ty.value)};ty.onchange=refresh;
+ document.getElementById("aclose").onclick=close;document.getElementById("acancel").onclick=close;
+ document.getElementById("scrim").onclick=e=>{if(e.target.id==="scrim")close()};
+ drop.onclick=()=>fi.click();drop.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();fi.click()}};
+ drop.ondragover=e=>{e.preventDefault();drop.classList.add("over")};drop.ondragleave=()=>drop.classList.remove("over");
+ drop.ondrop=e=>{e.preventDefault();drop.classList.remove("over");if(e.dataTransfer.files[0])choose(e.dataTransfer.files[0])};
+ fi.onchange=()=>{if(fi.files[0])choose(fi.files[0])};
+ mroot.querySelectorAll("[data-asample]").forEach(b=>b.onclick=async()=>{const s=dc.samples.find(x=>x.id===b.dataset.asample);
+  const blob=await fetch(s.file).then(r=>r.blob()).catch(()=>null);if(!blob)return toast("Could not open the sample.");
+  choose(new File([blob],s.file.split("/").pop(),{type:s.media_type}));ty.value=s.document.document_type;document.getElementById("anum").value=s.document.document_number||"";refresh()});
+ function choose(f){
+  pick=null;refresh();
+  const isPdf=f.type==="application/pdf"||/\.pdf$/i.test(f.name),isImg=/^image\/(jpeg|png|webp|gif)$/.test(f.type);
+  if(!isPdf&&!isImg){box.innerHTML=`<div class="flagitem" role="alert" id="aerr"><b><span class="ic" aria-hidden="true">⚠</span> Can't use this file</b>${esc(f.name)} isn't a JPG, PNG or PDF.</div>`;return}
+  if(f.size>DOC_MAX_MB*1e6){box.innerHTML=`<div class="flagitem" role="alert" id="aerr"><b><span class="ic" aria-hidden="true">⚠</span> File too large</b>This file is ${(f.size/1e6).toFixed(0)} MB. The limit is ${DOC_MAX_MB} MB.</div>`;return}
+  pick={file:f,media_type:isPdf?"application/pdf":f.type};
+  box.innerHTML=`<div class="file" id="afilebox"><div class="meta"><div class="nm">${esc(f.name)}</div><div class="small muted">${(f.size/1e6).toFixed(1)} MB</div></div></div>${isImg?`<img class="docprev" alt="Preview of ${esc(f.name)}" src="${URL.createObjectURL(f)}">`:""}`;
+  refresh();
+ }
+ go.onclick=async()=>{
+  if(!pick||!ty.value)return;go.disabled=true;
+  const key=uid("file");let stored=true;
+  try{await Files.put(key,await shrinkImage(pick.file))}catch(e){stored=false}
+  const num=document.getElementById("anum").value.trim(),note=document.getElementById("anote").value.trim();
+  Store.insert("Document",{ClientId:c.id,DocumentType:ty.value,DocumentNumber:num||null,FileName:pick.file.name,MediaType:pick.media_type,SizeBytes:pick.file.size,
+   FileStored:stored,FileKey:stored?key:null,AddedDate:TODAY_ISO,AddedBy:ME,Note:note||null,Status:"On file"});
+  Store.save();
+  logEvent(c.name,"Document added",`${ty.value} · ${pick.file.name}${num?` · no. ${num}`:""} · added by ${ME}${stored?"":" · file could not be saved in this browser"}`);
+  close();renderClients();toast(stored?`${ty.value} added to ${c.name.split(" ")[0]}'s documents.`:"Added, but this browser would not keep the file.");
+ };
+}
+
+/* What each saved field was verified against: {release_date:"Release papers", ...}. */
+function verifiedFields(n){const out={};Object.entries(n.key_info).forEach(([key,f])=>{if(f.verified&&f.value&&f.verified.value===f.value)out[key]=f.verified.docs.join(", ")});return out}
+function saveDocuments(n,clientId,interactionId){
+ (n.docs||[]).filter(D=>D.readable).forEach(D=>{
+  const flagOf=r=>n.flags.find(f=>f.id===`f-${D.id}-${r.key}`);
+  const key=D.blob?uid("file"):null;if(key)Files.put(key,D.blob).catch(()=>{});
+  Store.insert("Document",{ClientId:clientId,InteractionId:interactionId,DocumentType:D.type,DocumentNumber:D.number||null,IssuedBy:D.issued_by||null,FileName:D.file,
+   MediaType:D.media_type||null,FileStored:!!key,FileKey:key,AddedDate:TODAY_ISO,AddedBy:ME,
+   ReadBy:D.by,VerifiedBy:ME,VerifiedDate:TODAY_ISO,Status:"Checked",
+   Matched:D.results.filter(r=>r.outcome==="match").map(r=>r.key),
+   Differed:D.results.filter(r=>r.outcome==="differs").map(r=>{const f=flagOf(r);return{Field:r.key,Note:r.note,Document:r.doc,Chosen:f&&f.resolved?(f.value===r.doc?"Document":"Note"):null}}),
+   Added:D.results.filter(r=>r.state==="added").map(r=>r.key),LeftOut:D.results.filter(r=>r.state!=="added"&&r.outcome==="add").map(r=>r.key)})});
+}
+
+/* ---------- New client note ---------- */
+function renderNote(){
+ const n=state.note, k=n.key_info, L=n.transcript, S=n.source;
+ const open=n.flags.filter(f=>!f.resolved).length;
+ ensureKeys(n);
+ const fld=d=>{const key=d.key,label=d.label,f=k[key];const flagged=n.flags.some(x=>x.field===key&&!x.resolved);const mark=flagged?`<span aria-hidden="true">⚠ </span>`:"";
+  const checking=n.flags.some(x=>x.field===key&&!x.resolved&&x.kind==="Check");
+  const head=`<span>${mark}${esc(label)}${flagged?" (to confirm)":""}${checking?` <span class="tag warn fh-tag">Check</span>`:""} ${f.by?"":srcBtn(f.source,L,S)}</span>`;
+  const heard=f.heard_as&&f.value&&f.heard_as!==f.value?`<span class="heardas">Heard as “${esc(f.heard_as)}”</span>`:"";
+  const ver=f.verified&&f.value&&f.verified.value===f.value?`<span class="verified" data-verified="${key}"><span aria-hidden="true">✓ </span>Verified · ${esc(f.verified.docs.join(", "))}</span>`:"";
+  const opts=key==="gender"?(n.flags.find(x=>x.field==="gender")?.options||["Male","Female","Non-binary","Prefers not to say"]):d.options;
+  const ctl=opts&&(key==="gender"||d.type==="select")
+   ?`<select id="k-${key}" ${state.editing?"":"disabled"}><option value="">${key==="gender"?"Not stated":"Not said"}</option>${opts.map(o=>`<option ${f.value===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`
+   :`<input id="k-${key}" ${d.type==="date"?'type="date"':""} value="${esc(f.value)}" placeholder="Not said" ${state.editing?"":"readonly"}>`;
+  return`<label class="${flagged?"flagged":""}">${head}${ctl}${ver}${heard}</label>`};
+ const groups=[...new Set(keyDefs(n.template).map(d=>d.group||"Profile"))];
+ const keyInfo=groups.map((g,gi)=>{const defs=keyDefs(n.template).filter(d=>(d.group||"Profile")===g);
+  const shown=defs.filter(d=>state.editing||d.required||k[d.key].value||n.flags.some(x=>x.field===d.key&&!x.resolved));
+  const rest=defs.filter(d=>!shown.includes(d));
+  if(!shown.length&&!rest.length)return"";
+  return`${gi?`<div class="kgroup">${esc(g)}</div>`:""}${shown.length?`<div class="keyinfo">${shown.map(fld).join("")}</div>`:""}${rest.length?`<p class="knot small muted">Not mentioned: ${rest.map(d=>esc(d.label)).join(", ")}. <button class="linkbtn" type="button" data-addfields>Add by hand</button></p>`:""}`}).join("");
+ const pc={Urgent:"u",Soon:"s",Later:"l"};
+ const ce=state.editing?'contenteditable="true"':"";
+ n.log.services=[...new Set(n.immediate_needs.map(x=>x.service_type).filter(Boolean))];
+ const untyped=n.immediate_needs.filter(x=>!x.service_type).length;
+ const stSel=(x,i)=>`<select class="stype ${x.service_type?"":"missing"}" data-stype="${i}" aria-label="Service type"><option value="">Service type…</option>${serviceTypes().map(t=>`<option ${t===x.service_type?"selected":""}>${esc(t)}</option>`).join("")}</select>`;
+ const agreedIdx=[],sugIdx=[];n.next_steps.forEach((x,i)=>(x.kind==="suggested"?sugIdx:agreedIdx).push(i));
+ const needSrc=a=>{const x=n.immediate_needs.find(x=>needCat(x.text)===a);return x?x.source:null};
+ const stepLi=i=>{const x=n.next_steps[i];
+  const ev=x.kind==="suggested"?(x.addresses[0]?srcBtn(needSrc(x.addresses[0])||x.source,L,S):""):srcBtn(x.source,L,S);
+  return`<li class="${x.ticked?"":"off"}"><input type="checkbox" data-tick="${i}" ${x.ticked?"checked":""} aria-label="Save this step"><span class="txt" ${ce} data-list="next_steps" data-i="${i}">${esc(x.text)}</span><button class="del" type="button" data-del="next_steps" data-i="${i}" aria-label="Remove">×</button>
+   <span class="meta"><span>Owner: ${state.editing?`<select data-owner="${i}" aria-label="Owner">${["Case manager","Client","Both"].map(o=>`<option ${o===x.owner?"selected":""}>${o}</option>`).join("")}</select>`:esc(x.owner)}</span>
+   <span>Due: ${state.editing?`<input data-due="${i}" value="${esc(x.due)}" placeholder="not said" aria-label="Due" size="10">`:(x.due?esc(x.due):"not said")}</span>
+   ${x.addresses.length?`<span>Addresses: ${esc(x.addresses.join(", "))}</span>`:""}
+   ${x.kind==="added"?`<span class="tag info">Added by case manager</span>`:x.kind==="suggested"?`<span>Evidence: need ${ev}</span>`:ev?`<span>Agreed at ${ev}</span>`:""}
+   ${x.creates_reminder&&x.ticked?`<span class="tag info">Creates reminder</span>`:""}${n.flags.some(f=>f.kind==="Check"&&!f.resolved&&f.step===x.text)?`<span class="tag warn fh-tag">Check due date</span>`:""}</span>
+   ${needsWhy(n,x)?`<span class="why ${x.why?"":"missing"}"><span aria-hidden="true">⚠ </span>Urgent need. Why not now? <select data-why="${i}" aria-label="Reason for declining"><option value="">Choose a reason…</option>${WHY.map(o=>`<option ${x.why===o?"selected":""}>${o}</option>`).join("")}</select></span>`:""}</li>`};
+ const noneNeeded=!agreedIdx.length;
+ const why=n.next_steps.map((x,i)=>i).filter(i=>needsWhy(n,n.next_steps[i]));
+ const noWhy=why.filter(i=>!n.next_steps[i].why).length;
+ const canSave=()=>!open&&n.rv1&&(!noneNeeded||n.noneConfirmed)&&!untyped&&n.log.minutes>0&&!noWhy&&fhKeyFactsOk(n);
+ const txFailed=!!((n.real&&n.real.status==="failed")||(n.realDraft&&n.realDraft.status==="failed"));
+ app.innerHTML=mockbar()+`
+ <div class="notehead"><div><p class="small muted">New client · ${esc(n.template)}</p><h1>Client note: ${esc(k.name.value||"New client")}</h1></div>
+  <div class="btns"><button class="btn" id="btn-edit" type="button" aria-pressed="${state.editing}">${state.editing?"Done editing":"Edit note"}</button></div></div>
+ ${sampleBanner(n)}
+ <div class="flagbar" id="flags" aria-label="Flags">${n.flags.map(f=>f.kind==="Check"?fhFlag(n,f):!f.resolved&&f.fix==="choose"?chooseFlag(f):f.resolved?`<div class="flagitem res"><div><b><span class="ic" aria-hidden="true">✓</span> Resolved · ${esc(f.kind)}: ${esc(fieldLabel(n,f.field))}</b> Set to ${esc(f.value||"Not stated")}${f.how?" · "+esc(f.how):""} · entered by ${ME}</div></div>`:`<div class="flagitem"><div><b><span class="ic" aria-hidden="true">⚠</span> ${esc(f.kind)}: ${esc(fieldLabel(n,f.field))}</b> ${esc(f.text)}</div>${f.kind==="Unclear"&&f.placeholder?`<div class="small">Heard in recording: <b class="mono">${esc(f.placeholder)}</b> ${srcBtn(k[f.field]&&k[f.field].source,L,S)}</div>`:""}<div class="row">${f.fix==="select"?`<select id="fx-${f.id}" aria-label="${esc(f.field)}"><option value="">Choose…</option>${f.options.map(o=>`<option ${f.draft===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`:`<input id="fx-${f.id}" placeholder="${esc(f.placeholder||"")}" aria-label="${esc(f.field)}" value="${esc(f.draft||"")}">`}${f.kind==="Missing"?`<select id="fxs-${f.id}" aria-label="Where did this come from?"><option value="">Where did this come from?</option>${SOURCES.map(o=>`<option ${f.drafthow===o?"selected":""}>${o}</option>`).join("")}</select>`:""}<button class="btn" type="button" data-fix="${f.id}">Save</button>${f.warn?`<button class="btn" type="button" data-fixforce="${f.id}">Save anyway</button>`:""}</div>${f.err?`<p class="fxerr" role="alert" id="fxe-${f.id}">${esc(f.err)}</p>`:""}</div>`).join("")}</div>
+ <div class="notegrid">
+  ${txPane(L,S,n.drafted)}
+  <div class="pane note ${state.editing?"editing":""}" id="note">
+   <section><div class="dochead"><h4>Key information ${open?`<span class="tag warn">${open} to confirm</span>`:`<span class="tag ok">Complete</span>`}</h4><button class="btn ghost small" id="btn-verify" type="button">Verify with a document</button></div>
+    ${docPanel(n)}
+    ${keyInfo}</section>
+   <section><h4>Immediate needs</h4><ul class="items" id="needs">${n.immediate_needs.map((x,i)=>`<li>${state.editing?`<select class="pri-sel" data-pri="${i}" aria-label="Priority">${["Urgent","Soon","Later"].map(o=>`<option ${o===x.priority?"selected":""}>${o}</option>`).join("")}</select>`:`<span class="pri ${pc[x.priority]||"l"}">${esc(x.priority)}</span>`}<span class="txt" ${ce} data-list="immediate_needs" data-i="${i}">${esc(x.text)}</span>${stSel(x,i)}${srcBtn(x.source,L,S)}<button class="del" type="button" data-del="immediate_needs" data-i="${i}" aria-label="Remove">×</button></li>`).join("")}</ul><button class="btn ghost add" type="button" data-add="immediate_needs">+ Add need</button></section>
+   <section id="steps"><h4>Next steps <span class="small muted" style="font-weight:400">Only ticked steps are saved</span></h4>
+    <div class="stepgrp">Agreed in meeting</div>
+    ${agreedIdx.length?`<ul class="items steps" id="steps-agreed">${agreedIdx.map(stepLi).join("")}</ul>`:`<p class="nosteps" id="nosteps"><span aria-hidden="true">⚠ </span>No next steps agreed</p>`}
+    <button class="btn ghost add" type="button" data-add="next_steps">+ Add step</button>
+    ${sugIdx.length?`<div class="stepgrp">AI suggested <span class="tag sug">You decide</span></div><ul class="items steps" id="steps-suggested">${sugIdx.map(stepLi).join("")}</ul>`:""}
+   </section>
+  </div>
+  <div class="pane review" id="review">
+   <h2>Review check</h2>
+   <div class="checks">
+    <div class="auto ${open?"n":"y"}"><i aria-hidden="true">${open?"⚠":"✓"}</i><span>${open?open+" flag"+(open>1?"s":"")+" to resolve (see top)":"All flags resolved"}</span></div>
+    <div class="auto ${untyped?"n":"y"}" id="chk-types"><i aria-hidden="true">${untyped?"⚠":"✓"}</i><span>${untyped?untyped+" need"+(untyped>1?"s":"")+" without a service type":"Every need has a service type"}</span></div>
+    <div class="auto ${n.log.minutes>0?"y":"n"}" id="chk-min"><i aria-hidden="true">${n.log.minutes>0?"✓":"⚠"}</i><span>${n.log.minutes>0?"Minutes logged":"Add the meeting length in minutes"}</span></div>
+    ${logBox(n.log,false)}
+    ${noneNeeded?`<label class="chk"><input type="checkbox" id="rv-none" ${n.noneConfirmed?"checked":""}> I confirm no next steps were agreed in this meeting</label>`:""}
+    <div class="auto ${noWhy?"n":"y"}" id="chk-why"><i aria-hidden="true">${noWhy?"⚠":"✓"}</i><span>${noWhy?noWhy+" urgent suggestion"+(noWhy>1?"s":"")+" declined without a reason":"Every urgent need has a step or a reason"}</span></div>
+    ${fhKeyFactsBox(n)}
+    <label class="chk"><input type="checkbox" id="rv1" ${n.rv1?"checked":""}> ${esc(reviewText(S))}</label>
+    <div id="fastbox"></div>
+   </div>
+   <button class="btn primary" id="btn-save" type="button" style="width:100%" ${canSave()?"":"disabled"}>Approve and save to case file</button>
+  </div>
+ </div>`;
+ wireSrc();
+ document.getElementById("btn-edit").onclick=()=>{syncNote();state.editing=!state.editing;renderNote()};
+ app.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.del,[gone]=n[l].splice(+b.dataset.i,1);n.edits++;logEvent(k.name.value,l==="immediate_needs"?"Need removed":"Next step removed",gone.text);renderNote()});
+ app.querySelectorAll("[data-pri]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.pri];const before=x.priority;x.priority=sel.value;n.edits++;logEvent(k.name.value,"Priority changed",`${x.text}: ${before} → ${sel.value}`);renderNote()});
+ app.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{syncNote();const l=b.dataset.add;n[l].push(l==="immediate_needs"?{priority:"Soon",text:"New need",service_type:"",source:null,added:true}:{kind:"added",text:"New step",owner:"Case manager",due:"",addresses:[],source:null,ticked:true,added:true});
+ if(l==="next_steps")n.noneConfirmed=false;n.edits++;renderNote();const items=app.querySelectorAll(`[data-list="${l}"]`);const last=l==="next_steps"?app.querySelector(`[data-list="next_steps"][data-i="${n.next_steps.length-1}"]`):items[items.length-1];last.focus();document.getSelection().selectAllChildren(last)});
+ const fixFlag=(f,force)=>{const v=document.getElementById("fx-"+f.id).value.trim();const hs=document.getElementById("fxs-"+f.id);const how=hs?hs.value:"";
+  f.draft=v;f.drafthow=how;f.err="";
+  const check=checkFix(f,v,how);
+  if(check.block){f.err=check.block;f.warn=false;logEvent(k.name.value,"Fix rejected",`${f.field}: "${v||"blank"}" · ${check.block}`);renderNote();return}
+  if(check.warn&&!force){f.err=check.warn;f.warn=true;logEvent(k.name.value,"Fix contradicts recording",`${f.field}: heard "${f.placeholder}" · entered "${v}"`);renderNote();return}
+  syncNote();const before=k[f.field].value;const val=how==="Not known"?"":v;
+  f.resolved=true;f.value=val;f.how=how;f.warn=false;k[f.field].value=val;k[f.field].by=ME;k[f.field].how=how||(force?"Differs from recording":"");
+  logEvent(k.name.value,"Flag resolved",`${f.kind} ${f.field}: "${before||"blank"}" → "${val||"Not stated"}" · entered by ${ME}${how?" · source: "+how:""}${force?" · differs from recording (saved anyway)":""}`);renderNote()};
+ wireDocs(n);fhWireNote(n,canSave);
+ app.querySelectorAll("[data-addfields]").forEach(b=>b.onclick=()=>{const e=document.getElementById("btn-edit");if(e&&!state.editing)e.click()});
+ app.querySelectorAll("[data-fix]").forEach(b=>b.onclick=()=>fixFlag(n.flags.find(x=>x.id===b.dataset.fix),false));
+ app.querySelectorAll("[data-fixforce]").forEach(b=>b.onclick=()=>fixFlag(n.flags.find(x=>x.id===b.dataset.fixforce),true));
+ document.getElementById("rv1").onchange=e=>{n.rv1=e.target.checked;logEvent(k.name.value,e.target.checked?"Review box ticked":"Review box unticked",reviewText(S)+(txFailed?" · sample transcript banner showing":""));document.getElementById("btn-save").disabled=!canSave()};
+ const rn=document.getElementById("rv-none");if(rn)rn.onchange=e=>{n.noneConfirmed=e.target.checked;logEvent(k.name.value,e.target.checked?"No steps confirmed":"No steps unconfirmed","I confirm no next steps were agreed in this meeting");document.getElementById("btn-save").disabled=!canSave()};
+ app.querySelectorAll("[data-stype]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.immediate_needs[+sel.dataset.stype];const before=x.service_type||"none";x.service_type=sel.value;n.edits++;logEvent(k.name.value,"Service type changed",`${x.text}: ${before} → ${sel.value||"none"}`);renderNote()});
+ wireLog(n.log,()=>{const m=document.getElementById("chk-min"),ok=n.log.minutes>0;m.className="auto "+(ok?"y":"n");m.innerHTML=`<i aria-hidden="true">${ok?"✓":"⚠"}</i><span>${ok?"Minutes logged":"Add the meeting length in minutes"}</span>`;document.getElementById("btn-save").disabled=!canSave()});
+ app.querySelectorAll("[data-tick]").forEach(cb=>cb.onchange=()=>{syncNote();n.next_steps[+cb.dataset.tick].ticked=cb.checked;renderNote()});
+ app.querySelectorAll("[data-why]").forEach(sel=>sel.onchange=()=>{syncNote();const x=n.next_steps[+sel.dataset.why];x.why=sel.value;logEvent(k.name.value,"Decline reason chosen",`${x.text}: ${sel.value||"none"}`);renderNote()});
+ document.getElementById("btn-save").onclick=()=>{
+  syncNote();
+  const rec=durSec(n.source.dur),took=Date.now()-n.startedAt;
+  if(n.source.kind==="audio"&&rec&&took<rec*1000&&!n.tsOpened&&!n.fastOk){
+   const fb=document.getElementById("fastbox");
+   fb.innerHTML=`<div class="flagitem" role="alert" id="fastwarn"><b><span class="ic" aria-hidden="true">⚠</span> Approve without listening?</b>You are approving ${secs(took)} after upload. The recording is ${esc(n.source.dur)} long and no time stamps were opened.<div class="row"><button class="btn" type="button" id="fast-back">Go back and check</button><button class="btn primary" type="button" id="fast-ok">Approve anyway</button></div></div>`;
+   logEvent(k.name.value,"Fast approval warning",`${secs(took)} after upload · recording ${n.source.dur} · 0 time stamps opened`);
+   document.getElementById("fast-back").onclick=()=>{fb.innerHTML="";logEvent(k.name.value,"Fast approval cancelled","Went back to check")};
+   document.getElementById("fast-ok").onclick=()=>{n.fastOk=true;logEvent(k.name.value,"Fast approval confirmed","Approved without opening the recording");document.getElementById("btn-save").click()};
+   document.getElementById("fast-ok").focus();return}
+  const nm=k.name.value||"New client", first=nm.split(" ")[0];
+  const r=fill(n.reminder,{first});
+  const kept=n.next_steps.filter(x=>x.ticked);
+  const makesReminder=kept.some(x=>x.creates_reminder);
+  /* Extra template fields go onto the Client record under their "record" name. Empty stays empty. */
+  const extra={};keyDefs(n.template).filter(d=>!d.required&&d.record).forEach(d=>{const v=(k[d.key]||{}).value||"";
+   if(d.options&&d.options.join()==="Yes,No"){extra[d.record]=v?v.toLowerCase():"";extra[d.record+"Date"]=v==="Yes"?TODAY_ISO:""}else extra[d.record]=v});
+  const verified=verifiedFields(n);
+  const c=Store.insert("Client",{Name:nm,Age:k.age.value,Gender:k.gender.value||"Not stated",Locality:k.locality.value,Phone:k.contact.value,...extra,ClientSince:TODAY_ISO,Status:"New intake",
+   ...(Object.keys(verified).length?{VerifiedFields:verified}:{})},true);
+  const docs=(n.docs||[]).filter(d=>d.readable);
+  const it=Store.insert("Interaction",{ClientId:c.Id,Date:TODAY_ISO,Type:"Intake note",Template:n.template,Channel:n.source.kind==="audio"?"Voice note":"Typed",SourceName:n.source.name||null,MeetingType:n.log.meeting_type,Minutes:n.log.minutes,
+   Summary:`Needs: ${n.immediate_needs.map(x=>x.text).join("; ")}. Next steps: ${kept.map(x=>x.text).join("; ")||"none agreed"}.`+(docs.length?` Checked against: ${docs.map(d=>d.type).join(", ")}.`:"")});
+  saveDocuments(n,c.Id,it.Id);
+  logServices(c.Id,it,n.log.services);
+  n.immediate_needs.forEach(x=>{const d=n.next_steps.find(s=>s.kind==="suggested"&&!s.ticked&&s.why&&s.addresses.includes(needCat(x.text)));
+   Store.insert("Need",{ClientId:c.Id,Text:x.text,ServiceType:x.service_type,Priority:x.priority,Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id,...(d?{DeclinedStep:d.text,DeclineReason:d.why}:{})})});
+  kept.forEach(x=>Store.insert("Goal",{ClientId:c.Id,Text:x.text,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id,Owner:x.owner,DueText:x.due||null,Addresses:x.addresses,Origin:x.kind==="agreed"?"Agreed in meeting":x.kind==="added"?"Added by case manager":"AI suggestion accepted"}));
+  if(makesReminder)Store.insert("Goal",{ClientId:c.Id,Text:r.text,Type:r.type,DueDate:r.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,reviewText(n.source));
+  n.immediate_needs.filter(x=>x.added).forEach(x=>logEvent(nm,"Need added",`${x.priority}: ${x.text}`));
+  n.next_steps.filter(x=>x.added).forEach(x=>logEvent(nm,"Next step added",x.text));
+  n.next_steps.filter(x=>x.kind==="suggested").forEach(x=>logEvent(nm,x.ticked?"Suggestion accepted":"Suggestion declined",x.text+(!x.ticked&&x.why?` · reason: ${x.why}`:"")));
+  n.next_steps.filter(x=>x.kind==="agreed"&&!x.ticked).forEach(x=>logEvent(nm,"Agreed step not saved",x.text));
+  if(makesReminder)logEvent(nm,"Reminder created",`${r.type}, ${fmt(parseDate(r.date))}: ${r.text}`);
+  logEvent(nm,"Key facts confirmed",fhKeyFacts(n).map(([,l,v])=>`${l}: ${v}`).join(" · "));
+  logEvent(nm,"Note approved",`${secs(Date.now()-n.startedAt)} from upload to approval · ${n.edits} edit${n.edits===1?"":"s"} · ${n.tsOpened} time stamp${n.tsOpened===1?"":"s"} opened · sample transcript banner: ${txFailed?"showing":"no"}${n.fastOk?" · fast approval confirmed":""}`);
+  Store.save();
+  state.sel=c.Id;state.newIds.add(c.Id);state.editing=false;go("services");toast(`Saved. ${nm} is now in your clients. Next: match services.`);
+ };
+}
+function syncNote(){
+ const n=state.note;if(!n)return;
+ const who=n.key_info.name.value;
+ keyFields(n.template).forEach(([f,label])=>{const el=document.getElementById("k-"+f);if(el&&el.value!==n.key_info[f].value){logEvent(who,"Field edited",`${label}: "${n.key_info[f].value||"blank"}" → "${el.value||"blank"}" · entered by ${ME}`);n.edits++;n.key_info[f].value=el.value;n.key_info[f].by=ME}});
+ app.querySelectorAll("[data-owner]").forEach(el=>{const x=n.next_steps[+el.dataset.owner];if(x&&el.value!==x.owner){logEvent(who,"Step owner changed",`${x.text}: ${x.owner} → ${el.value}`);n.edits++;x.owner=el.value}});
+ app.querySelectorAll("[data-due]").forEach(el=>{const x=n.next_steps[+el.dataset.due];const v=el.value.trim();if(x&&v!==x.due){logEvent(who,"Step due changed",`${x.text}: "${x.due||"not said"}" → "${v||"not said"}"`);n.edits++;x.due=v}});
+ app.querySelectorAll("[data-list]").forEach(el=>{const it=n[el.dataset.list][+el.dataset.i];const t=el.textContent.trim();if(it&&t!==it.text){if(!it.added){logEvent(who,el.dataset.list==="immediate_needs"?"Need edited":"Next step edited",`"${it.text}" → "${t}"`);n.edits++}it.text=t}});
+}
+
+/* ---------- Existing client update ---------- */
+function renderUpdate(){
+ const u=state.update,c=u.client,S=u.source;
+ app.innerHTML=mockbar()+`
+ <div class="notehead"><div><p class="small muted">${esc(c.name)} · ${esc(u.type)}</p><h1>Update to case file</h1></div>
+  <div class="btns"><button class="btn" id="btn-back" type="button">Back to clients</button></div></div>
+ ${sampleBanner(u)}
+ <div class="notegrid">
+  ${txPane(u.transcript,S)}
+  <div class="pane note">
+   <section><h4>Summary</h4><p contenteditable="true" id="usum" style="border-radius:3px;outline:1px dashed var(--line);padding:4px 6px">${esc(u.summary)}</p><p class="small muted" style="margin-top:4px">Click the text to edit it.</p></section>
+   <section><h4>Changes to the case file <span class="tag info">${u.changes.length}</span></h4>
+    <ul class="diff">${u.changes.map((ch,i)=>`<li><span class="k ${ch.kind==="add"?"add":"chg"}">${ch.kind==="add"?"Add":"Change"}</span><label class="chk"><input type="checkbox" ${ch.flagged?"":"checked"} data-keep="${i}"> <span>${ch.flagged?`<span class="tag warn">To confirm</span> `:""}<b>${esc(ch.label)}:</b> ${ch.from?`<s>${esc(ch.from)}</s> → `:ch.field==="status"?`<s>${esc(c.status)}</s> → `:""}${esc(ch.to)} ${srcBtn(ch.source,u.transcript,S)}</span></label>${ch.flagged?`<p class="small muted" style="margin:2px 0 0 26px">${esc(ch.flagReason||"Not said by the client, or unclear — confirm before keeping.")}</p>`:""}</li>`).join("")}</ul>
+    <p class="small muted" style="margin-top:8px">Untick anything you don't want added. Flagged items start unticked.</p></section>
+  </div>
+  <div class="pane review">
+   <h2>Review check</h2>
+   <div class="checks">
+    <div class="auto ${u.log.minutes>0&&u.log.services.length?"y":"n"}" id="chk-log"><i>${u.log.minutes>0&&u.log.services.length?"✓":"!"}</i><span>${u.log.minutes>0&&u.log.services.length?"Service log complete":"Add minutes and at least one service"}</span></div>
+    ${logBox(u.log,true)}
+    <label class="chk"><input type="checkbox" id="urv"> I checked these changes against the ${S.kind==="audio"?"recording":"notes"}</label>
+   </div>
+   <button class="btn primary" id="usave" type="button" style="width:100%" disabled>Add to case file</button>
+  </div>
+ </div>`;
+ wireSrc();
+ const sv=document.getElementById("usave");
+ const logOk=()=>u.log.minutes>0&&u.log.services.length>0;
+ const refresh=()=>{const ok=logOk(),m=document.getElementById("chk-log");m.className="auto "+(ok?"y":"n");m.innerHTML=`<i>${ok?"✓":"!"}</i><span>${ok?"Service log complete":"Add minutes and at least one service"}</span>`;sv.disabled=!(ok&&document.getElementById("urv").checked)};
+ document.getElementById("urv").onchange=e=>{refresh();logEvent(c.name,e.target.checked?"Review box ticked":"Review box unticked",u.type)};
+ wireLog(u.log,refresh);
+ document.getElementById("btn-back").onclick=()=>go("clients");
+ sv.onclick=()=>{
+  const keep=[...app.querySelectorAll("[data-keep]")].map(x=>x.checked);
+  const it=Store.insert("Interaction",{ClientId:c.id,Date:TODAY_ISO,Type:u.type,Summary:document.getElementById("usum").textContent.trim(),Channel:S.kind==="audio"?"Voice note":"Typed",Template:u.type+" update",SourceName:S.name||null,MeetingType:u.log.meeting_type,Minutes:u.log.minutes});
+  logServices(c.id,it,u.log.services);
+  let newRem=null;
+  u.changes.forEach((ch,i)=>{if(!keep[i])return;
+   if(ch.field==="status")Store.update("Client",c.id,{Status:ch.to});
+   if(ch.field==="need"){const ex=ch.from&&Store.all("Need").find(x=>x.ClientId===c.id&&x.Status==="Open"&&x.Text===ch.from);
+    if(ex)Store.update("Need",ex.Id,{Text:ch.to,...(ch.service_type?{ServiceType:ch.service_type}:{})});else Store.insert("Need",{ClientId:c.id,Text:ch.to,ServiceType:ch.service_type||"",Priority:"Soon",Status:"Open",CreatedDate:TODAY_ISO,InteractionId:it.Id})}
+   if(ch.field==="note"&&ch.label==="Next step")Store.insert("Goal",{ClientId:c.id,Text:ch.to,Type:"Next step",DueDate:null,Status:"Open",InteractionId:it.Id});
+   if(ch.field==="reminder")newRem=ch.reminder;
+  });
+  /* Logging an update answers the client's open reminders; the update's own reminder (if kept) becomes the next one. */
+  Store.where("Goal",g=>g.ClientId===c.id&&g.Status==="Open"&&g.DueDate).forEach(g=>Store.update("Goal",g.Id,{Status:"Done",CompletedDate:TODAY_ISO}));
+  if(newRem)Store.insert("Goal",{ClientId:c.id,Text:newRem.text,Type:newRem.type,DueDate:newRem.date,Status:"Open",InteractionId:it.Id});
+  approve(it.Id,`I checked these changes against the ${S.kind==="audio"?"recording":"notes"}`);
+  u.changes.forEach((ch,i)=>logEvent(c.name,keep[i]?"Change accepted":"Change removed",`${ch.label}: ${ch.to}`));
+  if(newRem)logEvent(c.name,"Reminder created",`${newRem.type}, ${fmt(parseDate(newRem.date))}: ${newRem.text}`);
+  logEvent(c.name,"Update approved",`${u.type} · ${secs(Date.now()-u.startedAt)} from upload to approval`);
+  Store.save();
+  state.sel=c.id;state.newIds.add(c.id);go("clients");toast(`Added to ${c.name}'s case file.`);
+ };
+}
+
+/* ---------- Activity log view ---------- */
+function renderActivity(){
+ const count=e=>ACTIVITY.filter(a=>a.event===e).length;
+ const approvals=ACTIVITY.filter(a=>a.event==="Note approved"||a.event==="Update approved");
+ app.innerHTML=mockbar()+`
+ <div class="notehead"><div><h1>Activity log</h1><p class="small muted">What happened in this session, newest first. Kept on screen only and cleared on reload.</p></div></div>
+ <div class="pane">
+  <div class="metrics">
+   <div><b>${approvals.length}</b><span>Notes and updates approved</span></div>
+   <div><b>${count("Field edited")+count("Need edited")+count("Next step edited")+count("Priority changed")+count("Need added")+count("Need removed")+count("Next step added")+count("Next step removed")+count("Step owner changed")+count("Step due changed")}</b><span>Edits to AI drafts</span></div>
+   <div><b>${count("Flag resolved")}</b><span>Flags resolved</span></div>
+   <div><b>${count("Suggestion accepted")} of ${count("Suggestion accepted")+count("Suggestion declined")}</b><span>AI suggestions accepted</span></div>
+   <div><b>${count("Time stamp opened")}</b><span>Time stamps opened</span></div>
+   <div><b>${count("Reminder created")}</b><span>Reminders created</span></div>
+  </div>
+  ${ACTIVITY.length?`<div class="tablewrap"><table class="log" id="activity"><thead><tr><th>Time</th><th>Client</th><th>Event</th><th>Detail</th></tr></thead><tbody>${ACTIVITY.map(a=>`<tr><td class="when">${a.at}</td><td>${esc(a.client)}</td><td class="ev">${esc(a.event)}</td><td>${esc(a.detail)}</td></tr>`).join("")}</tbody></table></div>`:`<p class="muted small">Nothing yet. Start a new client or log a response, and each upload, edit, flag, review tick and approval shows up here.</p>`}
+ </div>`;
+}
+
+/* ---------- Start: load the simulated AI responses ---------- */
+const helperCheck=fetch("api/status").then(r=>r.ok?r.json():null).then(j=>{if(j&&j.helper){Object.assign(AI,j);AI.on=j.mode==="real"&&(j.key_found||j.draft_key_found)}}).catch(()=>{});
+fetch("simulated_responses.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})
+ .then(j=>helperCheck.then(()=>{SIM=j;Store.load();render()}))
+ .catch(()=>{app.innerHTML=`<div class="pane"><h3>Couldn't load simulated_responses.json</h3><p class="small" style="margin-top:6px">Browsers block this file when the page is opened by double-click. From this folder run <code>python3 -m http.server 8000</code> and open <code>http://localhost:8000</code>. If the JSON was edited, check it for a missing comma or quote.</p></div>`});
+</script>
+<script src="matched-services.js"></script>
+<script src="matched-network.js"></script>
+<script src="grant-report.js"></script>
+<script src="failure-handling.js"></script>
