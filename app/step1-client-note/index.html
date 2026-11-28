@@ -272,6 +272,7 @@ li.skip .dot{border-style:dashed}
 <link rel="stylesheet" href="matched-services.css">
 <link rel="stylesheet" href="matched-network.css">
 <link rel="stylesheet" href="failure-handling.css">
+<link rel="stylesheet" href="grant-report.css">
 
 <header>
   <div class="wrap top">
@@ -280,6 +281,7 @@ li.skip .dot{border-style:dashed}
       <button type="button" data-go="home" id="nav-home">Home</button>
       <button type="button" data-go="clients" id="nav-clients">Clients</button>
       <button type="button" data-go="network" id="nav-network">Matched services</button>
+      <button type="button" data-go="grant" id="nav-grant">Grant report</button>
       <button type="button" data-go="activity" id="nav-activity">Activity log</button>
     </nav>
     <div class="who"><b>Denise</b> · Case manager</div>
@@ -584,8 +586,8 @@ document.getElementById("brand").onclick=()=>go("home");
 function toast(msg){const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
 
 function render(){
- ["home","clients","network","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
- ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices,network:renderNetwork})[state.view]();
+ ["home","clients","network","grant","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
+ ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices,network:renderNetwork,grant:renderGrant})[state.view]();
  app.querySelectorAll("[data-aimode]").forEach(b=>b.onclick=()=>{if(!AI.on&&!AI.key_found&&!AI.draft_key_found){toast("No key found. Add a key to backend/.env, then restart the helper.");return}AI.on=!AI.on;logEvent("","AI switch",AI.on?"Real ("+AI.model+")":"Simulated");render();toast(AI.on?"Real AI on.":"Simulated responses on.")});
  app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();Files.clear();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
@@ -1323,4 +1325,5 @@ fetch("simulated_responses.json",{cache:"no-cache"}).then(r=>{if(!r.ok)throw new
 </script>
 <script src="matched-services.js"></script>
 <script src="matched-network.js"></script>
+<script src="grant-report.js"></script>
 <script src="failure-handling.js"></script>
