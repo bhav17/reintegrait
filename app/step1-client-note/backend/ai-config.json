@@ -26,5 +26,14 @@
     "effort": "low",
     "max_tokens": 4000,
     "timeout_seconds": 120
+  },
+  "report": {
+    "_help": "Drafts the grant report narrative (Grant report tab, 'Draft wording with AI'). Every number is counted in code and filled in after the model writes; the model only sees totals, never names or notes. Same ANTHROPIC_API_KEY as the note. Try claude-opus-5-5 here to compare the writing.",
+    "enabled": true,
+    "provider": "anthropic",
+    "model": "claude-sonnet-5-5",
+    "effort": "medium",
+    "max_tokens": 8000,
+    "timeout_seconds": 120
   }
 }

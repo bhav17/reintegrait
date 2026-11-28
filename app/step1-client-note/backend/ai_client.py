@@ -406,6 +406,44 @@ def read_document(data_b64, media_type, fields, config, api_key):
             "request_id": getattr(resp, "_request_id", None), "seconds": seconds}
 
 
+# ---------------------------------------------------------------------------
+# Grant report narrative. report_draft.py builds the request and checks the answer;
+# this function only makes the call. The instructions live in prompts/grant-report.md.
+# ---------------------------------------------------------------------------
+def report_schema():
+    return {"type": "object", "additionalProperties": False, "required": ["sections"],
+            "properties": {"sections": {"type": "array", "items": {
+                "type": "object", "additionalProperties": False, "required": ["key", "text"],
+                "properties": {"key": {"type": "string"}, "text": {"type": "string"}}}}}}
+
+
+def draft_report_call(system, user, config, api_key):
+    """One call to Claude for the report narrative. Returns {sections, model, usage, request_id, stop_reason, seconds}."""
+    anthropic = _anthropic(api_key)
+    model, effort = config.get("model") or "claude-sonnet-5-5", config.get("effort", "medium")
+    client = _client(anthropic, api_key, config)
+    started = time.time()
+    resp = _create(anthropic, client, "report.model", "report.timeout_seconds",
+                   model=model,
+                   max_tokens=int(config.get("max_tokens", 8000)),
+                   system=system,
+                   messages=[{"role": "user", "content": user}],
+                   output_config={"effort": effort, "format": {"type": "json_schema", "schema": report_schema()}})
+    seconds = round(time.time() - started, 1)
+    usage = {"input_tokens": resp.usage.input_tokens, "output_tokens": resp.usage.output_tokens}
+    if resp.stop_reason == "refusal":
+        raise AIError("The model declined to draft the report.", None, str(getattr(resp, "stop_details", "")))
+    if resp.stop_reason == "max_tokens":
+        raise AIError("The draft was cut off. Raise report.max_tokens in ai-config.json.", None, "")
+    text = next((b.text for b in resp.content if b.type == "text"), "")
+    try:
+        out = json.loads(text)
+    except json.JSONDecodeError:
+        raise AIError("The model's answer was not valid JSON.", None, text[:300])
+    return {"sections": out.get("sections") or [], "model": getattr(resp, "model", model), "usage": usage,
+            "request_id": getattr(resp, "_request_id", None), "stop_reason": resp.stop_reason, "seconds": seconds}
+
+
 ANTHROPIC_HTTP_ERRORS = {
     400: "The model could not read this request.",
     401: "Anthropic did not accept the key. Check ANTHROPIC_API_KEY in backend/.env.",

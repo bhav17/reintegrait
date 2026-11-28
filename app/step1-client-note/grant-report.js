@@ -3,7 +3,12 @@
    narrative for a funder, and holds it until the case manager has edited it and ticked the review check.
    Loaded after index.html's main script and uses its helpers
    (Store, state, app, go, logEvent, toast, esc, fmt, parseDate, TODAY, TODAY_ISO, mockbar).
-   The narrative is drafted from the numbers by plain templates (simulated AI). Nothing leaves the browser.
+   The narrative starts as a plain template filled from the numbers.
+   Live mode (backend/server.py running): the browser sends its case file to the helper's shared case file,
+   and the numbers are counted there from every case manager's records (backend/grant_report.py, same rules
+   as grStats below). "Draft wording with AI" asks Claude for the wording: it writes {placeholders}, code
+   fills in the numbers and refuses any draft with a typed number or a client's name (backend/report_draft.py).
+   Without the helper, everything is counted in this browser as before and nothing leaves it.
    The two funder layouts are sample layouts, not the funders' official forms. */
 
 const GR_PERIODS = {
@@ -34,7 +39,48 @@ const GR_TITLES = {
   innov: "7. Are there any innovative programs or accomplishments you would like to share with BJA?",
 };
 const GR_ASK = "[Denise to answer";
-const GR = { period: "q4", funder: "icjia", text: null, key: "", checked: false, saved: null };
+const GR = { period: "q4", funder: "icjia", text: null, key: "", checked: false, saved: null,
+  edited: false, live: null, loading: false, drafted: null, busy: false, problems: null };
+
+/* ---------- Live mode: the shared case file on the helper ---------- */
+const grDevice = () => { let d = ""; try { d = localStorage.getItem("reintegrait.device") || ""; if (!d) { d = "dev-" + Math.random().toString(36).slice(2, 10); localStorage.setItem("reintegrait.device", d); } } catch (e) { d = "dev-unsaved"; } return d; };
+const grLiveOn = () => AI.helper && AI.shared_case_file;
+const grPost = (path, body) => fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+  .then(r => r.json().then(j => (r.ok || j.error ? j : Promise.reject(new Error("HTTP " + r.status)))));
+function grSync() { return grLiveOn() ? grPost("api/records/sync", { device: grDevice(), label: "Denise", records: Store.data }) : Promise.resolve(null); }
+/* Every save also goes to the shared case file, a second after the last change. */
+let grSyncTimer = null;
+const grStoreSave = Store.save;
+Store.save = function () { grStoreSave.call(this); if (grLiveOn()) { clearTimeout(grSyncTimer); grSyncTimer = setTimeout(() => grSync().catch(() => {}), 1000); if (GR.live) GR.live.stale = true; } };
+const grPeriodBody = () => ({ period: GR_PERIODS[GR.period], funder: GR.funder });
+/* The helper sends counts where the browser keeps Sets; give them a .size so the template and the table read both. */
+function grFromServer(st) { const s = { ...st, byType: {} }; Object.entries(st.byType).forEach(([k, v]) => { s.byType[k] = { minutes: v.minutes, clients: { size: v.clients } }; }); return s; }
+async function grLoadLive(key) {
+  GR.loading = true;
+  try {
+    await helperCheck;
+    if (!grLiveOn()) return;
+    await grSync();
+    const j = await grPost("api/report/metrics", grPeriodBody());
+    if (!j.ok) throw new Error(j.error || "no answer");
+    GR.live = { key, ...j, stale: false };
+    if (!GR.edited && !GR.drafted && !GR.saved) GR.text = null;  // redraft the template from the shared numbers
+  } catch (e) { GR.live = { key, error: String(e.message || e) }; }
+  finally { GR.loading = false; if (state.view === "grant") render(); }
+}
+async function grDraftAI() {
+  GR.busy = true; GR.problems = null; render();
+  try {
+    await grSync();
+    const j = await grPost("api/report/draft", grPeriodBody());
+    if (!j.ok) { GR.problems = j.problems || null; toast(j.error || "The AI draft failed. The template draft was kept."); return; }
+    GR.text = GR.text.map(x => (j.sections[x.key] ? { ...x, text: j.sections[x.key] } : x));
+    GR.drafted = j.model; GR.edited = false; GR.checked = false; GR.saved = null;
+    logEvent("", "Grant report drafted by AI", `${j.model} · ${j.attempts === 1 ? "passed the number and name checks" : "passed the checks on the second try"}`);
+    toast("Drafted. Every number was filled in from the case file.");
+  } catch (e) { toast("Could not reach the helper. The template draft was kept."); }
+  finally { GR.busy = false; render(); }
+}
 
 const grIn = (d, p) => d >= p.from && d <= p.to;
 const grPct = (a, b) => b ? Math.round(a / b * 100) : null;
@@ -53,7 +99,7 @@ function grStats(pKey) {
   const byType = {};
   Store.where("Service", s => grIn(s.Date, p)).forEach(s => {
     const t = byType[s.ServiceType] || (byType[s.ServiceType] = { minutes: 0, clients: new Set() });
-    t.minutes += s.Minutes; t.clients.add(s.ClientId);
+    t.minutes += Number(s.Minutes) || 0; t.clients.add(s.ClientId);
   });
   const refs = Store.where("Referral", r => grIn(r.SentDate || "", p));
   const accepted = refs.filter(r => r.Status === "Accepted" || ["Accepted", "Attended", "No-show", "Closed"].includes(r.Stage));
@@ -83,7 +129,7 @@ function grStats(pKey) {
   Store.where("Service", x => x.Date <= p.to).forEach(x => { (svcClients[x.ServiceType] = svcClients[x.ServiceType] || new Set()).add(x.ClientId); });
   return {
     byAge, byGender, cum: cumIds.size, engaged, svcClients,
-    p, meetings, served: served.size, intakes: intakes.length, contacts: its.length, minutes: withMin.reduce((a, x) => a + x.Minutes, 0),
+    p, meetings, served: served.size, intakes: intakes.length, contacts: its.length, minutes: withMin.reduce((a, x) => a + (Number(x.Minutes) || 0), 0),
     byType, refs: refs.length, accepted: accepted.length, declined: declined.length, answered, attended: attended.length,
     noShow: noShow.length, closed: closed.length, met: met.length, why, needTypes, openNeeds: openNeeds.length,
     pendingAnswer: refs.length - answered, pendingShow: accepted.length - attended.length - noShow.length,
@@ -173,16 +219,33 @@ function grText(sections) {
 
 /* ---------- Screen ---------- */
 function renderGrant() {
-  const s = grStats(GR.period);
   const key = GR.period + "|" + GR.funder;
+  if (GR.key !== key) { GR.text = null; GR.live = null; GR.drafted = null; GR.edited = false; GR.problems = null; }
+  if (grLiveOn() && !GR.loading && (!GR.live || GR.live.key !== key || GR.live.stale)) grLoadLive(key);
+  else if (!AI.helper && !GR.loading && !GR.live) helperCheck.then(() => { if (grLiveOn() && state.view === "grant") render(); });
+  const live = GR.live && GR.live.key === key && !GR.live.error ? GR.live : null;
+  const s = live ? grFromServer(live.stats) : grStats(GR.period);
   if (GR.key !== key || !GR.text) { GR.key = key; GR.text = grDraft(s, GR.funder); GR.checked = false; GR.saved = null; }
   const flags = grFlags(s);
+  const comp = live ? live.completeness : [];
+  const race = comp.find(c => c.field === "Race/ethnicity");
+  if (GR.funder === "icjia" && race && race.of && race.known < race.of) flags.push(`Race/ethnicity is recorded for ${race.known} of ${race.of} clients served. ICJIA R3 requires it.`);
+  if (live) live.devices.filter(d => (Date.now() - Date.parse(d.last_sync)) > 7 * 864e5).forEach(d => flags.push(`${d.label || "A case manager"}'s records were last sent ${d.last_sync.slice(0, 10)}, over a week ago. Their latest work may be missing.`));
+  const t = x => x.slice(11, 16);
+  const srcLine = live
+    ? `Counted from the shared case file: ${live.devices.length} ${live.devices.length === 1 ? "browser" : "browsers"}, as of ${t(live.as_of)}.`
+    : GR.live && GR.live.error ? `The shared case file could not be read (${GR.live.error}), so this is counted from this browser only.`
+    : grLiveOn() ? "Reading the shared case file…" : "Counted from this browser's case file. Run backend/server.py to count every case manager's records.";
+  const rs = AI.report || {};
+  const canAI = live && rs.enabled && rs.key_found && rs.sdk_installed;
+  const draftTag = GR.drafted ? `<span class="tag ok" title="Claude wrote the wording; every number was filled in by code and checked">AI drafted · ${esc(GR.drafted)} · numbers checked</span>` : `<span class="tag sim">Template draft</span>`;
   const cell = (n, l, sub) => `<div class="gr-stat"><b>${n}</b><span>${l}</span>${sub ? `<small>${sub}</small>` : ""}</div>`;
   const rate = (a, b) => b ? grPct(a, b) + "%" : "n/a";
   const types = Object.entries(s.byType).sort((a, b) => b[1].minutes - a[1].minutes);
   app.innerHTML = mockbar() + `
   <div class="gr-head"><h1>Grant report</h1>
-   <p class="muted">Counted from your case files. The AI drafts the wording, you check it and approve it.</p></div>
+   <p class="muted">Counted from your case files. The AI drafts the wording, you check it and approve it.</p>
+   <p class="small muted" id="gr-source">${esc(srcLine)}</p></div>
   <div class="pane gr-ctl"><label class="field"><span>Reporting period</span><select id="gr-period">${Object.entries(GR_PERIODS).map(([k, v]) => `<option value="${k}" ${k === GR.period ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
    <label class="field"><span>Funder layout</span><select id="gr-funder">${Object.entries(GR_FUNDERS).map(([k, v]) => `<option value="${k}" ${k === GR.funder ? "selected" : ""}>${esc(v.label)}</option>`).join("")}</select></label>
    <span class="tag sim" title="A sample layout, not the funder's official form">Sample layout</span></div>
@@ -193,24 +256,32 @@ function renderGrant() {
   </div>
   <div class="pane" style="margin-top:12px"><h2>${esc(GR_FUNDERS[GR.funder].label.split(",")[0])} figures</h2>
    <p class="small muted" style="margin-bottom:8px">Taken from: ${esc(GR_FUNDERS[GR.funder].source)}. Rows marked Not tracked are not in the case file yet, so you enter them in the funder's system by hand.</p>
-   <div class="tablewrap"><table id="gr-metrics"><thead><tr><th>Measure</th><th>This report</th><th>Note</th></tr></thead><tbody>${grMetrics(s, GR.funder).map(([m, v, n]) => `<tr><td>${esc(m)}</td><td class="${/^Not/.test(String(v)) ? "gr-nt" : ""}">${esc(v)}</td><td class="muted small">${esc(n)}</td></tr>`).join("")}</tbody></table></div></div>
+   <div class="tablewrap"><table id="gr-metrics"><thead><tr><th>Measure</th><th>This report</th><th>Note</th></tr></thead><tbody>${(live ? live.metrics : grMetrics(s, GR.funder)).map(([m, v, n]) => `<tr><td>${esc(m)}</td><td class="${/^Not/.test(String(v)) ? "gr-nt" : ""}">${esc(v)}</td><td class="muted small">${esc(n)}</td></tr>`).join("")}</tbody></table></div>
+   ${comp.length ? `<p class="small muted" id="gr-complete" style="margin-top:8px">Recorded for the clients served: ${comp.map(c => `${esc(c.field)} ${c.known} of ${c.of}`).join(" · ")}.</p>` : ""}</div>
   ${types.length ? `<div class="pane" style="margin-top:12px"><h2>Dosage by service type</h2><div class="tablewrap"><table><thead><tr><th>Service type</th><th>Clients</th><th>Minutes</th></tr></thead><tbody>${types.map(([t, v]) => `<tr><td>${esc(t)}</td><td>${v.clients.size}</td><td>${v.minutes}</td></tr>`).join("")}</tbody></table></div></div>` : ""}
-  <div class="pane" style="margin-top:12px"><h2>Draft report <span class="tag sim">AI drafted · simulated</span></h2>
+  <div class="pane" style="margin-top:12px"><h2>Draft report ${draftTag}</h2>
+   ${GR.problems ? `<div class="gr-flags" role="note"><b>The AI draft was refused, so the template draft is shown</b><ul>${GR.problems.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
    ${flags.length ? `<div class="gr-flags" role="note"><b>Check before you approve</b><ul>${flags.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
    ${GR.text.map((x, i) => `<label class="field gr-sec"><span>${esc(x.title)}</span><textarea data-sec="${i}" rows="4">${esc(x.text)}</textarea></label>`).join("")}
    <p class="small muted">No client names appear in this report. Edit any section; your edits are what get saved.</p>
    <label class="gr-check"><input type="checkbox" id="gr-ok" ${GR.checked ? "checked" : ""}> I checked these numbers and this wording against the case files.</label>
    <div class="btns" style="margin-top:10px"><button class="btn primary" id="gr-save" type="button" ${grCan() ? "" : "disabled"}>Approve and save report</button>
-    <button class="btn" id="gr-copy" type="button">Copy text</button><button class="btn" id="gr-dl" type="button">Download .txt</button><button class="btn ghost" id="gr-redraft" type="button">Redraft from the numbers</button></div>
+    <button class="btn" id="gr-copy" type="button">Copy text</button><button class="btn" id="gr-dl" type="button">Download .txt</button><button class="btn ghost" id="gr-redraft" type="button">Redraft from the numbers</button>
+    ${canAI ? `<button class="btn" id="gr-ai" type="button" ${GR.busy ? "disabled" : ""}>${GR.busy ? "Drafting…" : "Draft wording with AI"}</button>` : ""}</div>
+   ${canAI ? `<p class="small muted" style="margin-top:6px">${esc(rs.model)} sees only the totals above, never names or notes. It writes placeholders and code fills in every number.</p>` : ""}
    ${GR.saved ? `<p class="small" id="gr-saved" style="margin-top:8px"><span class="tag ok">Approved</span> by Denise at ${esc(GR.saved)}. Saved to the activity log.</p>` : ""}
   </div>`;
   document.getElementById("gr-period").onchange = e => { GR.period = e.target.value; GR.text = null; render(); };
   document.getElementById("gr-funder").onchange = e => { GR.funder = e.target.value; GR.text = null; render(); };
-  app.querySelectorAll("[data-sec]").forEach(t => t.oninput = () => { GR.text[+t.dataset.sec].text = t.value; document.getElementById("gr-save").disabled = !grCan(); if (GR.saved) { GR.saved = null; GR.checked = false; document.getElementById("gr-ok").checked = false; const m = document.getElementById("gr-saved"); if (m) m.remove(); } });
+  app.querySelectorAll("[data-sec]").forEach(t => t.oninput = () => { GR.text[+t.dataset.sec].text = t.value; GR.edited = true; document.getElementById("gr-save").disabled = !grCan(); if (GR.saved) { GR.saved = null; GR.checked = false; document.getElementById("gr-ok").checked = false; const m = document.getElementById("gr-saved"); if (m) m.remove(); } });
   document.getElementById("gr-ok").onchange = e => { GR.checked = e.target.checked; document.getElementById("gr-save").disabled = !grCan(); };
   document.getElementById("gr-save").onclick = () => {
     GR.saved = clock().slice(0, 5);
-    const rec = Store.insert("Approval", { RecordType: "GrantReport", RecordId: key, ApprovedBy: "Denise", ApprovedAt: new Date().toISOString(), Statement: `Checked the ${GR_FUNDERS[GR.funder].label} report for ${GR_PERIODS[GR.period].label} against the case files.` });
+    const rec = Store.insert("Approval", { RecordType: "GrantReport", RecordId: key, ApprovedBy: "Denise", ApprovedAt: new Date().toISOString(), Statement: `Checked the ${GR_FUNDERS[GR.funder].label} report for ${GR_PERIODS[GR.period].label} against the case files.`,
+      /* What was approved: the numbers as they stood, where they came from, and who wrote the wording. */
+      Snapshot: { source: live ? "shared case file" : "this browser", asOf: live ? live.as_of : new Date().toISOString(), wording: GR.drafted || "template",
+        figures: { served: s.served, intakes: s.intakes, contacts: s.contacts, minutes: s.minutes, referrals: s.refs, accepted: s.accepted, attended: s.attended, closed: s.closed, met: s.met },
+        sections: GR.text.map(x => ({ key: x.key, text: x.text })) } });
     Store.save();
     logEvent("", "Grant report approved", `${GR_FUNDERS[GR.funder].label} · ${GR_PERIODS[GR.period].label} · ${s.served} clients, ${s.refs} referrals`);
     toast("Report approved and saved."); renderGrant();
@@ -221,5 +292,6 @@ function renderGrant() {
     a.href = URL.createObjectURL(new Blob([`${GR_FUNDERS[GR.funder].label}\nReporting period: ${GR_PERIODS[GR.period].label}\n\n${grText(GR.text)}\n`], { type: "text/plain" }));
     a.download = `grant-report-${GR.funder}-${GR.period}.txt`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
-  document.getElementById("gr-redraft").onclick = () => { GR.text = null; GR.saved = null; render(); toast("Redrafted from the current numbers."); };
+  document.getElementById("gr-redraft").onclick = () => { GR.text = null; GR.saved = null; GR.drafted = null; GR.edited = false; GR.problems = null; render(); toast("Redrafted from the current numbers."); };
+  const ai = document.getElementById("gr-ai"); if (ai) ai.onclick = grDraftAI;
 }

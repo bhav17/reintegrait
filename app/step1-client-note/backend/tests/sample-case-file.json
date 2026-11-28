@@ -1,0 +1,2357 @@
+{
+ "sample": {
+  "records": {
+   "Client": [
+    {
+     "Id": "c1",
+     "Name": "Marcus Reed",
+     "Age": 41,
+     "Gender": "Male",
+     "Locality": "Austin",
+     "Phone": "773-555-0142",
+     "ClientSince": "2026-10-02",
+     "Status": "Referral pending"
+    },
+    {
+     "Id": "c2",
+     "Name": "Tanya Brooks",
+     "Age": 29,
+     "Gender": "Female",
+     "Locality": "Roseland",
+     "Phone": "312-555-0178",
+     "ClientSince": "2026-09-14",
+     "Status": "Active"
+    },
+    {
+     "Id": "c3",
+     "Name": "Luis Herrera",
+     "Age": 52,
+     "Gender": "Male",
+     "Locality": "Little Village",
+     "Phone": "773-555-0119",
+     "ClientSince": "2026-10-21",
+     "Status": "Needs follow-up"
+    },
+    {
+     "Id": "c4",
+     "Name": "Keisha Moore",
+     "Age": 36,
+     "Gender": "Female",
+     "Locality": "North Lawndale",
+     "Phone": "872-555-0163",
+     "ClientSince": "2026-08-30",
+     "Status": "Active"
+    },
+    {
+     "Id": "c5",
+     "Name": "James Carter",
+     "Age": 24,
+     "Gender": "Male",
+     "Locality": "Humboldt Park",
+     "Phone": "773-555-0127",
+     "ClientSince": "2026-10-28",
+     "Status": "Referral pending"
+    }
+   ],
+   "Interaction": [
+    {
+     "Id": "int-s3",
+     "ClientId": "c1",
+     "Date": "2026-10-02",
+     "Type": "Intake note",
+     "Summary": "Released Sep 28 from Stateville. Needs ID, job, and SNAP.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 55
+    },
+    {
+     "Id": "int-s7",
+     "ClientId": "c1",
+     "Date": "2026-10-20",
+     "Type": "Second visit",
+     "Summary": "Has state ID now. Wants warehouse work. Sister's place is stable through December.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 30
+    },
+    {
+     "Id": "int-s10",
+     "ClientId": "c1",
+     "Date": "2026-11-03",
+     "Type": "Referral sent",
+     "Summary": "Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 10
+    },
+    {
+     "Id": "int-s16",
+     "ClientId": "c2",
+     "Date": "2026-09-14",
+     "Type": "Intake note",
+     "Summary": "Released Sep 9 from Logan. Two kids staying with her mother.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 50
+    },
+    {
+     "Id": "int-s19",
+     "ClientId": "c2",
+     "Date": "2026-10-08",
+     "Type": "Second visit",
+     "Summary": "SNAP approved. Interested in GED.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 25
+    },
+    {
+     "Id": "int-s21",
+     "ClientId": "c2",
+     "Date": "2026-11-04",
+     "Type": "Weekly phone check",
+     "Summary": "Started GED classes at Olive-Harvey. Childcare is the main barrier.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 8
+    },
+    {
+     "Id": "int-s26",
+     "ClientId": "c3",
+     "Date": "2026-10-21",
+     "Type": "Intake note",
+     "Summary": "Released Oct 15. In a shelter. Needs a clinic for diabetes medication.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 45
+    },
+    {
+     "Id": "int-s31",
+     "ClientId": "c4",
+     "Date": "2026-08-30",
+     "Type": "Intake note",
+     "Summary": "Released Aug 24. Has housing with partner.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 40
+    },
+    {
+     "Id": "int-s34",
+     "ClientId": "c4",
+     "Date": "2026-11-09",
+     "Type": "Weekly message check",
+     "Summary": "Working at a restaurant 30 hrs/week. Hearing date not set yet.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Text message",
+     "Minutes": 5
+    },
+    {
+     "Id": "int-s39",
+     "ClientId": "c5",
+     "Date": "2026-10-28",
+     "Type": "Intake note",
+     "Summary": "Released Oct 24. Staying with grandmother.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 40
+    },
+    {
+     "Id": "int-s42",
+     "ClientId": "c5",
+     "Date": "2026-11-05",
+     "Type": "Referral sent",
+     "Summary": "Referred to Safer Foundation job training. Start date Nov 18.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 12
+    }
+   ],
+   "Need": [
+    {
+     "Id": "nee-s1",
+     "ClientId": "c1",
+     "Text": "Job readiness program",
+     "ServiceType": "Jobs",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-02",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s2",
+     "ClientId": "c1",
+     "Text": "Steady housing (staying with sister)",
+     "ServiceType": "Housing",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-02",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s14",
+     "ClientId": "c2",
+     "Text": "Childcare during GED classes",
+     "ServiceType": "Family",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-09-14",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s15",
+     "ClientId": "c2",
+     "Text": "SNAP recertification",
+     "ServiceType": "Benefits",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-09-14",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s24",
+     "ClientId": "c3",
+     "Text": "Housing application paperwork",
+     "ServiceType": "Housing",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-21",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s25",
+     "ClientId": "c3",
+     "Text": "Diabetes care",
+     "ServiceType": "Health",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-21",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s30",
+     "ClientId": "c4",
+     "Text": "Driver's license reinstatement",
+     "ServiceType": "Legal",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-08-30",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s37",
+     "ClientId": "c5",
+     "Text": "Job training",
+     "ServiceType": "Jobs",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-28",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s38",
+     "ClientId": "c5",
+     "Text": "Phone (lost his)",
+     "ServiceType": "Benefits",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-28",
+     "InteractionId": null
+    }
+   ],
+   "Service": [
+    {
+     "Id": "ser-s4",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "ID and documents",
+     "Minutes": 19,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s5",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "Jobs",
+     "Minutes": 18,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s6",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "Benefits",
+     "Minutes": 18,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s8",
+     "ClientId": "c1",
+     "InteractionId": "int-s7",
+     "Date": "2026-10-20",
+     "ServiceType": "Jobs",
+     "Minutes": 15,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s9",
+     "ClientId": "c1",
+     "InteractionId": "int-s7",
+     "Date": "2026-10-20",
+     "ServiceType": "Housing",
+     "Minutes": 15,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s11",
+     "ClientId": "c1",
+     "InteractionId": "int-s10",
+     "Date": "2026-11-03",
+     "ServiceType": "Jobs",
+     "Minutes": 10,
+     "MeetingType": "Phone call"
+    },
+    {
+     "Id": "ser-s17",
+     "ClientId": "c2",
+     "InteractionId": "int-s16",
+     "Date": "2026-09-14",
+     "ServiceType": "Benefits",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s18",
+     "ClientId": "c2",
+     "InteractionId": "int-s16",
+     "Date": "2026-09-14",
+     "ServiceType": "Family",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s20",
+     "ClientId": "c2",
+     "InteractionId": "int-s19",
+     "Date": "2026-10-08",
+     "ServiceType": "Benefits",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s22",
+     "ClientId": "c2",
+     "InteractionId": "int-s21",
+     "Date": "2026-11-04",
+     "ServiceType": "Family",
+     "Minutes": 8,
+     "MeetingType": "Phone call"
+    },
+    {
+     "Id": "ser-s27",
+     "ClientId": "c3",
+     "InteractionId": "int-s26",
+     "Date": "2026-10-21",
+     "ServiceType": "Housing",
+     "Minutes": 23,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s28",
+     "ClientId": "c3",
+     "InteractionId": "int-s26",
+     "Date": "2026-10-21",
+     "ServiceType": "Health",
+     "Minutes": 22,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s32",
+     "ClientId": "c4",
+     "InteractionId": "int-s31",
+     "Date": "2026-08-30",
+     "ServiceType": "Legal",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s33",
+     "ClientId": "c4",
+     "InteractionId": "int-s31",
+     "Date": "2026-08-30",
+     "ServiceType": "Jobs",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s35",
+     "ClientId": "c4",
+     "InteractionId": "int-s34",
+     "Date": "2026-11-09",
+     "ServiceType": "Legal",
+     "Minutes": 5,
+     "MeetingType": "Text message"
+    },
+    {
+     "Id": "ser-s40",
+     "ClientId": "c5",
+     "InteractionId": "int-s39",
+     "Date": "2026-10-28",
+     "ServiceType": "Jobs",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s41",
+     "ClientId": "c5",
+     "InteractionId": "int-s39",
+     "Date": "2026-10-28",
+     "ServiceType": "Benefits",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s43",
+     "ClientId": "c5",
+     "InteractionId": "int-s42",
+     "Date": "2026-11-05",
+     "ServiceType": "Jobs",
+     "Minutes": 12,
+     "MeetingType": "Phone call"
+    }
+   ],
+   "Goal": [
+    {
+     "Id": "goa-s13",
+     "ClientId": "c1",
+     "Text": "Did Marcus attend the Cara Collective orientation on Tue Nov 10?",
+     "Type": "Referral check",
+     "DueDate": "2026-11-11",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s23",
+     "ClientId": "c2",
+     "Text": "Weekly call. Ask how GED classes are going.",
+     "Type": "Weekly phone check",
+     "DueDate": "2026-11-11",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s29",
+     "ClientId": "c3",
+     "Text": "Bring the housing application and help fill it in.",
+     "Type": "Second visit",
+     "DueDate": "2026-11-09",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s36",
+     "ClientId": "c4",
+     "Text": "Text check-in about the license hearing date.",
+     "Type": "Weekly message check",
+     "DueDate": "2026-11-16",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s45",
+     "ClientId": "c5",
+     "Text": "Did James start the Safer Foundation program?",
+     "Type": "Referral check",
+     "DueDate": "2026-11-20",
+     "Status": "Open",
+     "InteractionId": null
+    }
+   ],
+   "Referral": [
+    {
+     "Id": "ref-s12",
+     "ClientId": "c1",
+     "InteractionId": "int-s10",
+     "Partner": "Cara Collective",
+     "Service": "Job readiness",
+     "Status": "Accepted",
+     "SentDate": "2026-11-03",
+     "AnswerDate": "2026-11-04",
+     "Appointment": {
+      "date": "2026-11-10",
+      "time": "09:00"
+     }
+    },
+    {
+     "Id": "ref-s44",
+     "ClientId": "c5",
+     "InteractionId": "int-s42",
+     "Partner": "Safer Foundation",
+     "Service": "Job training",
+     "Status": "Sent",
+     "SentDate": "2026-11-05"
+    }
+   ],
+   "Approval": [],
+   "Document": [],
+   "Provider": []
+  },
+  "expected": {
+   "q4": {
+    "period": {
+     "label": "Q4 2026, Oct 1 to Nov 11 (quarter so far)",
+     "from": "2026-10-01",
+     "to": "2026-11-11"
+    },
+    "stats": {
+     "byAge": {
+      "36-45": 2,
+      "26-35": 1,
+      "46-55": 1,
+      "18-25": 1
+     },
+     "byGender": {
+      "Male": 3,
+      "Female": 2
+     },
+     "cum": 5,
+     "engaged": 5,
+     "svcClients": {
+      "ID and documents": 1,
+      "Jobs": 3,
+      "Benefits": 3,
+      "Housing": 2,
+      "Family": 1,
+      "Health": 1,
+      "Legal": 1
+     },
+     "p": {
+      "label": "Q4 2026, Oct 1 to Nov 11 (quarter so far)",
+      "from": "2026-10-01",
+      "to": "2026-11-11"
+     },
+     "meetings": [
+      "In-person visit",
+      "Phone call",
+      "Text message"
+     ],
+     "served": 5,
+     "intakes": 3,
+     "contacts": 9,
+     "minutes": 230,
+     "byType": {
+      "ID and documents": {
+       "minutes": 19,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 75,
+       "clients": 2
+      },
+      "Benefits": {
+       "minutes": 63,
+       "clients": 3
+      },
+      "Housing": {
+       "minutes": 38,
+       "clients": 2
+      },
+      "Family": {
+       "minutes": 8,
+       "clients": 1
+      },
+      "Health": {
+       "minutes": 22,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 5,
+       "clients": 1
+      }
+     },
+     "refs": 2,
+     "accepted": 1,
+     "declined": 0,
+     "answered": 1,
+     "attended": 0,
+     "noShow": 0,
+     "closed": 0,
+     "met": 0,
+     "why": {},
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1
+     },
+     "openNeeds": 9,
+     "pendingAnswer": 1,
+     "pendingShow": 1,
+     "noOutcome": 0
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "9 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       5,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Male: 3, Female: 2",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 1, 26-35: 1, 36-45: 2, 46-55: 1, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 5 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       2,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "1 accepted, 0 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       5,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       5,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       0,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       3,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       2,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       5,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   },
+   "q3": {
+    "period": {
+     "label": "Q3 2026, Jul 1 to Sep 30",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "stats": {
+     "byAge": {
+      "26-35": 1,
+      "36-45": 1
+     },
+     "byGender": {
+      "Female": 2
+     },
+     "cum": 2,
+     "engaged": 1,
+     "svcClients": {
+      "Benefits": 1,
+      "Family": 1,
+      "Legal": 1,
+      "Jobs": 1
+     },
+     "p": {
+      "label": "Q3 2026, Jul 1 to Sep 30",
+      "from": "2026-07-01",
+      "to": "2026-09-30"
+     },
+     "meetings": [
+      "In-person visit"
+     ],
+     "served": 2,
+     "intakes": 2,
+     "contacts": 2,
+     "minutes": 90,
+     "byType": {
+      "Benefits": {
+       "minutes": 25,
+       "clients": 1
+      },
+      "Family": {
+       "minutes": 25,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 20,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 20,
+       "clients": 1
+      }
+     },
+     "refs": 0,
+     "accepted": 0,
+     "declined": 0,
+     "answered": 0,
+     "attended": 0,
+     "noShow": 0,
+     "closed": 0,
+     "met": 0,
+     "why": {},
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1
+     },
+     "openNeeds": 9,
+     "pendingAnswer": 0,
+     "pendingShow": 0,
+     "noOutcome": 0
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "2 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       2,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Female: 2",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 0, 26-35: 1, 36-45: 1, 46-55: 0, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 2 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       0,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "0 accepted, 0 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       2,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       1,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       1,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       1,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       0,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       2,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   },
+   "half": {
+    "period": {
+     "label": "Jul 1 to Nov 11, 2026 (six-month period so far)",
+     "from": "2026-07-01",
+     "to": "2026-11-11"
+    },
+    "stats": {
+     "byAge": {
+      "36-45": 2,
+      "26-35": 1,
+      "46-55": 1,
+      "18-25": 1
+     },
+     "byGender": {
+      "Male": 3,
+      "Female": 2
+     },
+     "cum": 5,
+     "engaged": 5,
+     "svcClients": {
+      "ID and documents": 1,
+      "Jobs": 3,
+      "Benefits": 3,
+      "Housing": 2,
+      "Family": 1,
+      "Health": 1,
+      "Legal": 1
+     },
+     "p": {
+      "label": "Jul 1 to Nov 11, 2026 (six-month period so far)",
+      "from": "2026-07-01",
+      "to": "2026-11-11"
+     },
+     "meetings": [
+      "In-person visit",
+      "Phone call",
+      "Text message"
+     ],
+     "served": 5,
+     "intakes": 5,
+     "contacts": 11,
+     "minutes": 320,
+     "byType": {
+      "ID and documents": {
+       "minutes": 19,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 95,
+       "clients": 3
+      },
+      "Benefits": {
+       "minutes": 88,
+       "clients": 3
+      },
+      "Housing": {
+       "minutes": 38,
+       "clients": 2
+      },
+      "Family": {
+       "minutes": 33,
+       "clients": 1
+      },
+      "Health": {
+       "minutes": 22,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 25,
+       "clients": 1
+      }
+     },
+     "refs": 2,
+     "accepted": 1,
+     "declined": 0,
+     "answered": 1,
+     "attended": 0,
+     "noShow": 0,
+     "closed": 0,
+     "met": 0,
+     "why": {},
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1
+     },
+     "openNeeds": 9,
+     "pendingAnswer": 1,
+     "pendingShow": 1,
+     "noOutcome": 0
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "11 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       5,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Male: 3, Female: 2",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 1, 26-35: 1, 36-45: 2, 46-55: 1, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 5 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       2,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "1 accepted, 0 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       5,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       5,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       0,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       3,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       2,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       5,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   }
+  }
+ },
+ "busy": {
+  "records": {
+   "Client": [
+    {
+     "Id": "c1",
+     "Name": "Marcus Reed",
+     "Age": 41,
+     "Gender": "Male",
+     "Locality": "Austin",
+     "Phone": "773-555-0142",
+     "ClientSince": "2026-10-02",
+     "Status": "Referral pending"
+    },
+    {
+     "Id": "c2",
+     "Name": "Tanya Brooks",
+     "Age": 29,
+     "Gender": "Female",
+     "Locality": "Roseland",
+     "Phone": "312-555-0178",
+     "ClientSince": "2026-09-14",
+     "Status": "Active"
+    },
+    {
+     "Id": "c3",
+     "Name": "Luis Herrera",
+     "Age": 52,
+     "Gender": "Male",
+     "Locality": "Little Village",
+     "Phone": "773-555-0119",
+     "ClientSince": "2026-10-21",
+     "Status": "Needs follow-up"
+    },
+    {
+     "Id": "c4",
+     "Name": "Keisha Moore",
+     "Age": 36,
+     "Gender": "Female",
+     "Locality": "North Lawndale",
+     "Phone": "872-555-0163",
+     "ClientSince": "2026-08-30",
+     "Status": "Active"
+    },
+    {
+     "Id": "c5",
+     "Name": "James Carter",
+     "Age": 24,
+     "Gender": "Male",
+     "Locality": "Humboldt Park",
+     "Phone": "773-555-0127",
+     "ClientSince": "2026-10-28",
+     "Status": "Referral pending"
+    },
+    {
+     "Id": "cli-mx01qn3zfl46",
+     "Name": "Test Person",
+     "Age": "19",
+     "Gender": "",
+     "ClientSince": "2026-10-05",
+     "Status": "Active",
+     "RaceEthnicity": "Black or African American"
+    }
+   ],
+   "Interaction": [
+    {
+     "Id": "int-s3",
+     "ClientId": "c1",
+     "Date": "2026-10-02",
+     "Type": "Intake note",
+     "Summary": "Released Sep 28 from Stateville. Needs ID, job, and SNAP.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 55
+    },
+    {
+     "Id": "int-s7",
+     "ClientId": "c1",
+     "Date": "2026-10-20",
+     "Type": "Second visit",
+     "Summary": "Has state ID now. Wants warehouse work. Sister's place is stable through December.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 30
+    },
+    {
+     "Id": "int-s10",
+     "ClientId": "c1",
+     "Date": "2026-11-03",
+     "Type": "Referral sent",
+     "Summary": "Referred to Cara Collective job readiness. Orientation Tue Nov 10, 9am.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 10
+    },
+    {
+     "Id": "int-s16",
+     "ClientId": "c2",
+     "Date": "2026-09-14",
+     "Type": "Intake note",
+     "Summary": "Released Sep 9 from Logan. Two kids staying with her mother.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 50
+    },
+    {
+     "Id": "int-s19",
+     "ClientId": "c2",
+     "Date": "2026-10-08",
+     "Type": "Second visit",
+     "Summary": "SNAP approved. Interested in GED.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 25
+    },
+    {
+     "Id": "int-s21",
+     "ClientId": "c2",
+     "Date": "2026-11-04",
+     "Type": "Weekly phone check",
+     "Summary": "Started GED classes at Olive-Harvey. Childcare is the main barrier.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 8
+    },
+    {
+     "Id": "int-s26",
+     "ClientId": "c3",
+     "Date": "2026-10-21",
+     "Type": "Intake note",
+     "Summary": "Released Oct 15. In a shelter. Needs a clinic for diabetes medication.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 45
+    },
+    {
+     "Id": "int-s31",
+     "ClientId": "c4",
+     "Date": "2026-08-30",
+     "Type": "Intake note",
+     "Summary": "Released Aug 24. Has housing with partner.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 40
+    },
+    {
+     "Id": "int-s34",
+     "ClientId": "c4",
+     "Date": "2026-11-09",
+     "Type": "Weekly message check",
+     "Summary": "Working at a restaurant 30 hrs/week. Hearing date not set yet.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Text message",
+     "Minutes": 5
+    },
+    {
+     "Id": "int-s39",
+     "ClientId": "c5",
+     "Date": "2026-10-28",
+     "Type": "Intake note",
+     "Summary": "Released Oct 24. Staying with grandmother.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "In-person visit",
+     "Minutes": 40
+    },
+    {
+     "Id": "int-s42",
+     "ClientId": "c5",
+     "Date": "2026-11-05",
+     "Type": "Referral sent",
+     "Summary": "Referred to Safer Foundation job training. Start date Nov 18.",
+     "Channel": "Sample",
+     "Template": null,
+     "SourceName": null,
+     "MeetingType": "Phone call",
+     "Minutes": 12
+    },
+    {
+     "Id": "int-mx01qn3zp5yr",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Date": "2026-10-05",
+     "Type": "Intake note",
+     "MeetingType": "In-person visit",
+     "Minutes": "35"
+    },
+    {
+     "Id": "int-mx01qn3zen5i",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Date": "2026-08-02",
+     "Type": "Weekly phone check",
+     "MeetingType": "Phone call",
+     "Minutes": 0
+    }
+   ],
+   "Need": [
+    {
+     "Id": "nee-s1",
+     "ClientId": "c1",
+     "Text": "Job readiness program",
+     "ServiceType": "Jobs",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-02",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s2",
+     "ClientId": "c1",
+     "Text": "Steady housing (staying with sister)",
+     "ServiceType": "Housing",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-02",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s14",
+     "ClientId": "c2",
+     "Text": "Childcare during GED classes",
+     "ServiceType": "Family",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-09-14",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s15",
+     "ClientId": "c2",
+     "Text": "SNAP recertification",
+     "ServiceType": "Benefits",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-09-14",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s24",
+     "ClientId": "c3",
+     "Text": "Housing application paperwork",
+     "ServiceType": "Housing",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-21",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s25",
+     "ClientId": "c3",
+     "Text": "Diabetes care",
+     "ServiceType": "Health",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-21",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s30",
+     "ClientId": "c4",
+     "Text": "Driver's license reinstatement",
+     "ServiceType": "Legal",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-08-30",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s37",
+     "ClientId": "c5",
+     "Text": "Job training",
+     "ServiceType": "Jobs",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-28",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-s38",
+     "ClientId": "c5",
+     "Text": "Phone (lost his)",
+     "ServiceType": "Benefits",
+     "Priority": "Soon",
+     "Status": "Open",
+     "CreatedDate": "2026-10-28",
+     "InteractionId": null
+    },
+    {
+     "Id": "nee-mx01qn3zpdju",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Text": "x",
+     "Status": "Open"
+    },
+    {
+     "Id": "nee-mx01qn3zygra",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Text": "y",
+     "ServiceType": "Jobs",
+     "Status": "Closed"
+    }
+   ],
+   "Service": [
+    {
+     "Id": "ser-s4",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "ID and documents",
+     "Minutes": 19,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s5",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "Jobs",
+     "Minutes": 18,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s6",
+     "ClientId": "c1",
+     "InteractionId": "int-s3",
+     "Date": "2026-10-02",
+     "ServiceType": "Benefits",
+     "Minutes": 18,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s8",
+     "ClientId": "c1",
+     "InteractionId": "int-s7",
+     "Date": "2026-10-20",
+     "ServiceType": "Jobs",
+     "Minutes": 15,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s9",
+     "ClientId": "c1",
+     "InteractionId": "int-s7",
+     "Date": "2026-10-20",
+     "ServiceType": "Housing",
+     "Minutes": 15,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s11",
+     "ClientId": "c1",
+     "InteractionId": "int-s10",
+     "Date": "2026-11-03",
+     "ServiceType": "Jobs",
+     "Minutes": 10,
+     "MeetingType": "Phone call"
+    },
+    {
+     "Id": "ser-s17",
+     "ClientId": "c2",
+     "InteractionId": "int-s16",
+     "Date": "2026-09-14",
+     "ServiceType": "Benefits",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s18",
+     "ClientId": "c2",
+     "InteractionId": "int-s16",
+     "Date": "2026-09-14",
+     "ServiceType": "Family",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s20",
+     "ClientId": "c2",
+     "InteractionId": "int-s19",
+     "Date": "2026-10-08",
+     "ServiceType": "Benefits",
+     "Minutes": 25,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s22",
+     "ClientId": "c2",
+     "InteractionId": "int-s21",
+     "Date": "2026-11-04",
+     "ServiceType": "Family",
+     "Minutes": 8,
+     "MeetingType": "Phone call"
+    },
+    {
+     "Id": "ser-s27",
+     "ClientId": "c3",
+     "InteractionId": "int-s26",
+     "Date": "2026-10-21",
+     "ServiceType": "Housing",
+     "Minutes": 23,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s28",
+     "ClientId": "c3",
+     "InteractionId": "int-s26",
+     "Date": "2026-10-21",
+     "ServiceType": "Health",
+     "Minutes": 22,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s32",
+     "ClientId": "c4",
+     "InteractionId": "int-s31",
+     "Date": "2026-08-30",
+     "ServiceType": "Legal",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s33",
+     "ClientId": "c4",
+     "InteractionId": "int-s31",
+     "Date": "2026-08-30",
+     "ServiceType": "Jobs",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s35",
+     "ClientId": "c4",
+     "InteractionId": "int-s34",
+     "Date": "2026-11-09",
+     "ServiceType": "Legal",
+     "Minutes": 5,
+     "MeetingType": "Text message"
+    },
+    {
+     "Id": "ser-s40",
+     "ClientId": "c5",
+     "InteractionId": "int-s39",
+     "Date": "2026-10-28",
+     "ServiceType": "Jobs",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s41",
+     "ClientId": "c5",
+     "InteractionId": "int-s39",
+     "Date": "2026-10-28",
+     "ServiceType": "Benefits",
+     "Minutes": 20,
+     "MeetingType": "In-person visit"
+    },
+    {
+     "Id": "ser-s43",
+     "ClientId": "c5",
+     "InteractionId": "int-s42",
+     "Date": "2026-11-05",
+     "ServiceType": "Jobs",
+     "Minutes": 12,
+     "MeetingType": "Phone call"
+    },
+    {
+     "Id": "ser-mx01qn3zvoa7",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Date": "2026-10-05",
+     "ServiceType": "Transport",
+     "Minutes": 35
+    },
+    {
+     "Id": "ser-mx01qn3zk8nv",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Date": "2026-08-02",
+     "ServiceType": "Education",
+     "Minutes": 7
+    }
+   ],
+   "Goal": [
+    {
+     "Id": "goa-s13",
+     "ClientId": "c1",
+     "Text": "Did Marcus attend the Cara Collective orientation on Tue Nov 10?",
+     "Type": "Referral check",
+     "DueDate": "2026-11-11",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s23",
+     "ClientId": "c2",
+     "Text": "Weekly call. Ask how GED classes are going.",
+     "Type": "Weekly phone check",
+     "DueDate": "2026-11-11",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s29",
+     "ClientId": "c3",
+     "Text": "Bring the housing application and help fill it in.",
+     "Type": "Second visit",
+     "DueDate": "2026-11-09",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s36",
+     "ClientId": "c4",
+     "Text": "Text check-in about the license hearing date.",
+     "Type": "Weekly message check",
+     "DueDate": "2026-11-16",
+     "Status": "Open",
+     "InteractionId": null
+    },
+    {
+     "Id": "goa-s45",
+     "ClientId": "c5",
+     "Text": "Did James start the Safer Foundation program?",
+     "Type": "Referral check",
+     "DueDate": "2026-11-20",
+     "Status": "Open",
+     "InteractionId": null
+    }
+   ],
+   "Referral": [
+    {
+     "Id": "ref-s12",
+     "ClientId": "c1",
+     "InteractionId": "int-s10",
+     "Partner": "Cara Collective",
+     "Service": "Job readiness",
+     "Status": "Accepted",
+     "SentDate": "2026-11-03",
+     "AnswerDate": "2026-11-04",
+     "Appointment": {
+      "date": "2026-11-10",
+      "time": "09:00"
+     }
+    },
+    {
+     "Id": "ref-s44",
+     "ClientId": "c5",
+     "InteractionId": "int-s42",
+     "Partner": "Safer Foundation",
+     "Service": "Job training",
+     "Status": "Sent",
+     "SentDate": "2026-11-05"
+    },
+    {
+     "Id": "ref-mx01qn3zg05l",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Partner": "A",
+     "SentDate": "2026-10-06",
+     "Status": "Declined",
+     "DeclineReason": "Program full"
+    },
+    {
+     "Id": "ref-mx01qn3zqjnh",
+     "ClientId": "cli-mx01qn3zfl46",
+     "Partner": "B",
+     "SentDate": "2026-10-07",
+     "Status": "Declined"
+    },
+    {
+     "Id": "ref-mx01qn3zvh70",
+     "ClientId": "c2",
+     "Partner": "C",
+     "SentDate": "2026-10-09",
+     "Status": "Accepted",
+     "Stage": "Attended",
+     "AttendedDate": "2026-10-15"
+    },
+    {
+     "Id": "ref-mx01qn3zqo8t",
+     "ClientId": "c3",
+     "Partner": "D",
+     "SentDate": "2026-10-22",
+     "Status": "Accepted",
+     "Stage": "Closed",
+     "Outcome": "Goal met"
+    },
+    {
+     "Id": "ref-mx01qn3zjp2h",
+     "ClientId": "c4",
+     "Partner": "E",
+     "SentDate": "2026-09-01",
+     "Stage": "No-show",
+     "Attendance": "No-show"
+    },
+    {
+     "Id": "ref-mx01qn3z9gm2",
+     "ClientId": "c4",
+     "Partner": "F",
+     "SentDate": "2026-07-20",
+     "Status": "Accepted",
+     "Attendance": "Showed up",
+     "Outcome": "Partly met"
+    },
+    {
+     "Id": "ref-mx01qn3zizys",
+     "ClientId": "c5",
+     "Partner": "G",
+     "SentDate": ""
+    }
+   ],
+   "Approval": [],
+   "Document": [],
+   "Provider": []
+  },
+  "expected": {
+   "q4": {
+    "period": {
+     "label": "Q4 2026, Oct 1 to Nov 11 (quarter so far)",
+     "from": "2026-10-01",
+     "to": "2026-11-11"
+    },
+    "stats": {
+     "byAge": {
+      "36-45": 2,
+      "26-35": 1,
+      "46-55": 1,
+      "18-25": 2
+     },
+     "byGender": {
+      "Male": 3,
+      "Female": 2,
+      "Unknown": 1
+     },
+     "cum": 6,
+     "engaged": 5,
+     "svcClients": {
+      "ID and documents": 1,
+      "Jobs": 3,
+      "Benefits": 3,
+      "Housing": 2,
+      "Family": 1,
+      "Health": 1,
+      "Legal": 1,
+      "Transport": 1,
+      "Education": 1
+     },
+     "p": {
+      "label": "Q4 2026, Oct 1 to Nov 11 (quarter so far)",
+      "from": "2026-10-01",
+      "to": "2026-11-11"
+     },
+     "meetings": [
+      "In-person visit",
+      "Phone call",
+      "Text message"
+     ],
+     "served": 6,
+     "intakes": 4,
+     "contacts": 10,
+     "minutes": 265,
+     "byType": {
+      "ID and documents": {
+       "minutes": 19,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 75,
+       "clients": 2
+      },
+      "Benefits": {
+       "minutes": 63,
+       "clients": 3
+      },
+      "Housing": {
+       "minutes": 38,
+       "clients": 2
+      },
+      "Family": {
+       "minutes": 8,
+       "clients": 1
+      },
+      "Health": {
+       "minutes": 22,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 5,
+       "clients": 1
+      },
+      "Transport": {
+       "minutes": 35,
+       "clients": 1
+      }
+     },
+     "refs": 6,
+     "accepted": 3,
+     "declined": 2,
+     "answered": 5,
+     "attended": 2,
+     "noShow": 0,
+     "closed": 1,
+     "met": 1,
+     "why": {
+      "Program full": 1,
+      "Other": 1
+     },
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1,
+      "Other": 1
+     },
+     "openNeeds": 10,
+     "pendingAnswer": 1,
+     "pendingShow": 1,
+     "noOutcome": 1
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "10 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       6,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Male: 3, Female: 2, Unknown: 1",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 2, 26-35: 1, 36-45: 2, 46-55: 1, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 6 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       6,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "3 accepted, 2 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       6,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       5,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       1,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       3,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       2,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       6,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   },
+   "q3": {
+    "period": {
+     "label": "Q3 2026, Jul 1 to Sep 30",
+     "from": "2026-07-01",
+     "to": "2026-09-30"
+    },
+    "stats": {
+     "byAge": {
+      "26-35": 1,
+      "36-45": 1,
+      "18-25": 1
+     },
+     "byGender": {
+      "Female": 2,
+      "Unknown": 1
+     },
+     "cum": 3,
+     "engaged": 1,
+     "svcClients": {
+      "Benefits": 1,
+      "Family": 1,
+      "Legal": 1,
+      "Jobs": 1,
+      "Education": 1
+     },
+     "p": {
+      "label": "Q3 2026, Jul 1 to Sep 30",
+      "from": "2026-07-01",
+      "to": "2026-09-30"
+     },
+     "meetings": [
+      "In-person visit",
+      "Phone call"
+     ],
+     "served": 3,
+     "intakes": 2,
+     "contacts": 3,
+     "minutes": 90,
+     "byType": {
+      "Benefits": {
+       "minutes": 25,
+       "clients": 1
+      },
+      "Family": {
+       "minutes": 25,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 20,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 20,
+       "clients": 1
+      },
+      "Education": {
+       "minutes": 7,
+       "clients": 1
+      }
+     },
+     "refs": 2,
+     "accepted": 2,
+     "declined": 0,
+     "answered": 2,
+     "attended": 1,
+     "noShow": 1,
+     "closed": 1,
+     "met": 0,
+     "why": {},
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1,
+      "Other": 1
+     },
+     "openNeeds": 10,
+     "pendingAnswer": 0,
+     "pendingShow": 0,
+     "noOutcome": 0
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "3 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       3,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Female: 2, Unknown: 1",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 1, 26-35: 1, 36-45: 1, 46-55: 0, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 3 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       2,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "2 accepted, 1 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       3,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       1,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       2,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       1,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       0,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       2,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   },
+   "half": {
+    "period": {
+     "label": "Jul 1 to Nov 11, 2026 (six-month period so far)",
+     "from": "2026-07-01",
+     "to": "2026-11-11"
+    },
+    "stats": {
+     "byAge": {
+      "36-45": 2,
+      "26-35": 1,
+      "46-55": 1,
+      "18-25": 2
+     },
+     "byGender": {
+      "Male": 3,
+      "Female": 2,
+      "Unknown": 1
+     },
+     "cum": 6,
+     "engaged": 5,
+     "svcClients": {
+      "ID and documents": 1,
+      "Jobs": 3,
+      "Benefits": 3,
+      "Housing": 2,
+      "Family": 1,
+      "Health": 1,
+      "Legal": 1,
+      "Transport": 1,
+      "Education": 1
+     },
+     "p": {
+      "label": "Jul 1 to Nov 11, 2026 (six-month period so far)",
+      "from": "2026-07-01",
+      "to": "2026-11-11"
+     },
+     "meetings": [
+      "In-person visit",
+      "Phone call",
+      "Text message"
+     ],
+     "served": 6,
+     "intakes": 6,
+     "contacts": 13,
+     "minutes": 355,
+     "byType": {
+      "ID and documents": {
+       "minutes": 19,
+       "clients": 1
+      },
+      "Jobs": {
+       "minutes": 95,
+       "clients": 3
+      },
+      "Benefits": {
+       "minutes": 88,
+       "clients": 3
+      },
+      "Housing": {
+       "minutes": 38,
+       "clients": 2
+      },
+      "Family": {
+       "minutes": 33,
+       "clients": 1
+      },
+      "Health": {
+       "minutes": 22,
+       "clients": 1
+      },
+      "Legal": {
+       "minutes": 25,
+       "clients": 1
+      },
+      "Transport": {
+       "minutes": 35,
+       "clients": 1
+      },
+      "Education": {
+       "minutes": 7,
+       "clients": 1
+      }
+     },
+     "refs": 8,
+     "accepted": 5,
+     "declined": 2,
+     "answered": 7,
+     "attended": 3,
+     "noShow": 1,
+     "closed": 2,
+     "met": 1,
+     "why": {
+      "Program full": 1,
+      "Other": 1
+     },
+     "needTypes": {
+      "Jobs": 2,
+      "Housing": 2,
+      "Family": 1,
+      "Benefits": 2,
+      "Health": 1,
+      "Legal": 1,
+      "Other": 1
+     },
+     "openNeeds": 10,
+     "pendingAnswer": 1,
+     "pendingShow": 1,
+     "noOutcome": 1
+    },
+    "metrics": {
+     "icjia": [
+      [
+       "Total clients served this quarter (may include duplicates)",
+       "13 contacts",
+       "Counted as one per logged contact"
+      ],
+      [
+       "Unique clients served this quarter",
+       6,
+       ""
+      ],
+      [
+       "Clients by gender",
+       "Male: 3, Female: 2, Unknown: 1",
+       ""
+      ],
+      [
+       "Clients by age group",
+       "18-25: 2, 26-35: 1, 36-45: 2, 46-55: 1, 56-64: 0, 65 and up: 0, Unknown: 0",
+       "R3 age groups"
+      ],
+      [
+       "Clients by race/ethnicity",
+       "Not tracked (all 6 Unknown)",
+       "R3 requires it. Add a race/ethnicity field to the intake note"
+      ],
+      [
+       "Types of outreach conducted",
+       "Not tracked",
+       "Phone, in-person, text and others. Meeting type is logged per contact"
+      ],
+      [
+       "R3-funded staff (start, end, hired, left)",
+       "Not tracked",
+       "Staffing is not part of the case file"
+      ],
+      [
+       "Your priority-area metric: referrals sent",
+       8,
+       "Reentry metrics come from your AmpliFund performance plan. Match these to the ones you chose"
+      ],
+      [
+       "Your priority-area metric: referrals accepted and attended",
+       "5 accepted, 3 attended",
+       ""
+      ]
+     ],
+     "bja": [
+      [
+       "Participants served since the start (cumulative), measure 8",
+       6,
+       "Includes people served directly and through referrals"
+      ],
+      [
+       "Still engaged at the end of the period, measure 9A",
+       5,
+       "Counted as a contact in the last 30 days. BJA lets each program define engagement"
+      ],
+      [
+       "No longer engaged, measure 9B",
+       1,
+       ""
+      ],
+      [
+       "Completed all program requirements, measure 10A",
+       "Not tracked",
+       "Needs a completion field per client"
+      ],
+      [
+       "Received employment services, measure 27",
+       3,
+       "Service type Jobs"
+      ],
+      [
+       "Received housing services, measure 28",
+       2,
+       "Service type Housing"
+      ],
+      [
+       "Received education services, measure 26",
+       "Not tracked",
+       "No education service type yet"
+      ],
+      [
+       "Received other services, measure 29",
+       6,
+       "ID and documents, Benefits, Family, Legal, Transport, Health"
+      ],
+      [
+       "Obtained permanent or stable housing (6+ months), measure 31",
+       "Not tracked",
+       "Needs a housing outcome with a date"
+      ],
+      [
+       "Obtained employment, and kept it 6+ months, measures 35 and 36",
+       "Not tracked",
+       "Needs an employment outcome with dates"
+      ],
+      [
+       "Court and criminal involvement, measures 46 to 58 (closeout only)",
+       "Not collected",
+       "ReintegrAIt does not hold arrest or conviction data"
+      ]
+     ]
+    }
+   }
+  }
+ }
+}
