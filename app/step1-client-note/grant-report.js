@@ -45,9 +45,15 @@ const GR = { period: "q4", funder: "icjia", text: null, key: "", checked: false,
 /* ---------- Live mode: the shared case file on the helper ---------- */
 const grDevice = () => { let d = ""; try { d = localStorage.getItem("reintegrait.device") || ""; if (!d) { d = "dev-" + Math.random().toString(36).slice(2, 10); localStorage.setItem("reintegrait.device", d); } } catch (e) { d = "dev-unsaved"; } return d; };
 const grLiveOn = () => AI.helper && AI.shared_case_file;
-const grPost = (path, body) => fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+const grPost = (path, body, f = fetch) => f(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
   .then(r => r.json().then(j => (r.ok || j.error ? j : Promise.reject(new Error("HTTP " + r.status)))));
 function grSync() { return grLiveOn() ? grPost("api/records/sync", { device: grDevice(), label: "Denise", records: Store.data }) : Promise.resolve(null); }
+/* "Reset sample data" also empties the shared case file, so a demo starts from the five sample clients
+   even after test runs or other browsers added records. Prototype only: it removes every browser's records. */
+function grDemoReset() {
+  Object.assign(GR, { text: null, key: "", checked: false, saved: null, edited: false, live: null, drafted: null, problems: null });
+  if (grLiveOn()) grPost("api/records/clear", {}).then(() => grSync()).catch(() => {});
+}
 /* Every save also goes to the shared case file, a second after the last change. */
 let grSyncTimer = null;
 const grStoreSave = Store.save;
@@ -72,13 +78,13 @@ async function grDraftAI() {
   GR.busy = true; GR.problems = null; render();
   try {
     await grSync();
-    const j = await grPost("api/report/draft", grPeriodBody());
+    const j = await grPost("api/report/draft", grPeriodBody(), aiFetch);
     if (!j.ok) { GR.problems = j.problems || null; toast(j.error || "The AI draft failed. The template draft was kept."); return; }
     GR.text = GR.text.map(x => (j.sections[x.key] ? { ...x, text: j.sections[x.key] } : x));
     GR.drafted = j.model; GR.edited = false; GR.checked = false; GR.saved = null;
     logEvent("", "Grant report drafted by AI", `${j.model} · ${j.attempts === 1 ? "passed the number and name checks" : "passed the checks on the second try"}`);
     toast("Drafted. Every number was filled in from the case file.");
-  } catch (e) { toast("Could not reach the helper. The template draft was kept."); }
+  } catch (e) { toast(e && e.name === "AbortError" ? `${aiErr(e)} The template draft was kept.` : "Could not reach the helper. The template draft was kept."); }
   finally { GR.busy = false; render(); }
 }
 

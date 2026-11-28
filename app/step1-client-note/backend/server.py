@@ -25,6 +25,7 @@ from ai_client import AIError, draft_note, draft_update, read_document, transcri
 import grant_report
 import report_draft
 from case_store import CaseStore
+import selftest
 
 HERE = Path(__file__).resolve().parent          # backend/
 SITE = HERE.parent                              # step1-client-note/ (the prototype)
@@ -108,7 +109,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass  # the browser stopped waiting (demo time limit); the answer is still in the log
 
     def _body(self):
         n = int(self.headers.get("Content-Length") or 0)
@@ -125,7 +129,9 @@ class Handler(SimpleHTTPRequestHandler):
                                     "draft_key_found": bool(read_env().get("ANTHROPIC_API_KEY")),
                                     "draft_model": read_env().get("ANTHROPIC_MODEL") or DEFAULT_DRAFT_MODEL,
                                     "note": note_status(cfg), "document": document_status(cfg),
-                                    "report": report_status(cfg), "shared_case_file": shared_case_file_on()})
+                                    "report": report_status(cfg), "shared_case_file": shared_case_file_on(),
+                                    "demo_time_limit": cfg.get("demo_time_limit_seconds", 75),
+                                    "selftest": selftest.LAST})
         return super().do_GET()
 
     def do_POST(self):
@@ -143,6 +149,12 @@ class Handler(SimpleHTTPRequestHandler):
             return _read_document_handler(self, body)
         if self.path.startswith("/api/records/sync"):
             return _sync_handler(self, body)
+        if self.path.startswith("/api/records/clear"):
+            if not shared_case_file_on():
+                return self._json(403, {"ok": False, "error": "The shared case file is off on this server."})
+            store().clear()
+            write_log({"type": "activity", "client": "", "event": "Shared case file cleared", "detail": "Reset sample data"})
+            return self._json(200, {"ok": True})
         if self.path.startswith("/api/report/metrics"):
             return _report_metrics_handler(self, body)
         if self.path.startswith("/api/report/draft"):
@@ -438,6 +450,12 @@ def main():
         print(f"  Report:   counted from {CASE_FILE.relative_to(SITE)}; template wording (report drafting is off)")
     print(f"  Log file: {LOG.relative_to(SITE)}")
     print("  Stop:     press Control + C\n", flush=True)
+    if "--check" in sys.argv:
+        failed = [r for r in selftest.run(cfg, read_env()) if not r["ok"]]
+        sys.exit(1 if failed else 0)
+    if "--no-check" not in sys.argv:
+        print("  Self-test running in the background (one tiny call per model; skip with --no-check)…", flush=True)
+        threading.Thread(target=selftest.run, args=(cfg, read_env()), daemon=True).start()
     try:
         ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
     except OSError as e:

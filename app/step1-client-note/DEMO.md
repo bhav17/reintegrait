@@ -13,6 +13,12 @@ Click **Reset sample data** first. Every case starts from the **Class demo…** 
 
 The Rosa and Darius notes are the real note model's output from the lab-case runs (`test-recordings/lab-cases/results/*.raw.json`), stored in `simulated_responses.json` under `demo_cases`. The prototype replays them through the same `applyDraft` code as a live run. The checks run live on top. The screen says "Saved real-AI run" so nobody mistakes the replay for a live call.
 
+## Demo safety
+
+- **Self-test.** `python3 backend/server.py` checks each model in the background when it starts (one tiny call each) and prints a ✓ or ✗ line per model. The grey bar then shows **Self-test passed** or **Self-test: N not ready** (hover for the reason). `python3 backend/server.py --check` runs the test and stops; `--no-check` skips it.
+- **Time limit.** A live AI call that takes longer than `demo_time_limit_seconds` in `backend/ai-config.json` (75 by default) is stopped, and the screen carries on with the sample, the same way it does when a call fails. Set it to 0 for long real recordings.
+- **Reset sample data** also empties the helper's shared case file, so the Grant report starts from the five sample clients. It removes every browser's records, which is fine for a demo and wrong for real use.
+
 ## Script (about 6 minutes)
 
 ### 1. Happy path (1 min)

@@ -209,6 +209,7 @@ To start a fresh log, stop the helper, delete `ai-log.jsonl`, and start again. T
 | `report_draft.py` | Asks Claude for the report wording and checks every number and name in it. | Yes |
 | `case_store.py` | The shared case file (SQLite). | Yes |
 | `prompts/grant-report.md` | The instructions the report model gets. | Yes |
+| `selftest.py` | The start-up check: one tiny call to each model, so a bad key or empty account shows before the demo. | Yes |
 | `tests/` | Unit tests and the browser-made fixture they compare against (`make-fixture.js` rebuilds it). | Yes |
 | `data/case-file.db` | The shared case file: real client records once in use. | **Never** |
 | `.env.example` | Shows teammates what to put in their own `.env`. | Yes |
