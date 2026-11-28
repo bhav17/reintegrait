@@ -5,3 +5,5 @@ logs/*
 !logs/.gitkeep
 # Python build cache.
 __pycache__/
+# The shared case file holds client records. It stays on the machine running the helper.
+data/

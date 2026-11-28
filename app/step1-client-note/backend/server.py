@@ -1,9 +1,10 @@
 """Small helper that runs on your laptop.
 
-It does three things:
+It does four things:
   1. Shows the prototype at http://localhost:8000
   2. Passes recordings to the real AI model (see ai_client.py and ai-config.json)
   3. Writes every AI request, answer, error and review click to logs/ai-log.jsonl
+  4. Keeps the shared case file (data/case-file.db) that the Grant report is counted from
 
 Start it from the step1-client-note folder with:  python3 backend/server.py
 Uses only what comes with Python 3, so there is nothing to install.
@@ -21,6 +22,9 @@ from pathlib import Path
 import importlib.util
 
 from ai_client import AIError, draft_note, draft_update, read_document, transcribe
+import grant_report
+import report_draft
+from case_store import CaseStore
 
 HERE = Path(__file__).resolve().parent          # backend/
 SITE = HERE.parent                              # step1-client-note/ (the prototype)
@@ -31,6 +35,22 @@ PORT = int(os.environ.get("PORT", "8000"))
 MAX_UPLOAD = 100 * 1024 * 1024                  # 100 MB
 DEFAULT_DRAFT_MODEL = "claude-sonnet-5-5"       # typed updates, when ANTHROPIC_MODEL is blank
 _log_lock = threading.Lock()
+CASE_FILE = HERE / "data" / "case-file.db"
+_store = None
+
+
+def store():
+    global _store
+    if _store is None:
+        _store = CaseStore(CASE_FILE)
+    return _store
+
+
+def shared_case_file_on():
+    """The shared case file holds client records, so it is only on when the helper runs on this laptop
+    (the default), or when whoever hosts it turns it on with SHARED_CASE_FILE=on."""
+    host = os.environ.get("HOST", "127.0.0.1")
+    return host in ("127.0.0.1", "localhost") or os.environ.get("SHARED_CASE_FILE") == "on"
 
 
 def read_env():
@@ -104,7 +124,8 @@ class Handler(SimpleHTTPRequestHandler):
                                     "key_found": bool(read_env().get("HF_TOKEN")),
                                     "draft_key_found": bool(read_env().get("ANTHROPIC_API_KEY")),
                                     "draft_model": read_env().get("ANTHROPIC_MODEL") or DEFAULT_DRAFT_MODEL,
-                                    "note": note_status(cfg), "document": document_status(cfg)})
+                                    "note": note_status(cfg), "document": document_status(cfg),
+                                    "report": report_status(cfg), "shared_case_file": shared_case_file_on()})
         return super().do_GET()
 
     def do_POST(self):
@@ -120,6 +141,12 @@ class Handler(SimpleHTTPRequestHandler):
             return self._draft_note(body)
         if self.path.startswith("/api/read-document"):
             return _read_document_handler(self, body)
+        if self.path.startswith("/api/records/sync"):
+            return _sync_handler(self, body)
+        if self.path.startswith("/api/report/metrics"):
+            return _report_metrics_handler(self, body)
+        if self.path.startswith("/api/report/draft"):
+            return _report_draft_handler(self, body)
         if self.path.startswith("/api/log"):
             try:
                 ev = json.loads(body or b"{}")
@@ -290,6 +317,94 @@ def _read_document_handler(handler, body):
     return handler._json(200, {"ok": True, "model": r["request"]["model"], "document": doc, "seconds": r["seconds"]})
 
 
+# ---------------------------------------------------------------------------
+# Shared case file and the live grant report
+# ---------------------------------------------------------------------------
+def report_status(cfg):
+    r = cfg.get("report") or {}
+    return {"enabled": bool(r.get("enabled")) and cfg.get("mode") == "real", "model": r.get("model"),
+            "key_found": bool(read_env().get("ANTHROPIC_API_KEY")),
+            "sdk_installed": importlib.util.find_spec("anthropic") is not None}
+
+
+def _sync_handler(handler, body):
+    if not shared_case_file_on():
+        return handler._json(403, {"ok": False, "error": "The shared case file is off on this server."})
+    try:
+        req = json.loads(body or b"{}")
+        r = store().sync(req.get("device"), req.get("label"), req.get("records"))
+    except (json.JSONDecodeError, ValueError, AttributeError) as e:
+        return handler._json(400, {"ok": False, "error": f"Bad sync: {e}"})
+    return handler._json(200, {"ok": True, **r})
+
+
+def _report_request(handler, body):
+    """Read {period, funder} and count the report from the shared case file. Returns (report, records) or None."""
+    if not shared_case_file_on():
+        handler._json(403, {"ok": False, "error": "The shared case file is off on this server."})
+        return None
+    try:
+        req = json.loads(body or b"{}")
+        R = store().load()
+        rep = grant_report.compute(R, req.get("period"), req.get("funder"))
+    except (json.JSONDecodeError, ValueError, AttributeError) as e:
+        handler._json(400, {"ok": False, "error": f"Bad report request: {e}"})
+        return None
+    return req, rep, R
+
+
+def _public(rep):
+    return {k: v for k, v in rep.items() if k != "_s"}
+
+
+def _report_metrics_handler(handler, body):
+    got = _report_request(handler, body)
+    if not got:
+        return
+    req, rep, R = got
+    return handler._json(200, {"ok": True, **_public(rep), "devices": store().devices(),
+                               "as_of": datetime.now().isoformat(timespec="seconds")})
+
+
+def _report_draft_handler(handler, body):
+    got = _report_request(handler, body)
+    if not got:
+        return
+    req, rep, R = got
+    cfg = read_config()
+    rcfg = cfg.get("report") or {}
+    funder = req.get("funder")
+    facts = grant_report.facts(rep["_s"])
+    entry = {"type": "ai_request", "step": "draft grant report",
+             "input": {"funder": funder, "period": rep["_s"]["p"],
+                       "note": "Only the counts below were sent. No names, notes or dates of birth.",
+                       "placeholders": {k: v["value"] for k, v in facts.items()}}}
+    if not report_status(cfg)["enabled"]:
+        entry.update(mode="simulated", output="Report drafting is off in ai-config.json. The template draft was kept.")
+        write_log(entry)
+        return handler._json(200, {"ok": False, "mode": "simulated", "error": "Report drafting is off in ai-config.json."})
+    try:
+        r = report_draft.draft(rep, funder, R, rcfg, read_env().get("ANTHROPIC_API_KEY", ""))
+    except AIError as e:
+        entry.update(mode="real", request={"provider": "anthropic", "model": rcfg.get("model"), "effort": rcfg.get("effort")},
+                     error={"message": str(e), "status": e.status, "detail": e.detail})
+        write_log(entry)
+        print(f"  ✗ Report draft error: {e}", flush=True)
+        return handler._json(200, {"ok": False, "mode": "real", "error": str(e)})
+    entry.update(mode="real", request={"model": rcfg.get("model"), "effort": rcfg.get("effort"), **r["request"]},
+                 output={"raw_from_model": r["raw"], "filled": r["sections"]},
+                 checks={"passed": r["ok"], "attempts": r["attempts"], "problems": r["problems"], "each_attempt": r["history"]},
+                 usage=r["usage"], seconds=r["seconds"], error=None)
+    write_log(entry)
+    if not r["ok"]:
+        print(f"  ✗ Report draft refused after {r['attempts']} tries: {'; '.join(r['problems'])}", flush=True)
+        return handler._json(200, {"ok": False, "mode": "real", "model": r["model"], "problems": r["problems"],
+                                   "error": "The AI draft did not pass the number and name checks, so the template draft was kept."})
+    print(f"  ✓ {r['model']} drafted the grant report in {r['seconds']} s ({r['attempts']} tries, checks passed)", flush=True)
+    return handler._json(200, {"ok": True, "mode": "real", "model": r["model"], "sections": r["sections"],
+                               "attempts": r["attempts"], "seconds": r["seconds"]})
+
+
 def main():
     cfg = read_config()
     key = bool(read_env().get("HF_TOKEN"))
@@ -311,6 +426,16 @@ def main():
         print(f"  Document: {ds['model']} reads documents" + (f" (to turn on: {'; '.join(problems)})" if problems else ""))
     else:
         print("  Document: sample documents only (document reading is off)")
+    rs = report_status(cfg)
+    if not shared_case_file_on():
+        print("  Report:   shared case file is off on this server (set SHARED_CASE_FILE=on to turn it on)")
+    elif rs["enabled"]:
+        problems = [m for ok, m in ((rs["key_found"], "add ANTHROPIC_API_KEY to backend/.env"),
+                                    (rs["sdk_installed"], "run: python3 -m pip install anthropic")) if not ok]
+        print(f"  Report:   counted from {CASE_FILE.relative_to(SITE)}; {rs['model']} drafts the wording"
+              + (f" (to turn on: {'; '.join(problems)})" if problems else ""))
+    else:
+        print(f"  Report:   counted from {CASE_FILE.relative_to(SITE)}; template wording (report drafting is off)")
     print(f"  Log file: {LOG.relative_to(SITE)}")
     print("  Stop:     press Control + C\n", flush=True)
     try:

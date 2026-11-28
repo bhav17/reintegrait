@@ -142,6 +142,18 @@ Try `"model": "claude-sonnet-5-5"` or `"claude-haiku-5-5"` for faster, cheaper d
 
 The key fields come from the note template in `simulated_responses.json` (`templates` → `intake_notes`). Fields marked `"required": true` become a flag when they are missing. The others (date of birth, release date, facility, supervision, referral source, consent forms and so on) are filled only when they were said. If they weren't, the note lists them under **Not mentioned**, and the case manager can add them by hand.
 
+## The live grant report
+
+With the helper running, the **Grant report** tab is counted from a shared case file instead of one browser.
+
+- **Shared case file.** Each browser sends its records to `backend/data/case-file.db` (SQLite) a second after every save, and when the Grant report tab opens. A browser's copy is the truth for the records it sent: a reset on one laptop removes that laptop's records and leaves everyone else's. The file holds client records, so it is never uploaded to GitHub. It is on when the helper runs on your laptop; a hosted copy (`HOST` other than `127.0.0.1`) keeps it off unless you set `SHARED_CASE_FILE=on`.
+- **Numbers in code.** `grant_report.py` counts every figure with the same rules as `grStats()` and `grMetrics()` in `grant-report.js`, and keeps the record IDs behind each headline number. It also reports how many clients served have gender, age and race/ethnicity recorded, and flags missing race/ethnicity for ICJIA R3 and any browser that has not synced in a week.
+- **Wording by Claude, numbers by code.** **Draft wording with AI** sends Claude the totals only (no names, notes or dates of birth). Claude writes `{served}`, never `24`; `report_draft.py` fills each placeholder in and refuses the draft if it typed a number, wrote an amount in words, used a placeholder that does not exist, left out a section, or contains a client's name. A refused draft is sent back once with the problems listed; if it fails again, the template draft stays. The model is set under `"report"` in `ai-config.json` (default `claude-sonnet-5-5`; try `claude-opus-5-5` to compare). Instructions are in `prompts/grant-report.md`.
+- **Approval snapshot.** Approving the report saves the figures, where they came from, the time, and who wrote the wording (template or model) on the Approval record.
+- **Log.** Each AI draft adds a `"draft grant report"` line to the test log with the exact numbers sent, the model's raw answer, the filled text, and the check results.
+
+Checks: `python3 -m unittest discover -s backend/tests -v` (no install needed; confirms the Python counts match the browser's to the digit on two case files) and `node acceptance-test-grant-live.js` with the helper running (two browsers, one shared report).
+
 ## The test log
 
 Every AI request adds one line to `backend/logs/ai-log.jsonl`. Open it in any text editor (TextEdit, Notepad, VS Code). Each line is one event. The newest is at the bottom. Every line carries a `run` number: each upload starts a new run, so all the lines from one test share the same number.
@@ -193,6 +205,12 @@ To start a fresh log, stop the helper, delete `ai-log.jsonl`, and start again. T
 | `prompts/draft-note.md` | The instructions the note model gets. | Yes |
 | `prompts/read-document.md` | The instructions the document reader gets. It only copies what is printed; the prototype does the comparing. | Yes |
 | `ai-config.json` | Providers, models, instructions, and the real/simulated setting. | Yes |
+| `grant_report.py` | Counts the grant report from the shared case file. No model involved. | Yes |
+| `report_draft.py` | Asks Claude for the report wording and checks every number and name in it. | Yes |
+| `case_store.py` | The shared case file (SQLite). | Yes |
+| `prompts/grant-report.md` | The instructions the report model gets. | Yes |
+| `tests/` | Unit tests and the browser-made fixture they compare against (`make-fixture.js` rebuilds it). | Yes |
+| `data/case-file.db` | The shared case file: real client records once in use. | **Never** |
 | `.env.example` | Shows teammates what to put in their own `.env`. | Yes |
 | `.env` | Your keys. | **Never** |
 | `logs/ai-log.jsonl` | Your test log. | No |
