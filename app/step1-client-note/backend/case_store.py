@@ -65,6 +65,13 @@ class CaseStore:
             counts[t] += 1
         return {"synced_at": now, "counts": counts}
 
+    def clear(self):
+        """Remove every record from every browser. Used by the demo reset."""
+        with _lock:
+            self.db.execute("DELETE FROM records")
+            self.db.execute("DELETE FROM devices")
+            self.db.commit()
+
     def load(self):
         """All records, {type: [record, ...]}, in the order they were first written."""
         out = {t: [] for t in RECORD_TYPES}

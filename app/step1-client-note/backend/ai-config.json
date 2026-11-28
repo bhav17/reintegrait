@@ -8,6 +8,8 @@
     "return_timestamps": true
   },
   "timeout_seconds": 180,
+  "demo_time_limit_seconds": 75,
+  "_demo_help": "demo_time_limit_seconds: in the browser, a live AI call that takes longer than this is stopped and the screen carries on with the sample, as if the call had failed. Keeps a class demo moving. 0 turns it off (use 0 for long real recordings).",
   "note": {
     "_help": "Drafts the note from the real transcript. Needs ANTHROPIC_API_KEY in .env and: python3 -m pip install anthropic. Set enabled to false to keep the sample note. location: where the agency works, so misheard place names can be corrected to real places there.",
     "enabled": true,

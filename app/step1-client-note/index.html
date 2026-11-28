@@ -466,11 +466,16 @@ const durSec=d=>{if(!d)return 0;const p=String(d).split(":").map(Number);return 
    speech-to-text model named in backend/ai-config.json. Everything else stays simulated.
    Without the helper, or with the switch on Simulated, the prototype works exactly as before. */
 const AI={helper:false,mode:"simulated",model:"",provider:"",key_found:false,draft_key_found:false,on:false};
+/* Demo safety: a live AI call that takes longer than demo_time_limit_seconds (backend/ai-config.json) is dropped,
+   and the screen carries on with the sample, the same way it does when a call fails. 0 turns the limit off. */
+function aiFetch(url,opts){const lim=+(AI.demo_time_limit||0);if(!lim)return fetch(url,opts);
+ const c=new AbortController(),t=setTimeout(()=>c.abort(),lim*1000);return fetch(url,{...opts,signal:c.signal}).finally(()=>clearTimeout(t))}
+const aiErr=e=>e&&e.name==="AbortError"?`The live model took longer than ${AI.demo_time_limit} second${+AI.demo_time_limit===1?"":"s"}, so it was stopped.`:"The laptop helper stopped. Restart it with python3 backend/server.py.";
 function startRealTx(job,src){
  if(!(AI.on&&src.kind==="audio"&&src.file))return;
  job.real={status:"running",model:AI.model};
- job.realTx=fetch("api/transcribe",{method:"POST",headers:{"Content-Type":src.file.type||"application/octet-stream","X-File-Name":src.name,"X-Audio-Duration":src.dur||"","X-Run":String(RUN)},body:src.file})
-  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+ job.realTx=aiFetch("api/transcribe",{method:"POST",headers:{"Content-Type":src.file.type||"application/octet-stream","X-File-Name":src.name,"X-Audio-Duration":src.dur||"","X-Run":String(RUN)},body:src.file})
+  .then(r=>r.json()).catch(e=>({ok:false,error:aiErr(e)}))
   .then(r=>{
    if(r.ok&&r.text){
     const mmss=t=>t==null?"–":Math.floor(t/60)+":"+String(Math.round(t%60)).padStart(2,"0");
@@ -493,8 +498,8 @@ function startRealDraft(job){
  if(!ns.key_found||!ns.sdk_installed){job.realDraft={status:"failed",error:!ns.key_found?"No Anthropic key in backend/.env.":"The Anthropic package is not installed (python3 -m pip install anthropic)."};return}
  job.realDraft={status:"running",model:ns.model};
  const lists={key_fields:keyDefs(job.template).map(f=>({key:f.key,label:f.label,type:f.type||"text",options:f.options||[]})),categories:SIM.matched_services.categories,service_types:serviceTypes(),meeting_types:SIM.templates.meeting_types};
- job.realDraftTx=fetch("api/draft-note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,lists,lines:job.transcript.map(l=>({id:l.id,time:l.time,text:l.text}))})})
-  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+ job.realDraftTx=aiFetch("api/draft-note",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,lists,lines:job.transcript.map(l=>({id:l.id,time:l.time,text:l.text}))})})
+  .then(r=>r.json()).catch(e=>({ok:false,error:aiErr(e)}))
   .then(r=>{
    if(r.ok&&r.note){applyDraft(job,r.note);job.realDraft={status:"done",model:r.model,seconds:r.seconds};
     logEvent(job.key_info.name.value||"New client","Real AI note drafted",`${r.model} · ${job.immediate_needs.length} needs · ${job.next_steps.length} steps · ${job.flags.length} to confirm · ${r.seconds} s`)}
@@ -558,9 +563,9 @@ function applyDraft(n,d){
 function startRealUpdate(job,src){
  if(!(AI.on&&AI.draft_key_found&&src.kind==="text"&&src.text))return;
  job.realUpdate={status:"running",model:AI.draft_model||"a real model"};
- job.realUpdateTx=fetch("api/draft-update",{method:"POST",headers:{"Content-Type":"application/json"},
+ job.realUpdateTx=aiFetch("api/draft-update",{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({text:src.text,type:job.type,client:{name:job.client.name,age:job.client.age,openNeeds:job.client.needs}})})
-  .then(r=>r.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}))
+  .then(r=>r.json()).catch(e=>({ok:false,error:aiErr(e)}))
   .then(r=>{
    if(r.ok&&r.summary){
     job.summary=r.summary;
@@ -589,9 +594,14 @@ function render(){
  ["home","clients","network","grant","activity"].forEach(v=>{const b=document.getElementById("nav-"+v);if(state.view===v)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});
  ({home:renderHome,clients:renderClients,process:renderProcess,note:renderNote,update:renderUpdate,activity:renderActivity,services:renderServices,network:renderNetwork,grant:renderGrant})[state.view]();
  app.querySelectorAll("[data-aimode]").forEach(b=>b.onclick=()=>{if(!AI.on&&!AI.key_found&&!AI.draft_key_found){toast("No key found. Add a key to backend/.env, then restart the helper.");return}AI.on=!AI.on;logEvent("","AI switch",AI.on?"Real ("+AI.model+")":"Simulated");render();toast(AI.on?"Real AI on.":"Simulated responses on.")});
- app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();Files.clear();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
+ app.querySelectorAll("[data-reset]").forEach(b=>b.onclick=()=>{Store.reset();if(typeof grDemoReset==="function")grDemoReset();Files.clear();state.sel="c1";state.newIds.clear();state.note=null;state.update=null;go(state.view==="clients"?"clients":"home");toast("Sample data restored.")});
 }
-const mockbar=()=>`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. ${AI.on?`Voice to text uses the real model <b>${esc(AI.model)}</b>.${AI.note&&AI.note.enabled&&AI.note.key_found&&AI.note.sdk_installed?` The new-client note is drafted by <b>${esc(AI.note.model)}</b>.`:""}${AI.draft_key_found?` Typed updates are drafted by <b>${esc(AI.draft_model||"a real model")}</b>.`:""} Everything else comes from simulated_responses.json.`:"AI output comes from simulated_responses.json."}${AI.helper?`<button class="btn ghost small" type="button" data-aimode aria-pressed="${AI.on}" title="${AI.key_found||AI.draft_key_found?"":"No key found in backend/.env"}">AI: ${AI.on?"Real":"Simulated"} · switch</button>`:""}<button class="btn ghost small" type="button" data-reset>Reset sample data</button>${typeof demoBar==="function"?demoBar():""}</div>`;
+const mockbar=()=>`<div class="mockbar"><span class="tag sim">Prototype</span>Sample clients, saved in this browser. ${AI.on?`Voice to text uses the real model <b>${esc(AI.model)}</b>.${AI.note&&AI.note.enabled&&AI.note.key_found&&AI.note.sdk_installed?` The new-client note is drafted by <b>${esc(AI.note.model)}</b>.`:""}${AI.draft_key_found?` Typed updates are drafted by <b>${esc(AI.draft_model||"a real model")}</b>.`:""} Everything else comes from simulated_responses.json.`:"AI output comes from simulated_responses.json."}${AI.helper?`<button class="btn ghost small" type="button" data-aimode aria-pressed="${AI.on}" title="${AI.key_found||AI.draft_key_found?"":"No key found in backend/.env"}">AI: ${AI.on?"Real":"Simulated"} · switch</button>`:""}${selftestTag()}<button class="btn ghost small" type="button" data-reset>Reset sample data</button>${typeof demoBar==="function"?demoBar():""}</div>`;
+/* The helper checks each model when it starts (backend/selftest.py). Show the result so a dead key is seen before the demo. */
+function selftestTag(){const t=AI.helper&&AI.on&&AI.selftest;if(!t||!["passed","failed"].includes(t.state))return"";
+ const bad=t.results.filter(r=>!r.ok);
+ return t.state==="passed"?`<span class="tag ok" id="selftest" title="${esc(t.results.map(r=>r.step+": "+r.model).join("; "))}">Self-test passed</span>`
+  :`<span class="tag warn" id="selftest" title="${esc(bad.map(r=>r.step+": "+r.message).join(" | "))}">Self-test: ${bad.length} not ready</span>`}
 
 /* ---------- Home ---------- */
 function renderHome(){
@@ -988,8 +998,8 @@ function openDocCheck(n){
     blob=await shrinkImage(blob);
     const media_type=pick.media_type==="application/pdf"?"application/pdf":(blob.type||pick.media_type);
     const fields=docDefs(n).map(f=>({key:f.key,label:f.label,type:f.type||"text",options:f.options||[]}));
-    const r=await fetch("api/read-document",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,client:who,file_name:pick.name,media_type,data:await blobB64(blob),fields})})
-     .then(x=>x.json()).catch(()=>({ok:false,error:"The laptop helper stopped. Restart it with python3 backend/server.py."}));
+    const r=await aiFetch("api/read-document",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({run:RUN,client:who,file_name:pick.name,media_type,data:await blobB64(blob),fields})})
+     .then(x=>x.json()).catch(e=>({ok:false,error:aiErr(e)}));
     if(!r.ok||!r.document){busy=false;go.disabled=false;logEvent(who,"Document read failed",`${pick.name} · ${r.error||"Unknown error"}`);return err("Couldn't read the document",r.error||"Unknown error.")}
     doc=r.document;meta={file:pick.name,by:`Read by ${r.model}`,seconds:r.seconds,media_type,blob:keep?blob:null};
    }
