@@ -248,6 +248,7 @@ def facts(s):
     add("open_needs", s["openNeeds"], "open needs across all caseloads today")
     add("participants_cumulative", s["cum"], "people served since the program started, up to the period end")
     add("still_engaged", s["engaged"], "people with a contact in the last 30 days of the period")
+    add("engaged_window", "30 days", "how recent a contact must be to count as still engaged")
     add("service_type_count", len(s["byType"]), "number of different service types delivered")
     for t, v in s["byType"].items():
         add(f"svc_{_slug(t)}_clients", v["clients"], f"clients who received {t} services")

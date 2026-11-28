@@ -393,7 +393,7 @@ def _report_draft_handler(handler, body):
         return handler._json(200, {"ok": False, "mode": "real", "error": str(e)})
     entry.update(mode="real", request={"model": rcfg.get("model"), "effort": rcfg.get("effort"), **r["request"]},
                  output={"raw_from_model": r["raw"], "filled": r["sections"]},
-                 checks={"passed": r["ok"], "attempts": r["attempts"], "problems": r["problems"]},
+                 checks={"passed": r["ok"], "attempts": r["attempts"], "problems": r["problems"], "each_attempt": r["history"]},
                  usage=r["usage"], seconds=r["seconds"], error=None)
     write_log(entry)
     if not r["ok"]:

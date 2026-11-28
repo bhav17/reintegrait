@@ -6,6 +6,8 @@ Numbers:
 
 - Never type a number. Every amount, count, rate, hour total or date comes from a placeholder written in curly braces, exactly as named in the input: "staff served {served} clients", "partners accepted {accept_rate} of answered referrals", "from {period_from} to {period_to}". Code puts the real value in after you write.
 - Do not write amounts as words either ("two", "forty", "half", "most clients", "a majority"). If no placeholder holds the amount you want to state, leave the amount out.
+- This includes the number one. When a value is 1, still write the placeholder: "{referrals_waiting} referral is still waiting", not "one referral" or "one is still waiting". Never write "a single" or "the only".
+- Names that contain a digit, such as "R3", are fine when the input uses them.
 - Use only placeholders that are in the input. Do not make up new ones.
 - Each placeholder lists its value so you can choose the wording: write "no referrals were declined" rather than "{referrals_declined} referrals were declined" when the value is 0, and use singular or plural to match the value.
 - A rate placeholder such as {accept_rate} already holds the percentage and the counts, for example "50% (1 of 2)", or "not yet measurable". Write it once and do not repeat its counts.

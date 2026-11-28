@@ -129,6 +129,22 @@ class NarrativeChecks(unittest.TestCase):
         self.assertIn("forty", joined)
         self.assertIn("made_up", joined)
 
+    def test_funder_code_allowed_but_one_referral_not(self):
+        ok = self.good()
+        ok[3]["text"] = "The program does not yet track R3-funded staff changes."
+        r = rd.draft(self.rep, "icjia", self.R, {}, "", call=_fake_model(ok))
+        self.assertTrue(r["ok"], r["problems"])
+        bad = self.good()
+        bad[3]["text"] = "One referral is still waiting. The R7 program grew."
+        r = rd.draft(self.rep, "icjia", self.R, {}, "", call=_fake_model(bad, bad))
+        self.assertFalse(r["ok"])
+        joined = " ".join(r["problems"])
+        self.assertIn("one referral", joined)
+        self.assertIn("7", joined)
+        fine = self.good()
+        fine[3]["text"] = "No one declined. One of the open needs is housing."
+        self.assertTrue(rd.draft(self.rep, "icjia", self.R, {}, "", call=_fake_model(fine))["ok"])
+
     def test_client_name_rejected(self):
         bad = self.good()
         bad[2]["text"] = "Marcus started a job program."

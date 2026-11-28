@@ -2,7 +2,7 @@
 // 1. In this folder: python3 backend/server.py   (the helper, not http.server: the shared case file lives there)
 // 2. In another terminal: node acceptance-test-grant-live.js   (needs Playwright)
 // Set AI_DRAFT=1 to also click "Draft wording with AI" (needs ANTHROPIC_API_KEY, mode "real", report.enabled).
-// It adds a test client to the shared case file. Delete backend/data/case-file.db afterwards to start clean.
+// It adds a test client to the shared case file. To start clean, stop the helper, then delete backend/data/case-file.db.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const URL = process.env.PROTO_URL || 'http://localhost:8000/';
